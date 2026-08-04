@@ -76,6 +76,14 @@ if (/RegisterKeyBind|bind\s+[\"']?space/i.test(source)) {
 	throw new Error("custom menu must not override the native Space camera control");
 }
 
+if (!/bluedots_large_png\.vtex/.test(style) || !/border-left:\s*3px solid #e4ae39/.test(style)) {
+	throw new Error("custom menu must retain the native-inspired Swift Menu chrome");
+}
+
+if (!/icons\/ui\/unmuted\.vsvg/.test(layout) || !/SwiftDemoVoiceEnabledLabel/.test(layout) || /icons\/ui\/sound_3\.vsvg/.test(layout)) {
+	throw new Error("voice controls must use explicit unmuted/muted UI with a text state");
+}
+
 var commands = [];
 var startupClasses = {};
 var menuPanel = {
@@ -135,15 +143,21 @@ context.GameStateAPI.GetPlayerDataJSO = function () {
 context.GameStateAPI.GetPlayerSlot = function (xuid) { return xuid === "101" ? 3 : -1; };
 context.GameStateAPI.GetPlayerName = function (xuid) { return xuid === "101" ? "Primary Name" : ""; };
 context.GameStateAPI.GetPlayerTeamName = function () { return ""; };
-context.GameStateAPI.GetPlayerStatsJSO = function () { return null; };
+context.GameStateAPI.GetPlayerStatsJSO = function (xuid) { return { status: xuid === "202" ? 1 : 0 }; };
 var players = context.SwiftDemoVoice.ReadPlayersForTest();
-if (players.length !== 2 || players[0].slot !== 3 || players[0].team !== "TERRORIST" || players[1].slot !== 8 || players[1].name !== "Fallback Name") {
+if (players.length !== 2 || players[0].slot !== 3 || players[0].team !== "TERRORIST" || players[1].slot !== 8 || players[1].name !== "Fallback Name" || !players[0].canFocus || !players[1].isDead || players[1].canFocus) {
 	throw new Error("demo player discovery/fallback failed: " + JSON.stringify(players));
 }
+context.SwiftDemoVoice.Refresh(false);
 
 commands.length = 0;
 if (context.SwiftDemoVoice.AccountIdFromXuid("76561198000000123") !== 39734395) {
 	throw new Error("Steam account ID conversion failed");
+}
+
+context.SwiftDemoVoice.FocusPlayer(8, "Fallback Name", "202");
+if (commands.length !== 0) {
+	throw new Error("dead players must not issue POV commands: " + JSON.stringify(commands));
 }
 
 context.SwiftDemoVoice.FocusPlayer(12, "Example Player", "76561198000000123");

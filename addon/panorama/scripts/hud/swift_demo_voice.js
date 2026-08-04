@@ -102,7 +102,7 @@ var SwiftDemoVoice = (function () {
 	function _PlayerSignature(players) {
 		var parts = [];
 		for (var i = 0; i < players.length; i++) {
-			parts.push(players[i].slot + ":" + players[i].xuid + ":" + players[i].team + ":" + players[i].name);
+			parts.push(players[i].slot + ":" + players[i].xuid + ":" + players[i].team + ":" + players[i].name + ":" + players[i].status);
 		}
 		return parts.join("|");
 	}
@@ -154,6 +154,34 @@ var SwiftDemoVoice = (function () {
 		return -1;
 	}
 
+	function _NormalizePlayerStatus(value) {
+		if (value === null || value === undefined || value === "") return -1;
+		var status = Number(value);
+		if (!isFinite(status)) return -1;
+		return Math.floor(status);
+	}
+
+	function _ReadPlayerStatus(xuid, source) {
+		var status = -1;
+		try {
+			var stats = GameStateAPI.GetPlayerStatsJSO(xuid);
+			status = _NormalizePlayerStatus(stats && stats.status);
+		} catch (error) {
+			status = -1;
+		}
+		if (status >= 0) return status;
+
+		status = _NormalizePlayerStatus(source && source.status);
+		if (status >= 0) return status;
+
+		try {
+			if (GameStateAPI.GetPlayerStatus) status = _NormalizePlayerStatus(GameStateAPI.GetPlayerStatus(xuid));
+		} catch (error) {
+			status = -1;
+		}
+		return status;
+	}
+
 	function _ReadPlayers() {
 		var result = [];
 		var seenSlots = {};
@@ -173,10 +201,12 @@ var SwiftDemoVoice = (function () {
 			var slot = -1;
 			var name = "";
 			var team = "";
+			var status = -1;
 			try {
 				slot = _ResolvePlayerSlot(xuid, source);
 				name = GameStateAPI.GetPlayerName(xuid) || "";
 				team = GameStateAPI.GetPlayerTeamName(xuid) || "";
+				status = _ReadPlayerStatus(xuid, source);
 			} catch (error) {
 				$.Msg("[SwiftDemoVoice] player API failed for " + xuid + ": " + error);
 			}
@@ -190,7 +220,11 @@ var SwiftDemoVoice = (function () {
 				xuid: xuid,
 				slot: slot,
 				name: name || ("Player " + (slot + 1)),
-				team: team
+				team: team,
+				status: status,
+				isDead: status === 1,
+				isDisconnected: status === 15,
+				canFocus: status !== 1 && status !== 15
 			});
 		}
 
@@ -203,12 +237,12 @@ var SwiftDemoVoice = (function () {
 
 	function _SetRowSelected(row, selected) {
 		_SetClass(row, "selected", selected);
-		var speaker = row ? row.FindChildTraverse("SwiftDemoVoiceEnabled") : null;
-		if (speaker) {
-			speaker.SetImage(selected
-				? "s2r://panorama/images/icons/ui/sound_3.vsvg"
-				: "s2r://panorama/images/icons/ui/sound_off.vsvg");
-		}
+		var audioIcon = row ? row.FindChildTraverse("SwiftDemoVoiceEnabled") : null;
+		var audioLabel = row ? row.FindChildTraverse("SwiftDemoVoiceEnabledLabel") : null;
+		if (audioIcon) audioIcon.SetImage(selected
+			? "s2r://panorama/images/icons/ui/unmuted.vsvg"
+			: "s2r://panorama/images/icons/ui/muted.vsvg");
+		if (audioLabel) audioLabel.text = selected ? "ON" : "OFF";
 	}
 
 	function _GetHudPlayerXuid() {
@@ -261,13 +295,29 @@ var SwiftDemoVoice = (function () {
 
 			_SetClass(row, "team-t", player.team === "TERRORIST");
 			_SetClass(row, "team-ct", player.team === "CT");
+			_SetClass(row, "dead", player.isDead);
+			_SetClass(row, "disconnected", player.isDisconnected);
+			_SetClass(row, "pov-unavailable", !player.canFocus);
 			row.FindChildTraverse("SwiftDemoVoiceSlot").text = String(player.slot + 1);
 			row.FindChildTraverse("SwiftDemoVoicePlayerName").text = player.name;
-			row.FindChildTraverse("SwiftDemoVoicePlayerMeta").text = _TeamLabel(player.team) + "  /  SLOT " + (player.slot + 1);
+			var meta = _TeamLabel(player.team) + "  /  SLOT " + (player.slot + 1);
+			if (player.isDead) meta += "  /  DEAD";
+			else if (player.isDisconnected) meta += "  /  OFFLINE";
+			row.FindChildTraverse("SwiftDemoVoicePlayerMeta").text = meta;
 
-			(function (playerSlot, playerName, playerXuid, focusButton, toggleButton) {
-				if (focusButton) {
-					focusButton.SetPanelEvent("onactivate", function () {
+			var povIcon = row.FindChildTraverse("SwiftDemoVoicePovIcon");
+			var povLabel = row.FindChildTraverse("SwiftDemoVoicePovLabel");
+			if (povIcon) povIcon.SetImage(player.canFocus
+				? "s2r://panorama/images/icons/ui/watch.vsvg"
+				: "s2r://panorama/images/icons/ui/elimination.vsvg");
+			if (povLabel) povLabel.text = player.canFocus ? "VIEW" : (player.isDead ? "DEAD" : "N/A");
+
+			var focusButton = row.FindChildTraverse("SwiftDemoVoiceFocus");
+			if (focusButton) focusButton.enabled = player.canFocus;
+
+			(function (playerSlot, playerName, playerXuid, canFocus, playerFocusButton, toggleButton) {
+				if (playerFocusButton && canFocus) {
+					playerFocusButton.SetPanelEvent("onactivate", function () {
 						FocusPlayer(playerSlot, playerName, playerXuid);
 					});
 				}
@@ -280,7 +330,8 @@ var SwiftDemoVoice = (function () {
 				player.slot,
 				player.name,
 				player.xuid,
-				row.FindChildTraverse("SwiftDemoVoiceFocus"),
+				player.canFocus,
+				focusButton,
 				row.FindChildTraverse("SwiftDemoVoiceToggle")
 			);
 			_SetRowSelected(row, !!_selectedSlots[player.slot]);
@@ -363,6 +414,14 @@ var SwiftDemoVoice = (function () {
 		return !!playerXuid && _GetHudPlayerXuid() === String(playerXuid);
 	}
 
+	function _FindPlayerForFocus(slot, playerXuid) {
+		var targetXuid = String(playerXuid || "");
+		for (var i = 0; i < _players.length; i++) {
+			if (_players[i].slot === slot || (targetXuid && _players[i].xuid === targetXuid)) return _players[i];
+		}
+		return null;
+	}
+
 	function _SetFirstPersonMode() {
 		// CS2's current DemoController enum maps OBS_MODE_IN_EYE to 2.
 		GameInterfaceAPI.ConsoleCommand("spec_mode 2");
@@ -400,13 +459,25 @@ var SwiftDemoVoice = (function () {
 		}
 
 		var currentXuid = _GetHudPlayerXuid();
-		_SetText("SwiftDemoVoiceStatus", "POV switch failed: " + playerName);
-		$.Msg("[SwiftDemoVoice] focus failed slot=" + displaySlot + " player=" + playerName + " current=" + currentXuid);
+		var targetStatus = _ReadPlayerStatus(playerXuid, null);
+		if (targetStatus === 1 || targetStatus === 15) {
+			_SetText("SwiftDemoVoiceStatus", targetStatus === 1 ? "POV unavailable: player is dead" : "POV unavailable: player is offline");
+			$.Msg("[SwiftDemoVoice] focus unavailable slot=" + displaySlot + " player=" + playerName + " status=" + targetStatus);
+			Refresh(false);
+		} else {
+			_SetText("SwiftDemoVoiceStatus", "POV switch failed: " + playerName);
+			$.Msg("[SwiftDemoVoice] focus failed slot=" + displaySlot + " player=" + playerName + " current=" + currentXuid);
+		}
 	}
 
 	function FocusPlayer(slot, playerName, playerXuid) {
 		var normalizedSlot = _NormalizeSlot(slot);
 		if (normalizedSlot < 0) return;
+		var knownPlayer = _FindPlayerForFocus(normalizedSlot, playerXuid);
+		if (knownPlayer && !knownPlayer.canFocus) {
+			_SetText("SwiftDemoVoiceStatus", knownPlayer.isDead ? "POV unavailable: player is dead" : "POV unavailable: player is offline");
+			return;
+		}
 		var displaySlot = normalizedSlot + 1;
 		var targetXuid = String(playerXuid || "");
 		var accountId = _AccountIdFromXuid(targetXuid);

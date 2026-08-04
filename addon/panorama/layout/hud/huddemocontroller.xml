@@ -19,12 +19,13 @@
 						<Label id="SwiftDemoVoicePlayerMeta" class="swift-demo-voice-player__meta" text="TEAM" />
 					</Panel>
 					<Panel class="swift-demo-voice-player__pov" hittest="false">
-						<Image src="s2r://panorama/images/icons/ui/watch.vsvg" />
-						<Label text="POV" />
+						<Image id="SwiftDemoVoicePovIcon" src="s2r://panorama/images/icons/ui/watch.vsvg" />
+						<Label id="SwiftDemoVoicePovLabel" text="VIEW" />
 					</Panel>
 				</Button>
 				<Button id="SwiftDemoVoiceToggle" class="swift-demo-voice-player__toggle" hittest="true">
-					<Image id="SwiftDemoVoiceEnabled" src="s2r://panorama/images/icons/ui/sound_3.vsvg" hittest="false" />
+					<Image id="SwiftDemoVoiceEnabled" src="s2r://panorama/images/icons/ui/unmuted.vsvg" hittest="false" />
+					<Label id="SwiftDemoVoiceEnabledLabel" text="ON" hittest="false" />
 				</Button>
 			</Panel>
 		</snippet>
@@ -109,7 +110,7 @@
 		<Panel id="SwiftDemoVoiceMenu" class="swift-demo-voice demo-active" hittest="true" hittestchildren="true" onload="SwiftDemoVoice.OnLoad()">
 			<Panel id="SwiftDemoVoiceHeader" class="swift-demo-voice__header" hittest="true" onactivate="SwiftDemoVoice.ToggleOpen()">
 				<Panel class="swift-demo-voice__brand">
-					<Image class="swift-demo-voice__brand-icon" src="s2r://panorama/images/icons/ui/sound_3.vsvg" />
+					<Image class="swift-demo-voice__brand-icon" src="s2r://panorama/images/icons/ui/unmuted.vsvg" />
 				</Panel>
 				<Panel class="swift-demo-voice__title-block" hittest="false">
 					<Label class="swift-demo-voice__title" text="DEMO VOICE" />
