@@ -9,7 +9,6 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFrame>
-#include <QGridLayout>
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QLabel>
@@ -28,21 +27,70 @@ namespace
 {
 QPixmap makeLogo()
 {
-    QPixmap pixmap(56, 56);
+    QPixmap pixmap(48, 48);
     pixmap.fill(Qt::transparent);
     QPainter painter(&pixmap);
     painter.setRenderHint(QPainter::Antialiasing);
-    painter.setPen(QPen(QColor(QStringLiteral("#e4ae39")), 2));
-    painter.setBrush(QColor(QStringLiteral("#26272a")));
-    painter.drawRoundedRect(QRectF(2, 2, 52, 52), 10, 10);
     painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(QStringLiteral("#e4ae39")));
+    painter.setBrush(QColor(QStringLiteral("#5aa9ff")));
+    painter.drawRoundedRect(QRectF(1, 1, 46, 46), 13, 13);
+    painter.setBrush(QColor(QStringLiteral("#ffffff")));
     QPolygonF triangle;
-    triangle << QPointF(23, 17) << QPointF(23, 39) << QPointF(41, 28);
+    triangle << QPointF(20, 15) << QPointF(20, 33) << QPointF(35, 24);
     painter.drawPolygon(triangle);
-    painter.setBrush(QColor(QStringLiteral("#78b9dc")));
-    painter.drawEllipse(QPointF(15, 28), 3.5, 3.5);
     return pixmap;
+}
+
+enum class Glyph
+{
+    Demo,
+    Folder,
+    Play,
+    Stop
+};
+
+QPixmap makeGlyph(Glyph glyph, int side, const QColor &color)
+{
+    QPixmap pixmap(side, side);
+    pixmap.fill(Qt::transparent);
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(QPen(color, qMax(1.5, side / 12.0), Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    painter.setBrush(Qt::NoBrush);
+
+    if (glyph == Glyph::Demo) {
+        painter.drawRoundedRect(QRectF(side * 0.16, side * 0.12, side * 0.68, side * 0.76), side * 0.12, side * 0.12);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(color);
+        QPolygonF triangle;
+        triangle << QPointF(side * 0.43, side * 0.35)
+                 << QPointF(side * 0.43, side * 0.65)
+                 << QPointF(side * 0.68, side * 0.50);
+        painter.drawPolygon(triangle);
+    } else if (glyph == Glyph::Folder) {
+        painter.drawLine(QPointF(side * 0.15, side * 0.35), QPointF(side * 0.37, side * 0.35));
+        painter.drawLine(QPointF(side * 0.37, side * 0.35), QPointF(side * 0.45, side * 0.24));
+        painter.drawLine(QPointF(side * 0.45, side * 0.24), QPointF(side * 0.70, side * 0.24));
+        painter.drawRoundedRect(QRectF(side * 0.12, side * 0.34, side * 0.76, side * 0.48), side * 0.08, side * 0.08);
+    } else if (glyph == Glyph::Play) {
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(color);
+        QPolygonF triangle;
+        triangle << QPointF(side * 0.30, side * 0.19)
+                 << QPointF(side * 0.30, side * 0.81)
+                 << QPointF(side * 0.79, side * 0.50);
+        painter.drawPolygon(triangle);
+    } else {
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(color);
+        painter.drawRoundedRect(QRectF(side * 0.25, side * 0.25, side * 0.50, side * 0.50), side * 0.08, side * 0.08);
+    }
+    return pixmap;
+}
+
+QIcon makeGlyphIcon(Glyph glyph, const QColor &color)
+{
+    return QIcon(makeGlyph(glyph, 24, color));
 }
 
 QLabel *sectionEyebrow(const QString &text, QWidget *parent)
@@ -52,13 +100,6 @@ QLabel *sectionEyebrow(const QString &text, QWidget *parent)
     return label;
 }
 
-QFrame *horizontalLine(QWidget *parent)
-{
-    auto *line = new QFrame(parent);
-    line->setObjectName(QStringLiteral("Separator"));
-    line->setFixedHeight(1);
-    return line;
-}
 }
 
 LauncherWindow::LauncherWindow(QWidget *parent)
@@ -66,8 +107,8 @@ LauncherWindow::LauncherWindow(QWidget *parent)
 {
     setWindowTitle(QStringLiteral("Swift Demo Launcher"));
     setWindowIcon(QIcon(makeLogo()));
-    setMinimumSize(760, 650);
-    resize(780, 680);
+    setMinimumSize(780, 680);
+    resize(820, 700);
     setAcceptDrops(true);
 
     buildInterface();
@@ -91,32 +132,32 @@ void LauncherWindow::buildInterface()
     auto *central = new QWidget(this);
     central->setObjectName(QStringLiteral("Root"));
     auto *root = new QVBoxLayout(central);
-    root->setContentsMargins(30, 26, 30, 26);
-    root->setSpacing(14);
+    root->setContentsMargins(34, 28, 34, 24);
+    root->setSpacing(16);
 
     auto *header = new QHBoxLayout;
-    header->setSpacing(16);
+    header->setSpacing(14);
     auto *logo = new QLabel(central);
     logo->setPixmap(makeLogo());
-    logo->setFixedSize(56, 56);
+    logo->setFixedSize(48, 48);
     header->addWidget(logo);
 
     auto *titles = new QVBoxLayout;
-    titles->setSpacing(0);
-    auto *title = new QLabel(QStringLiteral("SWIFT DEMO LAUNCHER"), central);
+    titles->setSpacing(2);
+    auto *title = new QLabel(QStringLiteral("Demo 回放"), central);
     title->setObjectName(QStringLiteral("AppTitle"));
-    auto *subtitle = new QLabel(QStringLiteral("CS2 REVIEW SESSION  /  NATIVE QT"), central);
+    auto *subtitle = new QLabel(QStringLiteral("SWIFT  ·  COUNTER-STRIKE 2"), central);
     subtitle->setObjectName(QStringLiteral("AppSubtitle"));
     titles->addWidget(title);
     titles->addWidget(subtitle);
     header->addLayout(titles, 1);
 
-    securityBadge_ = new QLabel(QStringLiteral("CHECKING"), central);
+    securityBadge_ = new QLabel(QStringLiteral("正在检查"), central);
     securityBadge_->setObjectName(QStringLiteral("SecurityBadge"));
     securityBadge_->setProperty("state", QStringLiteral("neutral"));
     securityBadge_->setAlignment(Qt::AlignCenter);
-    securityBadge_->setMinimumWidth(144);
-    securityBadge_->setFixedHeight(34);
+    securityBadge_->setMinimumWidth(116);
+    securityBadge_->setFixedHeight(32);
     header->addWidget(securityBadge_, 0, Qt::AlignVCenter);
     root->addLayout(header);
 
@@ -124,15 +165,15 @@ void LauncherWindow::buildInterface()
     warningCard_->setObjectName(QStringLiteral("WarningCard"));
     warningCard_->setProperty("state", QStringLiteral("ready"));
     auto *warningLayout = new QHBoxLayout(warningCard_);
-    warningLayout->setContentsMargins(16, 13, 16, 13);
-    warningLayout->setSpacing(13);
-    auto *warningIcon = new QLabel(QStringLiteral("!"), warningCard_);
-    warningIcon->setObjectName(QStringLiteral("WarningIcon"));
-    warningIcon->setAlignment(Qt::AlignCenter);
-    warningIcon->setFixedSize(34, 34);
-    warningLayout->addWidget(warningIcon);
+    warningLayout->setContentsMargins(16, 12, 18, 12);
+    warningLayout->setSpacing(12);
+    warningIcon_ = new QLabel(QStringLiteral("✓"), warningCard_);
+    warningIcon_->setObjectName(QStringLiteral("WarningIcon"));
+    warningIcon_->setAlignment(Qt::AlignCenter);
+    warningIcon_->setFixedSize(28, 28);
+    warningLayout->addWidget(warningIcon_);
     auto *warningCopy = new QVBoxLayout;
-    warningCopy->setSpacing(2);
+    warningCopy->setSpacing(3);
     warningTitle_ = new QLabel(warningCard_);
     warningTitle_->setObjectName(QStringLiteral("WarningTitle"));
     warningDetail_ = new QLabel(warningCard_);
@@ -146,91 +187,114 @@ void LauncherWindow::buildInterface()
     dropCard_ = new QFrame(central);
     dropCard_->setObjectName(QStringLiteral("DropCard"));
     auto *dropLayout = new QHBoxLayout(dropCard_);
-    dropLayout->setContentsMargins(18, 15, 18, 15);
-    dropLayout->setSpacing(15);
+    dropLayout->setContentsMargins(18, 16, 18, 16);
+    dropLayout->setSpacing(16);
     auto *fileIcon = new QLabel(dropCard_);
-    fileIcon->setPixmap(style()->standardIcon(QStyle::SP_FileIcon).pixmap(30, 30));
-    fileIcon->setFixedSize(34, 34);
+    fileIcon->setObjectName(QStringLiteral("DemoIcon"));
+    fileIcon->setPixmap(makeGlyph(Glyph::Demo, 30, QColor(QStringLiteral("#73b7ff"))));
+    fileIcon->setAlignment(Qt::AlignCenter);
+    fileIcon->setFixedSize(48, 48);
     dropLayout->addWidget(fileIcon);
     auto *fileCopy = new QVBoxLayout;
-    fileCopy->setSpacing(2);
-    fileCopy->addWidget(sectionEyebrow(QStringLiteral("1  SELECT DEMO"), dropCard_));
-    demoName_ = new QLabel(QStringLiteral("拖放 .dem 文件到这里，或点击选择"), dropCard_);
+    fileCopy->setSpacing(3);
+    fileCopy->addWidget(sectionEyebrow(QStringLiteral("选择录像"), dropCard_));
+    demoName_ = new QLabel(QStringLiteral("拖放 Demo 到这里"), dropCard_);
     demoName_->setObjectName(QStringLiteral("PrimaryText"));
-    demoMeta_ = new QLabel(QStringLiteral("尚未选择 Demo"), dropCard_);
+    demoMeta_ = new QLabel(QStringLiteral("支持 CS2 .dem 文件，也可以点击右侧浏览"), dropCard_);
     demoMeta_->setObjectName(QStringLiteral("SecondaryText"));
     fileCopy->addWidget(demoName_);
     fileCopy->addWidget(demoMeta_);
     dropLayout->addLayout(fileCopy, 1);
-    chooseDemoButton_ = new QPushButton(QStringLiteral("选择文件"), dropCard_);
+    chooseDemoButton_ = new QPushButton(QStringLiteral("浏览…"), dropCard_);
     chooseDemoButton_->setObjectName(QStringLiteral("SecondaryButton"));
-    chooseDemoButton_->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
+    chooseDemoButton_->setIcon(makeGlyphIcon(Glyph::Folder, QColor(QStringLiteral("#d7dce5"))));
+    chooseDemoButton_->setIconSize(QSize(18, 18));
     connect(chooseDemoButton_, &QPushButton::clicked, this, &LauncherWindow::chooseDemo);
     dropLayout->addWidget(chooseDemoButton_);
     root->addWidget(dropCard_);
 
     auto *environmentCard = new QFrame(central);
     environmentCard->setObjectName(QStringLiteral("Card"));
-    auto *environment = new QGridLayout(environmentCard);
-    environment->setContentsMargins(18, 15, 18, 15);
-    environment->setHorizontalSpacing(14);
-    environment->setVerticalSpacing(8);
-    auto *environmentHeading = sectionEyebrow(QStringLiteral("2  GAME & MENU"), environmentCard);
-    environment->addWidget(environmentHeading, 0, 0, 1, 3);
+    auto *environment = new QVBoxLayout(environmentCard);
+    environment->setContentsMargins(18, 16, 18, 17);
+    environment->setSpacing(10);
+    environment->addWidget(sectionEyebrow(QStringLiteral("游戏与菜单"), environmentCard));
+
+    auto *pathRow = new QFrame(environmentCard);
+    pathRow->setObjectName(QStringLiteral("SettingsRow"));
+    pathRow->setMinimumHeight(60);
+    auto *pathLayout = new QHBoxLayout(pathRow);
+    pathLayout->setContentsMargins(14, 10, 10, 10);
+    pathLayout->setSpacing(14);
+    auto *pathCopy = new QVBoxLayout;
+    pathCopy->setSpacing(2);
     auto *pathCaption = new QLabel(QStringLiteral("CS2 路径"), environmentCard);
     pathCaption->setObjectName(QStringLiteral("FieldLabel"));
-    environment->addWidget(pathCaption, 1, 0);
+    pathCopy->addWidget(pathCaption);
     cs2Path_ = new QLabel(QStringLiteral("正在检测..."), environmentCard);
     cs2Path_->setObjectName(QStringLiteral("PathText"));
     cs2Path_->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    environment->addWidget(cs2Path_, 1, 1);
+    pathCopy->addWidget(cs2Path_);
+    pathLayout->addLayout(pathCopy, 1);
     chooseCs2Button_ = new QPushButton(QStringLiteral("更改"), environmentCard);
     chooseCs2Button_->setObjectName(QStringLiteral("GhostButton"));
     connect(chooseCs2Button_, &QPushButton::clicked, this, &LauncherWindow::chooseCs2Directory);
-    environment->addWidget(chooseCs2Button_, 1, 2);
+    pathLayout->addWidget(chooseCs2Button_);
+    environment->addWidget(pathRow);
 
-    auto *vpkCaption = new QLabel(QStringLiteral("菜单 VPK"), environmentCard);
+    auto *vpkRow = new QFrame(environmentCard);
+    vpkRow->setObjectName(QStringLiteral("SettingsRow"));
+    vpkRow->setMinimumHeight(60);
+    auto *vpkLayout = new QHBoxLayout(vpkRow);
+    vpkLayout->setContentsMargins(14, 10, 10, 10);
+    vpkLayout->setSpacing(14);
+    auto *vpkCopy = new QVBoxLayout;
+    vpkCopy->setSpacing(2);
+    auto *vpkCaption = new QLabel(QStringLiteral("菜单组件"), environmentCard);
     vpkCaption->setObjectName(QStringLiteral("FieldLabel"));
-    environment->addWidget(vpkCaption, 2, 0);
+    vpkCopy->addWidget(vpkCaption);
     vpkStatus_ = new QLabel(QStringLiteral("正在检查..."), environmentCard);
     vpkStatus_->setObjectName(QStringLiteral("VpkStatus"));
-    environment->addWidget(vpkStatus_, 2, 1);
+    vpkCopy->addWidget(vpkStatus_);
+    vpkLayout->addLayout(vpkCopy, 1);
     installButton_ = new QPushButton(QStringLiteral("安装 / 修复"), environmentCard);
     installButton_->setObjectName(QStringLiteral("SecondaryButton"));
     connect(installButton_, &QPushButton::clicked, this, &LauncherWindow::installOrRepairMenu);
-    environment->addWidget(installButton_, 2, 2);
-    environment->setColumnStretch(1, 1);
+    vpkLayout->addWidget(installButton_);
+    environment->addWidget(vpkRow);
     root->addWidget(environmentCard);
 
     auto *actionCard = new QFrame(central);
     actionCard->setObjectName(QStringLiteral("Card"));
     auto *actions = new QVBoxLayout(actionCard);
-    actions->setContentsMargins(18, 15, 18, 17);
-    actions->setSpacing(11);
-    actions->addWidget(sectionEyebrow(QStringLiteral("3  REVIEW SESSION"), actionCard));
+    actions->setContentsMargins(18, 16, 18, 17);
+    actions->setSpacing(12);
+    actions->addWidget(sectionEyebrow(QStringLiteral("观看控制"), actionCard));
+    statusLabel_ = new QLabel(QStringLiteral("正在检查环境..."), actionCard);
+    statusLabel_->setObjectName(QStringLiteral("StatusText"));
+    statusLabel_->setProperty("state", QStringLiteral("neutral"));
+    statusLabel_->setWordWrap(true);
+    actions->addWidget(statusLabel_);
     auto *actionRow = new QHBoxLayout;
     actionRow->setSpacing(10);
-    startButton_ = new QPushButton(QStringLiteral("开始观看 DEMO"), actionCard);
+    startButton_ = new QPushButton(QStringLiteral("开始观看"), actionCard);
     startButton_->setObjectName(QStringLiteral("PrimaryButton"));
-    startButton_->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
-    startButton_->setMinimumHeight(48);
+    startButton_->setIcon(makeGlyphIcon(Glyph::Play, QColor(QStringLiteral("#ffffff"))));
+    startButton_->setIconSize(QSize(18, 18));
+    startButton_->setMinimumHeight(50);
     connect(startButton_, &QPushButton::clicked, this, &LauncherWindow::startWatchingDemo);
     actionRow->addWidget(startButton_, 3);
-    stopButton_ = new QPushButton(QStringLiteral("停止观看 DEMO"), actionCard);
+    stopButton_ = new QPushButton(QStringLiteral("停止观看并恢复"), actionCard);
     stopButton_->setObjectName(QStringLiteral("StopButton"));
-    stopButton_->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
-    stopButton_->setMinimumHeight(48);
+    stopButton_->setIcon(makeGlyphIcon(Glyph::Stop, QColor(QStringLiteral("#c9ced8"))));
+    stopButton_->setIconSize(QSize(17, 17));
+    stopButton_->setMinimumHeight(50);
     connect(stopButton_, &QPushButton::clicked, this, &LauncherWindow::stopWatchingDemo);
     actionRow->addWidget(stopButton_, 2);
     actions->addLayout(actionRow);
-    actions->addWidget(horizontalLine(actionCard));
-    statusLabel_ = new QLabel(QStringLiteral("正在检查环境..."), actionCard);
-    statusLabel_->setObjectName(QStringLiteral("StatusText"));
-    statusLabel_->setWordWrap(true);
-    actions->addWidget(statusLabel_);
     root->addWidget(actionCard);
 
-    auto *footer = new QLabel(QStringLiteral("启动参数仅用于本次会话，不会写入 Steam 永久启动项。"), central);
+    auto *footer = new QLabel(QStringLiteral("仅本次使用 -insecure  ·  不会修改 Steam 永久启动项"), central);
     footer->setObjectName(QStringLiteral("FooterText"));
     footer->setAlignment(Qt::AlignCenter);
     root->addWidget(footer);
@@ -243,157 +307,186 @@ void LauncherWindow::applyStyle()
 {
     qApp->setStyleSheet(QStringLiteral(R"CSS(
         QWidget#Root {
-            background: #111214;
-            color: #e8e8e8;
-            font-family: "Segoe UI", "Microsoft YaHei UI";
+            background: #0d0f13;
+            color: #eef1f6;
+            font-family: "Segoe UI Variable", "Microsoft YaHei UI", "Segoe UI";
             font-size: 14px;
         }
         QLabel#AppTitle {
-            color: #f3f3f3;
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: 1px;
+            color: #f5f7fb;
+            font-size: 23px;
+            font-weight: 600;
         }
-        QLabel#AppSubtitle, QLabel#SectionEyebrow {
-            color: #e4ae39;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 1px;
+        QLabel#AppSubtitle {
+            color: #6f7785;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1.2px;
+        }
+        QLabel#SectionEyebrow {
+            color: #e7eaf0;
+            font-size: 14px;
+            font-weight: 600;
         }
         QLabel#SecurityBadge {
-            border-radius: 3px;
-            border: 1px solid #5d6164;
-            background: #292b2e;
-            color: #c9cbcc;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 1px;
+            border: none;
+            border-radius: 16px;
+            background: #242932;
+            color: #b9c0cb;
+            font-size: 12px;
+            font-weight: 600;
             padding: 0 12px;
         }
         QLabel#SecurityBadge[state="safe"] {
-            border-color: #5f8d72;
-            background: #1d3025;
-            color: #9fd6b2;
+            background: #153026;
+            color: #7de2b2;
         }
         QLabel#SecurityBadge[state="active"] {
-            border-color: #c58b32;
-            background: #3a2a18;
-            color: #f1bd60;
+            background: #352a16;
+            color: #f5c76b;
         }
         QLabel#SecurityBadge[state="danger"] {
-            border-color: #b65c51;
-            background: #3b211f;
-            color: #ef9c92;
+            background: #3b2023;
+            color: #ff9ca3;
         }
         QFrame#WarningCard {
-            border: 1px solid #3d5144;
-            border-left: 3px solid #6da17e;
-            border-radius: 4px;
-            background: #18221c;
+            border: none;
+            border-radius: 11px;
+            background: #14231d;
         }
         QFrame#WarningCard[state="active"] {
-            border-color: #70542d;
-            border-left-color: #e4ae39;
-            background: #2b2419;
+            background: #282116;
         }
         QFrame#WarningCard[state="danger"] {
-            border-color: #75433e;
-            border-left-color: #d36d61;
-            background: #2d1d1b;
+            background: #2c191c;
         }
         QLabel#WarningIcon {
-            border-radius: 17px;
-            background: #e4ae39;
-            color: #181818;
-            font-size: 20px;
-            font-weight: 800;
-        }
-        QLabel#WarningTitle {
-            color: #f0f0f0;
+            border-radius: 14px;
+            background: #48c78e;
+            color: #09120e;
             font-size: 15px;
             font-weight: 700;
         }
+        QFrame#WarningCard[state="active"] QLabel#WarningIcon {
+            background: #f0b94d;
+            color: #211805;
+        }
+        QFrame#WarningCard[state="danger"] QLabel#WarningIcon {
+            background: #ff7079;
+            color: #20080a;
+        }
+        QLabel#WarningTitle {
+            color: #f1f3f7;
+            font-size: 14px;
+            font-weight: 600;
+        }
         QLabel#WarningDetail {
-            color: #adaeaf;
+            color: #a0a7b2;
             font-size: 12px;
         }
         QFrame#Card, QFrame#DropCard {
-            border: 1px solid #343639;
-            border-radius: 5px;
-            background: #1b1c1f;
+            border: 1px solid #252a33;
+            border-radius: 12px;
+            background: #16191f;
         }
         QFrame#DropCard {
-            border: 1px dashed #5a5d60;
+            background: #15191f;
+            border: 1px dashed #343b47;
         }
         QFrame#DropCard[dragging="true"] {
-            border: 1px solid #e4ae39;
-            background: #262319;
+            border: 1px solid #5aa9ff;
+            background: #172333;
+        }
+        QLabel#DemoIcon {
+            border: 1px solid #293343;
+            border-radius: 12px;
+            background: #1b2430;
         }
         QLabel#PrimaryText {
-            color: #efefef;
+            color: #f1f3f7;
             font-size: 16px;
-            font-weight: 650;
+            font-weight: 600;
         }
         QLabel#SecondaryText, QLabel#PathText, QLabel#StatusText {
-            color: #9a9da0;
+            color: #8c94a1;
             font-size: 12px;
+        }
+        QFrame#SettingsRow {
+            border: none;
+            border-radius: 8px;
+            background: #1c2027;
         }
         QLabel#FieldLabel {
-            color: #777b7e;
-            font-size: 12px;
-            font-weight: 650;
+            color: #7f8794;
+            font-size: 11px;
+            font-weight: 600;
         }
         QLabel#VpkStatus {
-            color: #c9cbcc;
-            font-size: 12px;
-            font-weight: 650;
+            color: #c9ced7;
+            font-size: 13px;
+            font-weight: 600;
         }
-        QLabel#VpkStatus[installed="true"] { color: #8fcba4; }
-        QLabel#VpkStatus[installed="false"] { color: #d0a158; }
-        QFrame#Separator { background: #303235; border: none; }
+        QLabel#VpkStatus[installed="true"] { color: #72d9a7; }
+        QLabel#VpkStatus[installed="false"] { color: #d9b26d; }
+        QLabel#StatusText {
+            border: none;
+            border-radius: 7px;
+            background: #1c2027;
+            color: #a8afba;
+            padding: 9px 12px;
+        }
+        QLabel#StatusText[state="safe"] { color: #78d9aa; }
+        QLabel#StatusText[state="active"] { color: #e9bf6d; }
+        QLabel#StatusText[state="danger"] { color: #ff969d; }
         QPushButton {
-            min-height: 34px;
-            border-radius: 3px;
-            padding: 0 14px;
-            font-size: 12px;
-            font-weight: 650;
+            min-height: 36px;
+            border-radius: 8px;
+            padding: 0 16px;
+            font-size: 13px;
+            font-weight: 600;
         }
         QPushButton#PrimaryButton {
-            border: 1px solid #e4ae39;
-            border-left: 3px solid #f0be52;
-            background: #4b3a1c;
-            color: #fff0c9;
-            font-size: 14px;
+            border: none;
+            background: #4f9cf9;
+            color: #ffffff;
+            font-size: 15px;
         }
-        QPushButton#PrimaryButton:hover { background: #614a23; }
-        QPushButton#PrimaryButton:pressed { background: #372b18; }
+        QPushButton#PrimaryButton:hover { background: #73b7ff; }
+        QPushButton#PrimaryButton:pressed { background: #4697ee; }
         QPushButton#StopButton {
-            border: 1px solid #6f4541;
-            background: #31201f;
-            color: #e2a39d;
-            font-size: 13px;
+            border: 1px solid #343a45;
+            background: #20242b;
+            color: #cbd0d9;
         }
-        QPushButton#StopButton:hover { background: #472825; border-color: #b65c51; }
+        QPushButton#StopButton:hover { background: #292e37; border-color: #4c5563; }
         QPushButton#SecondaryButton, QPushButton#GhostButton {
-            border: 1px solid #505357;
-            background: #292b2e;
-            color: #d0d2d3;
+            border: 1px solid #343a45;
+            background: #24282f;
+            color: #d8dce4;
         }
         QPushButton#SecondaryButton:hover, QPushButton#GhostButton:hover {
-            border-color: #8b8f92;
-            background: #343639;
+            border-color: #596473;
+            background: #2d323b;
         }
         QPushButton#GhostButton { min-width: 58px; padding: 0 10px; }
         QPushButton:disabled {
-            border-color: #343638;
-            background: #202124;
-            color: #5e6164;
+            border-color: #23272e;
+            background: #1a1d22;
+            color: #505762;
+        }
+        QPushButton#PrimaryButton:disabled,
+        QPushButton#StopButton:disabled,
+        QPushButton#SecondaryButton:disabled,
+        QPushButton#GhostButton:disabled {
+            border: 1px solid #23272e;
+            background: #1a1d22;
+            color: #505762;
         }
         QLabel#FooterText {
-            color: #65686b;
+            color: #59616d;
             font-size: 11px;
         }
-        QMessageBox { background: #1b1c1f; }
+        QMessageBox { background: #16191f; }
     )CSS"));
 }
 
@@ -538,11 +631,14 @@ void LauncherWindow::setSecurityState(const QString &state, const QString &title
 {
     securityBadge_->setProperty("state", state);
     warningCard_->setProperty("state", state == QStringLiteral("safe") ? QStringLiteral("ready") : state);
+    statusLabel_->setProperty("state", state);
+    warningIcon_->setText(state == QStringLiteral("safe") ? QStringLiteral("✓") : QStringLiteral("!"));
     securityBadge_->setText(title);
     warningTitle_->setText(title);
     warningDetail_->setText(detail);
     repolish(securityBadge_);
     repolish(warningCard_);
+    repolish(statusLabel_);
 }
 
 void LauncherWindow::refreshState()
@@ -555,8 +651,8 @@ void LauncherWindow::refreshState()
     if (valid)
         cs2Path_->setText(QDir::toNativeSeparators(paths_.cs2Root));
     vpkStatus_->setProperty("installed", installed);
-    vpkStatus_->setText(!valid ? QStringLiteral("等待 CS2 路径")
-                               : installed ? QStringLiteral("● 已安装") : QStringLiteral("○ 尚未安装（启动时会自动安装）"));
+    vpkStatus_->setText(!valid ? QStringLiteral("等待设置 CS2 路径")
+                               : installed ? QStringLiteral("已安装，可用") : QStringLiteral("未安装 · 启动时自动处理"));
     repolish(vpkStatus_);
 
     chooseDemoButton_->setEnabled(!active);
@@ -566,22 +662,22 @@ void LauncherWindow::refreshState()
     stopButton_->setEnabled(valid && !running && (active || installed));
 
     if (!valid) {
-        setSecurityState(QStringLiteral("danger"), QStringLiteral("SETUP REQUIRED"), QStringLiteral("未找到有效的 CS2 安装目录，请点击“更改”手动选择。"));
+        setSecurityState(QStringLiteral("danger"), QStringLiteral("需要设置路径"), QStringLiteral("没有找到有效的 CS2 安装目录，请点击“更改”手动选择。"));
         statusLabel_->setText(lastStatus_);
     } else if (active && running) {
-        setSecurityState(QStringLiteral("active"), QStringLiteral("DEMO MODE ACTIVE"), QStringLiteral("CS2 正在以 -insecure 运行。请勿进入正常匹配；观看结束后先退出游戏。"));
+        setSecurityState(QStringLiteral("active"), QStringLiteral("Demo 模式运行中"), QStringLiteral("CS2 正在以 -insecure 运行，请勿进入正常匹配。观看结束后先退出游戏。"));
         statusLabel_->setText(QStringLiteral("Demo 会话进行中。游戏退出后，请回到这里点击“停止观看 Demo”。"));
     } else if (active && !running) {
-        setSecurityState(QStringLiteral("danger"), QStringLiteral("CLEANUP REQUIRED"), QStringLiteral("CS2 已退出，但 Demo 资源仍处于启用状态。点击“停止观看 Demo”恢复正常游戏环境。"));
-        statusLabel_->setText(QStringLiteral("现在可以点击“停止观看 Demo”完成清理。"));
+        setSecurityState(QStringLiteral("danger"), QStringLiteral("需要完成清理"), QStringLiteral("CS2 已退出，但 Demo 资源仍在启用。请点击“停止观看并恢复”。"));
+        statusLabel_->setText(QStringLiteral("现在可以安全清理 Demo 资源并恢复正常游戏环境。"));
     } else if (running) {
-        setSecurityState(QStringLiteral("active"), QStringLiteral("CS2 RUNNING"), QStringLiteral("当前 CS2 不是由本次 Demo 会话启动。请先退出游戏，才能开始 Demo 观看模式。"));
+        setSecurityState(QStringLiteral("active"), QStringLiteral("CS2 正在运行"), QStringLiteral("请先退出当前游戏，再从这里启动 Demo 观看模式。"));
         statusLabel_->setText(QStringLiteral("等待 CS2 退出。"));
     } else if (installed) {
-        setSecurityState(QStringLiteral("active"), QStringLiteral("MENU INSTALLED"), QStringLiteral("菜单 VPK 已启用。可以开始观看 Demo；若要正常游戏，请先点击“停止观看 Demo”。"));
+        setSecurityState(QStringLiteral("active"), QStringLiteral("菜单已准备"), QStringLiteral("可以开始观看 Demo。若要正常游戏，请先点击“停止观看并恢复”。"));
         statusLabel_->setText(lastStatus_.isEmpty() ? QStringLiteral("菜单已准备好。") : lastStatus_);
     } else {
-        setSecurityState(QStringLiteral("safe"), QStringLiteral("SAFE / READY"), QStringLiteral("当前没有 -insecure Demo 会话，也没有启用菜单覆盖，可以正常启动 CS2。"));
+        setSecurityState(QStringLiteral("safe"), QStringLiteral("可以正常游戏"), QStringLiteral("当前没有 Demo 会话或菜单覆盖，可以正常启动 CS2。"));
         statusLabel_->setText(lastStatus_.isEmpty() ? QStringLiteral("请选择一个 Demo。") : lastStatus_);
     }
 }

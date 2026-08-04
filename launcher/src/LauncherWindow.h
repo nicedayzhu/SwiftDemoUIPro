@@ -49,6 +49,7 @@ private:
 
     QLabel *securityBadge_ = nullptr;
     QFrame *warningCard_ = nullptr;
+    QLabel *warningIcon_ = nullptr;
     QLabel *warningTitle_ = nullptr;
     QLabel *warningDetail_ = nullptr;
     QFrame *dropCard_ = nullptr;
