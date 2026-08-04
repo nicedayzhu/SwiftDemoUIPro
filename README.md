@@ -104,3 +104,12 @@ dist\swift_demo_menu_override.vpk
 
 原理参考：
 [FACEITcom 讨论：CS2 demo 语音与 voice indices](https://www.reddit.com/r/FACEITcom/comments/16vvidt/no_recorded_voice_chat_in_faceit_cs2_demos/)
+
+## Qt 启动器
+
+`launcher` 目录包含一个原生 Qt 6 Widgets Windows 启动器。它可以选择/拖入 `.dem`、自动
+检测 Steam 多库中的 CS2、安装或修复菜单 VPK，并只为本次启动附加 `-insecure` 参数。
+
+观看结束后，玩家必须先退出 CS2，再点击“停止观看 Demo”。启动器会移除自己添加的 VPK
+SearchPath、VPK 和临时文件，使环境恢复为可正常游戏的状态。构建与发布方法见
+[launcher/README.md](launcher/README.md)。

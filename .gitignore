@@ -1,3 +1,7 @@
 /dist/
 /native_current/
 /native_current_decompiled/
+/launcher/build/
+/launcher/package/
+/launcher/.tools/
+/launcher/.qt/

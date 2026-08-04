@@ -1,0 +1,23 @@
+Swift Demo Launcher - Third-Party Notices
+=========================================
+
+Qt 6
+----
+This application dynamically links to the Qt 6 Core, Gui, and Widgets
+libraries. Qt is Copyright (C) The Qt Company Ltd. and other contributors.
+The Qt libraries in this package are used under the GNU Lesser General Public
+License version 3 (LGPL-3.0-only). They are shipped as separate, replaceable
+DLL files.
+
+License text and corresponding source information:
+https://www.qt.io/licensing/open-source-lgpl-obligations
+https://code.qt.io/cgit/qt/qtbase.git/tree/LICENSES/LGPL-3.0-only.txt
+https://code.qt.io/cgit/qt/qtbase.git/
+
+cs2-demo-opener reference
+-------------------------
+The Steam/CS2 launch flow was informed by the MIT-licensed open-source project
+drjackild/cs2-demo-opener. No 2D replay, demo parser, web frontend, or source
+files from that project are included in this launcher.
+
+https://github.com/drjackild/cs2-demo-opener
