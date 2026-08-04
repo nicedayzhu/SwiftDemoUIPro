@@ -1,4 +1,5 @@
 @define SwiftVoiceSteel: #b8bbbd;
+@define SwiftVoiceAudio: #78b9dc;
 @define SwiftVoiceGold: #e4ae39;
 @define SwiftVoiceCT: #718b99;
 @define SwiftVoiceT: #b79a56;
@@ -269,6 +270,279 @@
 	color: SwiftVoiceCT;
 }
 
+.swift-demo-round-picker
+{
+	width: 100%;
+	height: 46px;
+	flow-children: down;
+	overflow: clip;
+	margin-bottom: 10px;
+	transition-property: height;
+	transition-duration: 0.15s;
+	transition-timing-function: ease-out;
+}
+
+.swift-demo-round-picker.open
+{
+	height: 250px;
+}
+
+.swift-demo-round-picker__toggle
+{
+	width: 100%;
+	height: 46px;
+	flow-children: right;
+	background-color: gradient(linear, 0% 0%, 100% 0%, from(#ffffff0d), color-stop(0.64, #ffffff07), to(#0000001c));
+	border: 1px solid #ffffff15;
+	border-left: 3px solid #7d8083;
+	border-radius: 3px;
+	brightness: 1;
+	transition-property: brightness, background-color, border;
+	transition-duration: 0.1s;
+}
+
+.swift-demo-round-picker__toggle:hover
+{
+	brightness: 1.18;
+	background-color: gradient(linear, 0% 0%, 100% 0%, from(#e4ae391c), to(#ffffff0b));
+	border-color: #e4ae3952;
+	sound: "UIPanorama.generic_button_rollover";
+}
+
+.swift-demo-round-picker__toggle:active
+{
+	brightness: 0.86;
+	sound: "UIPanorama.submenu_select";
+}
+
+.open .swift-demo-round-picker__toggle
+{
+	border-left-color: SwiftVoiceGold;
+}
+
+.swift-demo-round-picker.unavailable .swift-demo-round-picker__toggle
+{
+	brightness: 0.58;
+}
+
+.swift-demo-round-picker__icon
+{
+	width: 48px;
+	height: 100%;
+	border-right: 1px solid #ffffff0d;
+}
+
+.swift-demo-round-picker__icon Image
+{
+	width: 20px;
+	height: 20px;
+	horizontal-align: center;
+	vertical-align: center;
+	wash-color: SwiftVoiceGold;
+	transform: rotateZ(180deg);
+}
+
+.swift-demo-round-picker__copy
+{
+	width: fill-parent-flow(1.0);
+	height: 100%;
+	flow-children: down;
+	padding: 5px 0px 0px 12px;
+}
+
+.swift-demo-round-picker__title
+{
+	font-family: Stratum2 Condensed, 'Arial Unicode MS';
+	font-size: 12px;
+	font-weight: bold;
+	letter-spacing: 0.8px;
+	color: #9b9ea0;
+}
+
+.swift-demo-round-picker__summary
+{
+	font-family: Stratum2, 'Arial Unicode MS';
+	font-size: 16px;
+	font-weight: bold;
+	color: #ededed;
+	margin-top: -2px;
+}
+
+.swift-demo-round-picker__count
+{
+	vertical-align: center;
+	font-family: Stratum2 Condensed, 'Arial Unicode MS';
+	font-size: 12px;
+	font-weight: bold;
+	letter-spacing: 0.5px;
+	color: #a6a8aa;
+	margin-right: 12px;
+}
+
+.swift-demo-round-picker__chevron
+{
+	width: 17px;
+	height: 17px;
+	vertical-align: center;
+	wash-color: #a4a7a9;
+	margin-right: 12px;
+	transition-property: transform, wash-color;
+	transition-duration: 0.14s;
+}
+
+.open .swift-demo-round-picker__chevron
+{
+	transform: rotateZ(180deg);
+	wash-color: SwiftVoiceGold;
+}
+
+.swift-demo-round-picker__dropdown
+{
+	width: 100%;
+	height: 198px;
+	flow-children: down;
+	background-color: gradient(linear, 0% 0%, 0% 100%, from(#202124fa), to(#111214fb));
+	border: 1px solid #ffffff13;
+	border-top: 2px solid #e4ae396b;
+	margin-top: 6px;
+	padding: 7px 8px 8px 8px;
+	opacity: 0;
+	visibility: collapse;
+	transition-property: opacity;
+	transition-duration: 0.1s;
+}
+
+.open .swift-demo-round-picker__dropdown
+{
+	opacity: 1;
+	visibility: visible;
+}
+
+.swift-demo-round-picker__dropdown-header
+{
+	width: 100%;
+	height: 24px;
+	flow-children: right;
+	border-bottom: 1px solid #ffffff10;
+	margin-bottom: 5px;
+}
+
+.swift-demo-round-picker__dropdown-header Label
+{
+	width: fill-parent-flow(1.0);
+	font-family: Stratum2 Condensed, 'Arial Unicode MS';
+	font-size: 11px;
+	font-weight: bold;
+	letter-spacing: 0.8px;
+	color: #777a7c;
+}
+
+.swift-demo-round-picker__dropdown-header Label:last-child
+{
+	width: 92px;
+	text-align: right;
+	margin-right: 42px;
+}
+
+.swift-demo-round-picker__list
+{
+	width: 100%;
+	height: fill-parent-flow(1.0);
+	flow-children: down;
+	overflow: squish scroll;
+	padding-right: 5px;
+}
+
+.swift-demo-round-picker__round
+{
+	width: 100%;
+	height: 40px;
+	flow-children: right;
+	background-color: gradient(linear, 0% 0%, 100% 0%, from(#ffffff0b), to(#0000001b));
+	border: 1px solid #ffffff0d;
+	border-left: 2px solid #6f7274;
+	margin-bottom: 4px;
+	transition-property: brightness, background-color, border;
+	transition-duration: 0.08s;
+}
+
+.swift-demo-round-picker__round:hover
+{
+	brightness: 1.22;
+	border-color: #e4ae394e;
+	background-color: gradient(linear, 0% 0%, 100% 0%, from(#e4ae3918), to(#ffffff08));
+	sound: "UIPanorama.generic_button_rollover";
+}
+
+.swift-demo-round-picker__round:active
+{
+	brightness: 0.84;
+	sound: "UIPanorama.submenu_select";
+}
+
+.swift-demo-round-picker__round.current
+{
+	border-left-color: SwiftVoiceGold;
+	background-color: gradient(linear, 0% 0%, 100% 0%, from(#e4ae3923), color-stop(0.72, #ffffff08), to(#00000018));
+}
+
+.swift-demo-round-picker__round-number
+{
+	width: 38px;
+	vertical-align: center;
+	text-align: center;
+	font-family: Stratum2 Condensed, 'Arial Unicode MS';
+	font-size: 18px;
+	font-weight: bold;
+	color: #aaadaf;
+}
+
+.current .swift-demo-round-picker__round-number
+{
+	color: SwiftVoiceGold;
+}
+
+.swift-demo-round-picker__round-copy
+{
+	width: fill-parent-flow(1.0);
+	height: 100%;
+	flow-children: down;
+	padding-top: 3px;
+}
+
+.swift-demo-round-picker__round-title
+{
+	font-family: Stratum2, 'Arial Unicode MS';
+	font-size: 14px;
+	font-weight: bold;
+	color: #d7d8d9;
+}
+
+.swift-demo-round-picker__round-time
+{
+	font-family: Stratum2 Mono, monospace;
+	font-size: 10px;
+	color: #7f8284;
+	margin-top: -2px;
+}
+
+.swift-demo-round-picker__round-marker
+{
+	width: 42px;
+	vertical-align: center;
+	text-align: center;
+	font-family: Stratum2 Condensed, 'Arial Unicode MS';
+	font-size: 11px;
+	font-weight: bold;
+	letter-spacing: 0.6px;
+	color: #76797b;
+}
+
+.current .swift-demo-round-picker__round-marker
+{
+	color: SwiftVoiceGold;
+}
+
 .swift-demo-voice__section-header
 {
 	width: 100%;
@@ -504,14 +778,14 @@
 
 .selected .swift-demo-voice-player__toggle Image
 {
-	wash-color: SwiftVoiceSteel;
+	wash-color: SwiftVoiceAudio;
 	opacity: 1;
-	img-shadow: #ffffff1c 0px 0px 3px 1.0;
+	img-shadow: #78b9dc42 0px 0px 4px 1.0;
 }
 
 .selected .swift-demo-voice-player__toggle Label
 {
-	color: #d0d2d3;
+	color: #b9d9ea;
 }
 
 .swift-demo-voice__footer

@@ -88,14 +88,30 @@ if (!/icons\/ui\/unmuted\.vsvg/.test(layout) || !/SwiftDemoVoiceEnabledLabel/.te
 	throw new Error("voice controls must use explicit unmuted/muted UI with a text state");
 }
 
+if (!/id="SwiftDemoRoundPicker"/.test(layout) || !/SwiftDemoVoice\.ToggleRoundPicker\(\)/.test(layout) || !/PLAYER AUDIO, POV &amp; ROUNDS/.test(layout)) {
+	throw new Error("custom menu must expose the compact round navigation component");
+}
+
+if (!/RoundIntervals/.test(source) || !/controller\.GotoTick\(Math\.floor\(rounds\[index\]\.nTickStart\)\)/.test(source)) {
+	throw new Error("round navigation must use the native demo state and controller tick API");
+}
+
+if (!/BLUE SPEAKER = VOICE ON/.test(layout) || /Eye = current POV/.test(layout) || !/SwiftVoiceAudio/.test(style)) {
+	throw new Error("footer legend must remain ASCII-only and match the blue enabled speaker state");
+}
+
 var commands = [];
+var gotoTicks = [];
+var demoState = null;
 var startupClasses = {};
 var menuPanel = {
 	SetHasClass: function (name, enabled) { startupClasses[name] = enabled; }
 };
 var contextPanel = {
 	FindChildTraverse: function (id) { return id === "SwiftDemoVoiceMenu" ? menuPanel : null; },
-	IsPlayingDemo: function () { return true; }
+	IsPlayingDemo: function () { return true; },
+	GetDemoControllerState: function () { return demoState; },
+	GotoTick: function (tick) { gotoTicks.push(tick); }
 };
 var context = {
 	console: console,
@@ -135,6 +151,25 @@ assertMasks([3, 4, 8, 10, 11], 3352, 0);
 assertMasks(Array.from({ length: 64 }, function (_, index) { return index; }), -1, -1);
 assertMasks([-1, 64, "bad", 0, 0], 1, 0);
 
+var testRounds = [
+	{ nTickStart: 0, nTickEnd: 100 },
+	{ nTickStart: 100, nTickEnd: 300 },
+	{ nTickStart: 300, nTickEnd: 500 }
+];
+if (context.SwiftDemoVoice.RoundNumberForTick(-1, testRounds) !== 0 ||
+	context.SwiftDemoVoice.RoundNumberForTick(0, testRounds) !== 1 ||
+	context.SwiftDemoVoice.RoundNumberForTick(99, testRounds) !== 1 ||
+	context.SwiftDemoVoice.RoundNumberForTick(100, testRounds) !== 2 ||
+	context.SwiftDemoVoice.RoundNumberForTick(499, testRounds) !== 3 ||
+	context.SwiftDemoVoice.RoundNumberForTick(500, testRounds) !== 3) {
+	throw new Error("round number lookup failed");
+}
+
+demoState = { nTick: 125, nSecondsPerTick: 0.015625, RoundIntervals: testRounds };
+if (!context.SwiftDemoVoice.JumpToRound(2) || gotoTicks[0] !== 300 || context.SwiftDemoVoice.JumpToRound(8)) {
+	throw new Error("direct round jump failed: " + JSON.stringify(gotoTicks));
+}
+
 context.GameStateAPI.GetPlayerDataJSO = function () {
 	return {
 		teams: [{ name: "" }, { name: "TERRORIST" }, { name: "CT" }],
@@ -169,4 +204,4 @@ if (commands[0] !== "spec_mode 2" || commands[1] !== "spec_lock_to_accountid 397
 	throw new Error("POV command mapping failed: " + JSON.stringify(commands));
 }
 
-console.log("demo voice mask, native UI, and first-person POV tests passed");
+console.log("demo voice mask, round navigation, native UI, and first-person POV tests passed");

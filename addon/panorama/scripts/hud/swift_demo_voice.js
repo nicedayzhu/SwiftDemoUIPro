@@ -9,6 +9,10 @@ var SwiftDemoVoice = (function () {
 	var _lastPlayerSignature = "";
 	var _lastHudPlayerXuid = "";
 	var _focusGeneration = 0;
+	var _rounds = [];
+	var _roundMenuOpen = false;
+	var _lastRoundSignature = "";
+	var _currentRound = 0;
 	var _started = false;
 
 	function _Context() {
@@ -65,6 +69,141 @@ var SwiftDemoVoice = (function () {
 		} catch (error) {
 			return false;
 		}
+	}
+
+	function _GetDemoState() {
+		var context = _DemoController();
+		try {
+			return context && context.GetDemoControllerState ? context.GetDemoControllerState() : null;
+		} catch (error) {
+			$.Msg("[SwiftDemoVoice] GetDemoControllerState failed: " + error);
+			return null;
+		}
+	}
+
+	function _RoundNumberForTick(tick, rounds) {
+		if (!rounds || rounds.length === 0 || rounds[0].nTickStart > tick) return 0;
+		for (var i = 0; i < rounds.length; i++) {
+			if (tick < rounds[i].nTickStart) return i;
+		}
+		return rounds.length;
+	}
+
+	function _FormatTickTime(tick, secondsPerTick) {
+		var totalSeconds = Math.max(0, Math.floor(Number(tick || 0) * Number(secondsPerTick || 0)));
+		var minutes = Math.floor(totalSeconds / 60);
+		var seconds = totalSeconds - minutes * 60;
+		return minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+	}
+
+	function _RoundSignature(rounds, secondsPerTick) {
+		var parts = [String(rounds.length), String(secondsPerTick || 0)];
+		for (var i = 0; i < rounds.length; i++) {
+			parts.push(rounds[i].nTickStart + ":" + rounds[i].nTickEnd);
+		}
+		return parts.join("|");
+	}
+
+	function _SetRoundPickerOpen(open) {
+		_roundMenuOpen = !!open;
+		_SetClass(_Panel("SwiftDemoRoundPicker"), "open", _roundMenuOpen);
+	}
+
+	function ToggleRoundPicker() {
+		if (_rounds.length === 0) {
+			_SetText("SwiftDemoVoiceStatus", "Round data is not available yet");
+			return;
+		}
+		_SetRoundPickerOpen(!_roundMenuOpen);
+	}
+
+	function _RenderRoundRows(state, currentRound) {
+		var list = _Panel("SwiftDemoRoundList");
+		if (!list) return;
+		list.RemoveAndDeleteChildren();
+
+		var rounds = state && state.RoundIntervals ? state.RoundIntervals : [];
+		var secondsPerTick = state ? Number(state.nSecondsPerTick || 0) : 0;
+		for (var i = 0; i < rounds.length; i++) {
+			var roundNumber = i + 1;
+			var interval = rounds[i];
+			var row = $.CreatePanel("Button", list, "SwiftDemoRound_" + roundNumber);
+			row.AddClass("swift-demo-round-picker__round");
+			_SetClass(row, "current", roundNumber === currentRound);
+
+			var number = $.CreatePanel("Label", row, "");
+			number.AddClass("swift-demo-round-picker__round-number");
+			number.text = String(roundNumber);
+
+			var copy = $.CreatePanel("Panel", row, "");
+			copy.AddClass("swift-demo-round-picker__round-copy");
+			var title = $.CreatePanel("Label", copy, "");
+			title.AddClass("swift-demo-round-picker__round-title");
+			title.text = "ROUND " + roundNumber;
+			var time = $.CreatePanel("Label", copy, "");
+			time.AddClass("swift-demo-round-picker__round-time");
+			time.text = _FormatTickTime(interval.nTickStart, secondsPerTick) + " - " + _FormatTickTime(interval.nTickEnd, secondsPerTick);
+
+			var marker = $.CreatePanel("Label", row, "");
+			marker.AddClass("swift-demo-round-picker__round-marker");
+			marker.text = roundNumber === currentRound ? "NOW" : "GO";
+
+			(function (roundIndex) {
+				row.SetPanelEvent("onactivate", function () {
+					JumpToRound(roundIndex);
+				});
+			})(i);
+		}
+	}
+
+	function _UpdateRoundPicker(forceRender) {
+		var state = _GetDemoState();
+		var rounds = state && state.RoundIntervals ? state.RoundIntervals : [];
+		var signature = _RoundSignature(rounds, state ? state.nSecondsPerTick : 0);
+		var currentRound = state ? _RoundNumberForTick(Number(state.nTick || 0), rounds) : 0;
+		var changed = signature !== _lastRoundSignature || currentRound !== _currentRound;
+
+		_rounds = rounds;
+		_lastRoundSignature = signature;
+		_currentRound = currentRound;
+
+		var toggle = _Panel("SwiftDemoRoundToggle");
+		if (toggle) toggle.enabled = rounds.length > 0;
+		_SetClass(_Panel("SwiftDemoRoundPicker"), "unavailable", rounds.length === 0);
+
+		if (rounds.length === 0) {
+			_SetText("SwiftDemoRoundSummary", "WAITING FOR ROUND DATA");
+			_SetText("SwiftDemoRoundCount", "0 ROUNDS");
+			_SetRoundPickerOpen(false);
+			if (forceRender || changed) _RenderRoundRows(null, 0);
+			return;
+		}
+
+		_SetText("SwiftDemoRoundSummary", currentRound > 0
+			? "ROUND " + currentRound + " OF " + rounds.length
+			: "BEFORE ROUND 1 OF " + rounds.length);
+		_SetText("SwiftDemoRoundCount", rounds.length + (rounds.length === 1 ? " ROUND" : " ROUNDS"));
+		if (forceRender || changed) _RenderRoundRows(state, currentRound);
+	}
+
+	function JumpToRound(roundIndex) {
+		var index = Math.floor(Number(roundIndex));
+		var state = _GetDemoState();
+		var rounds = state && state.RoundIntervals ? state.RoundIntervals : [];
+		var controller = _DemoController();
+		if (!isFinite(index) || index < 0 || index >= rounds.length || !controller || !controller.GotoTick) {
+			_SetText("SwiftDemoVoiceStatus", "Unable to jump to that round");
+			return false;
+		}
+
+		var targetRound = index + 1;
+		controller.GotoTick(Math.floor(rounds[index].nTickStart));
+		_SetText("SwiftDemoVoiceStatus", "Jumping to round " + targetRound + "...");
+		_SetText("SwiftDemoRoundSummary", "ROUND " + targetRound + " OF " + rounds.length);
+		_SetRoundPickerOpen(false);
+		$.Schedule(0.12, function () { _UpdateRoundPicker(true); });
+		$.Msg("[SwiftDemoVoice] jump to round=" + targetRound + " tick=" + rounds[index].nTickStart);
+		return true;
 	}
 
 	function _NormalizeSlot(slot) {
@@ -519,6 +658,7 @@ var SwiftDemoVoice = (function () {
 		_isOpen = !!open;
 		var menu = _Panel("SwiftDemoVoiceMenu");
 		_SetClass(menu, "collapsed", !_isOpen);
+		if (!_isOpen) _SetRoundPickerOpen(false);
 	}
 
 	function ToggleOpen() {
@@ -533,6 +673,7 @@ var SwiftDemoVoice = (function () {
 		_SetClass(menu, "demo-active", true);
 		_lastHudPlayerXuid = isDemo ? _GetHudPlayerXuid() : "";
 		Refresh(false);
+		_UpdateRoundPicker(false);
 
 		if (isDemo && !_wasDemo) {
 			_wasDemo = true;
@@ -554,6 +695,7 @@ var SwiftDemoVoice = (function () {
 		_SetClass(_Panel("SwiftDemoVoiceMenu"), "demo-active", true);
 		_SetOpen(true);
 		Refresh(true);
+		_UpdateRoundPicker(true);
 		_RunMaskCommands(-1, -1, "Loading demo players...");
 		$.Schedule(0.25, _Poll);
 		$.Msg("[SwiftDemoVoice] runtime loaded");
@@ -567,6 +709,9 @@ var SwiftDemoVoice = (function () {
 		SelectTeam: SelectTeam,
 		TogglePlayer: TogglePlayer,
 		FocusPlayer: FocusPlayer,
+		RoundNumberForTick: _RoundNumberForTick,
+		JumpToRound: JumpToRound,
+		ToggleRoundPicker: ToggleRoundPicker,
 		Refresh: Refresh,
 		ToggleOpen: ToggleOpen,
 		OnLoad: OnLoad

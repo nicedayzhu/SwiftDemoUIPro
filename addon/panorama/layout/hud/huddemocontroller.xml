@@ -114,7 +114,7 @@
 				</Panel>
 				<Panel class="swift-demo-voice__title-block" hittest="false">
 					<Label class="swift-demo-voice__title" text="DEMO VOICE" />
-					<Label class="swift-demo-voice__subtitle" text="PLAYER AUDIO &amp; POV" />
+					<Label class="swift-demo-voice__subtitle" text="PLAYER AUDIO, POV &amp; ROUNDS" />
 				</Panel>
 				<Label id="SwiftDemoVoiceCount" class="swift-demo-voice__count" text="0 PLAYERS" />
 				<Image id="SwiftDemoVoiceChevron" class="swift-demo-voice__chevron" src="s2r://panorama/images/icons/ui/expand.vsvg" />
@@ -130,14 +130,32 @@
 					<Button class="swift-demo-voice__tool swift-demo-voice__tool--team-t" onactivate="SwiftDemoVoice.SelectTeam('TERRORIST')"><Label text="T ONLY" /></Button>
 					<Button class="swift-demo-voice__tool swift-demo-voice__tool--team-ct" onactivate="SwiftDemoVoice.SelectTeam('CT')"><Label text="CT ONLY" /></Button>
 				</Panel>
+				<Panel id="SwiftDemoRoundPicker" class="swift-demo-round-picker" hittest="true" hittestchildren="true">
+					<Button id="SwiftDemoRoundToggle" class="swift-demo-round-picker__toggle" onactivate="SwiftDemoVoice.ToggleRoundPicker()">
+						<Panel class="swift-demo-round-picker__icon"><Image src="s2r://panorama/images/icons/ui/skip.vsvg" /></Panel>
+						<Panel class="swift-demo-round-picker__copy" hittest="false">
+							<Label class="swift-demo-round-picker__title" text="ROUND NAVIGATION" />
+							<Label id="SwiftDemoRoundSummary" class="swift-demo-round-picker__summary" text="WAITING FOR ROUND DATA" />
+						</Panel>
+						<Label id="SwiftDemoRoundCount" class="swift-demo-round-picker__count" text="0 ROUNDS" />
+						<Image class="swift-demo-round-picker__chevron" src="s2r://panorama/images/icons/ui/expand.vsvg" />
+					</Button>
+					<Panel class="swift-demo-round-picker__dropdown" hittest="true" hittestchildren="true">
+						<Panel class="swift-demo-round-picker__dropdown-header">
+							<Label text="SELECT ROUND" />
+							<Label text="START - END" />
+						</Panel>
+						<Panel id="SwiftDemoRoundList" class="swift-demo-round-picker__list" hittest="true" hittestchildren="true" />
+					</Panel>
+				</Panel>
 				<Panel class="swift-demo-voice__section-header">
-					<Label text="PLAYERS  ·  CLICK NAME FOR POV" />
+					<Label text="PLAYERS - CLICK NAME FOR POV" />
 					<Button class="swift-demo-voice__refresh" onactivate="SwiftDemoVoice.Refresh(true)"><Image src="s2r://panorama/images/icons/ui/refresh.vsvg" /><Label text="REFRESH" /></Button>
 				</Panel>
 				<Panel id="SwiftDemoVoicePlayerList" class="swift-demo-voice__players" hittest="true" hittestchildren="true" />
 				<Panel class="swift-demo-voice__footer">
 					<Label id="SwiftDemoVoiceMask" class="swift-demo-voice__mask" text="LOW  -1     HIGH  -1" />
-					<Label class="swift-demo-voice__hint" text="Eye = current POV  ·  blue audio button = enabled slot" />
+					<Label class="swift-demo-voice__hint" text="EYE = CURRENT POV     BLUE SPEAKER = VOICE ON" />
 				</Panel>
 			</Panel>
 		</Panel>
