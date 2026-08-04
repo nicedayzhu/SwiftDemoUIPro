@@ -1,7 +1,7 @@
-@define SwiftVoiceBlue: #82b9d6;
+@define SwiftVoiceSteel: #b8bbbd;
 @define SwiftVoiceGold: #e4ae39;
-@define SwiftVoiceCT: #72a9c7;
-@define SwiftVoiceT: #c9a453;
+@define SwiftVoiceCT: #718b99;
+@define SwiftVoiceT: #b79a56;
 
 .swift-demo-voice
 {
@@ -11,10 +11,7 @@
 	vertical-align: bottom;
 	margin: 0px 22px 112px 0px;
 	flow-children: down;
-	background-color: gradient(linear, 75% 100%, 0% 0%, from(#080e14f2), to(#101821f2));
-	background-image: url("s2r://panorama/images/backgrounds/bluedots_large_png.vtex");
-	background-size: 360px 360px;
-	background-img-opacity: 0.018;
+	background-color: gradient(linear, 75% 100%, 0% 0%, from(#0c0d0ff7), color-stop(0.58, #151618f6), to(#1b1c1ef5));
 	border: 1px solid #ffffff0f;
 	border-left: 3px solid #e4ae39c0;
 	box-shadow: #000000b8 0px 0px 28px 0px;
@@ -56,7 +53,7 @@
 	width: 100%;
 	height: 68px;
 	flow-children: right;
-	background-color: gradient(linear, 0% 0%, 100% 0%, from(#27333ed6), color-stop(0.55, #17212bd6), to(#0b1117e8));
+	background-color: gradient(linear, 0% 0%, 100% 0%, from(#303134e5), color-stop(0.55, #222326e5), to(#151618ed));
 	border-bottom: 1px solid #ffffff12;
 	padding-right: 16px;
 	brightness: 1;
@@ -67,7 +64,7 @@
 .swift-demo-voice__header:hover
 {
 	brightness: 1.16;
-	background-color: gradient(linear, 0% 0%, 100% 0%, from(#303c47e0), color-stop(0.55, #1c2731df), to(#0d141be8));
+	background-color: gradient(linear, 0% 0%, 100% 0%, from(#3a3b3ee8), color-stop(0.55, #292a2de8), to(#191a1ced));
 	sound: "UIPanorama.generic_button_rollover";
 }
 
@@ -75,7 +72,7 @@
 {
 	width: 64px;
 	height: 68px;
-	background-color: gradient(linear, 0% 0%, 100% 100%, from(#e4ae3927), to(#6c8fa213));
+	background-color: gradient(linear, 0% 0%, 100% 100%, from(#e4ae392b), to(#ffffff08));
 	border-right: 1px solid #ffffff12;
 }
 
@@ -103,7 +100,7 @@
 	font-size: 24px;
 	font-weight: bold;
 	letter-spacing: 0.8px;
-	color: #f5f8fb;
+	color: #f2f2f2;
 	text-shadow: 0px 1px 1px 1.0 #000000aa;
 }
 
@@ -137,7 +134,7 @@
 	width: 20px;
 	height: 20px;
 	vertical-align: center;
-	wash-color: #8ca1af;
+	wash-color: #a4a7a9;
 	transform: rotateZ(180deg);
 	transition-property: transform, wash-color;
 	transition-duration: 0.14s;
@@ -171,7 +168,7 @@
 	width: 100%;
 	height: 42px;
 	flow-children: right;
-	background-color: gradient(linear, 0% 0%, 100% 0%, from(#e4ae3914), color-stop(0.6, #526d7c0d), to(#00000000));
+	background-color: gradient(linear, 0% 0%, 100% 0%, from(#e4ae3914), color-stop(0.6, #ffffff08), to(#00000000));
 	border-left: 3px solid #e4ae39b0;
 	padding-left: 12px;
 	margin-bottom: 10px;
@@ -195,7 +192,7 @@
 	font-family: Stratum2, 'Arial Unicode MS';
 	font-size: 15px;
 	font-weight: medium;
-	color: #d0d5d9;
+	color: #d1d1d1;
 	text-overflow: ellipsis;
 }
 
@@ -239,7 +236,7 @@
 .swift-demo-voice__tool:hover
 {
 	brightness: 1.22;
-	background-color: gradient(linear, 0% 0%, 100% 0%, from(#e4ae3922), to(#668aa313));
+	background-color: gradient(linear, 0% 0%, 100% 0%, from(#e4ae3922), to(#ffffff0b));
 	border-color: #e4ae3966;
 	sound: "UIPanorama.generic_button_rollover";
 }
@@ -252,7 +249,7 @@
 
 .swift-demo-voice__tool--primary
 {
-	background-color: gradient(linear, 0% 0%, 100% 0%, from(#e4ae3921), color-stop(0.58, #526d7c18), to(#00000018));
+	background-color: gradient(linear, 0% 0%, 100% 0%, from(#e4ae3921), color-stop(0.58, #ffffff0c), to(#00000018));
 	border-color: #e4ae3952;
 	border-left: 3px solid SwiftVoiceGold;
 }
@@ -313,7 +310,7 @@
 	width: 15px;
 	height: 15px;
 	vertical-align: center;
-	wash-color: SwiftVoiceBlue;
+	wash-color: SwiftVoiceSteel;
 }
 
 .swift-demo-voice__refresh Label
@@ -343,7 +340,7 @@
 	vertical-align: center;
 	font-family: Stratum2, 'Arial Unicode MS';
 	font-size: 17px;
-	color: #5f7482;
+	color: #777b7e;
 }
 
 .swift-demo-voice-player
@@ -352,7 +349,7 @@
 	height: 58px;
 	flow-children: right;
 	margin-bottom: 7px;
-	background-color: gradient(linear, 0% 0%, 100% 0%, from(#ffffff0b), color-stop(0.62, #536b7a0d), to(#00000022));
+	background-color: gradient(linear, 0% 0%, 100% 0%, from(#ffffff0c), color-stop(0.62, #ffffff06), to(#00000024));
 	border: 1px solid #ffffff10;
 	border-left: 3px solid #657079;
 	border-radius: 3px;
@@ -382,21 +379,21 @@
 
 .swift-demo-voice-player.team-ct
 {
-	border-left-color: #628da5;
+	border-left-color: #667f8c;
 }
 
 .swift-demo-voice-player.selected
 {
 	brightness: 1;
-	background-color: gradient(linear, 0% 0%, 100% 0%, from(#526d7c20), color-stop(0.68, #526d7c0e), to(#00000021));
-	border-color: #82b9d638;
+	background-color: gradient(linear, 0% 0%, 100% 0%, from(#ffffff0e), color-stop(0.68, #ffffff07), to(#00000024));
+	border-color: #ffffff18;
 }
 
 .swift-demo-voice-player__stripe
 {
 	width: 2px;
 	height: 100%;
-	background-color: #52616b55;
+	background-color: #72757855;
 }
 
 .team-t .swift-demo-voice-player__stripe
@@ -406,7 +403,7 @@
 
 .team-ct .swift-demo-voice-player__stripe
 {
-	background-color: #72a9c78f;
+	background-color: #718b998f;
 }
 
 .swift-demo-voice-player__slot
@@ -422,7 +419,7 @@
 
 .selected .swift-demo-voice-player__slot
 {
-	color: SwiftVoiceGold;
+	color: #c7c9ca;
 }
 
 .swift-demo-voice-player__copy
@@ -444,7 +441,7 @@
 
 .selected .swift-demo-voice-player__name
 {
-	color: #f2f8fb;
+	color: #f1f1f1;
 }
 
 .swift-demo-voice-player__meta
@@ -463,7 +460,7 @@
 
 .team-ct .swift-demo-voice-player__meta
 {
-	color: #5783a0;
+	color: #698594;
 }
 
 .swift-demo-voice-player__toggle
@@ -482,7 +479,7 @@
 .swift-demo-voice-player__toggle:hover
 {
 	brightness: 1.25;
-	background-color: #82b9d61b;
+	background-color: #ffffff0d;
 }
 
 .swift-demo-voice-player__toggle Image
@@ -507,14 +504,14 @@
 
 .selected .swift-demo-voice-player__toggle Image
 {
-	wash-color: SwiftVoiceBlue;
+	wash-color: SwiftVoiceSteel;
 	opacity: 1;
-	img-shadow: #82b9d630 0px 0px 4px 1.0;
+	img-shadow: #ffffff1c 0px 0px 3px 1.0;
 }
 
 .selected .swift-demo-voice-player__toggle Label
 {
-	color: #b7d7e7;
+	color: #d0d2d3;
 }
 
 .swift-demo-voice__footer
@@ -594,7 +591,12 @@
 {
 	border-top-color: #e4ae3969;
 	border-right-color: #e4ae3969;
-	background-color: gradient(linear, 0% 0%, 100% 0%, from(#e4ae3922), color-stop(0.68, #526d7c10), to(#00000020));
+	background-color: gradient(linear, 0% 0%, 100% 0%, from(#e4ae3922), color-stop(0.68, #ffffff09), to(#00000020));
+}
+
+.swift-demo-voice-player.observed .swift-demo-voice-player__slot
+{
+	color: SwiftVoiceGold;
 }
 
 .swift-demo-voice-player.observed .swift-demo-voice-player__pov Image

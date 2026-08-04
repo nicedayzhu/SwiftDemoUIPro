@@ -76,8 +76,12 @@ if (/RegisterKeyBind|bind\s+[\"']?space/i.test(source)) {
 	throw new Error("custom menu must not override the native Space camera control");
 }
 
-if (!/bluedots_large_png\.vtex/.test(style) || !/border-left:\s*3px solid #e4ae39/.test(style)) {
-	throw new Error("custom menu must retain the native-inspired Swift Menu chrome");
+if (/bluedots_large_png\.vtex/.test(style) || !/from\(#0c0d0ff7\)/.test(style) || !/border-left:\s*3px solid #e4ae39/.test(style)) {
+	throw new Error("custom menu must use the neutral graphite native-inspired chrome");
+}
+
+if (/SwiftVoiceBlue|#82b9d6|#526d7c|#536b7a|#668aa3|#6c8fa2/.test(style)) {
+	throw new Error("legacy blue menu tint must not return outside subdued CT identity accents");
 }
 
 if (!/icons\/ui\/unmuted\.vsvg/.test(layout) || !/SwiftDemoVoiceEnabledLabel/.test(layout) || /icons\/ui\/sound_3\.vsvg/.test(layout)) {
