@@ -1,0 +1,144 @@
+<root>
+	<styles>
+		<include src="s2r://panorama/styles/csgostyles.vcss_c" />
+		<include src="s2r://panorama/styles/hud/huddemocontroller.vcss_c" />
+		<include src="s2r://panorama/styles/hud/swift_demo_voice.vcss_c" />
+	</styles>
+	<scripts>
+		<include src="s2r://panorama/scripts/hud/huddemocontroller.vts_c" />
+		<include src="s2r://panorama/scripts/hud/swift_demo_voice.vjs_c" />
+	</scripts>
+	<snippets>
+		<snippet name="SwiftDemoVoicePlayerRow">
+			<Panel class="swift-demo-voice-player" hittest="true" hittestchildren="true">
+				<Panel id="SwiftDemoVoiceTeamStripe" class="swift-demo-voice-player__stripe" hittest="false" />
+				<Button id="SwiftDemoVoiceFocus" class="swift-demo-voice-player__focus" hittest="true">
+					<Label id="SwiftDemoVoiceSlot" class="swift-demo-voice-player__slot" text="00" />
+					<Panel class="swift-demo-voice-player__copy" hittest="false">
+						<Label id="SwiftDemoVoicePlayerName" class="swift-demo-voice-player__name" text="Player" />
+						<Label id="SwiftDemoVoicePlayerMeta" class="swift-demo-voice-player__meta" text="TEAM" />
+					</Panel>
+					<Panel class="swift-demo-voice-player__pov" hittest="false">
+						<Image src="s2r://panorama/images/icons/ui/watch.vsvg" />
+						<Label text="POV" />
+					</Panel>
+				</Button>
+				<Button id="SwiftDemoVoiceToggle" class="swift-demo-voice-player__toggle" hittest="true">
+					<Image id="SwiftDemoVoiceEnabled" src="s2r://panorama/images/icons/ui/sound_3.vsvg" hittest="false" />
+				</Button>
+			</Panel>
+		</snippet>
+	</snippets>
+	<CSGOHudDemoController hittest="false">
+		<!-- Keep the native Valve DemoUI intact. The custom panel only handles voice and POV. -->
+		<Panel id="Root">
+			<Panel id="Settings" hittest="true" onactivate="HudDemoController.EatClick()">
+				<Panel class="CheckBox" id="XRayCheckbox" onactivate="HudDemoController.ToggleXRay();">
+					<ToggleButton id="XRayToggleButton" />
+					<Panel class="CheckBoxBody">
+						<Label class="CheckBoxTitle" text="#CSGO_Demo_Settings_XRay" />
+					</Panel>
+				</Panel>
+				<Panel class="CheckBox" id="TrueViewCheckBox" onactivate="HudDemoController.ToggleTrueView();">
+					<ToggleButton id="TrueViewToggleButton" />
+					<Panel class="CheckBoxBody">
+						<Label class="CheckBoxTitle" text="#CSGO_Demo_Settings_TrueView_Enable" />
+						<Label class="Explanation" text="#CSGO_Demo_Settings_TrueView_Explanation" />
+					</Panel>
+				</Panel>
+				<Panel class="CheckBox" id="TrueViewDOACheckBox" onactivate="HudDemoController.ToggleTrueViewDOACommands();">
+					<ToggleButton id="TrueViewDOAToggleButton" />
+					<Panel class="CheckBoxBody">
+						<Panel class="CheckBoxTitle">
+							<Label text="#CSGO_Demo_Settings_TrueViewDOA" />
+							<Image src="s2r://panorama/images/icons/ui/hourglass.vsvg" />
+						</Panel>
+						<Label class="Explanation" text="#CSGO_Demo_Settings_TrueViewDOA_Explanation" />
+					</Panel>
+				</Panel>
+				<Panel class="CheckBox" id="TrueViewWrongVersionCheckBox" onactivate="HudDemoController.ToggleTrueViewWrongVersion();">
+					<ToggleButton id="TrueViewWrongVersionToggleButton" />
+					<Panel class="CheckBoxBody">
+						<Label class="CheckBoxTitle" text="#CSGO_Demo_Settings_TrueViewWrongVersion" />
+						<Label class="Explanation" text="#CSGO_Demo_Settings_TrueViewWrongVersion_Explanation" />
+					</Panel>
+				</Panel>
+			</Panel>
+			<Panel id="Contents" hittest="true" onactivate="HudDemoController.EatClick()">
+				<Panel id="SliderRow">
+					<Panel id="RoundMarkers" />
+					<Panel id="HighlightMarkers" />
+					<Panel id="HighlightIcons" />
+					<Slider id="Slider" class="HorizontalSlider" direction="horizontal" />
+				</Panel>
+				<Panel id="ControlRow">
+					<Panel id="PlayButton" onactivate="HudDemoController.OnPlayClicked()">
+						<Image id="PlayIcon" src="s2r://panorama/images/icons/ui/play.vsvg" />
+						<Image id="PauseIcon" src="s2r://panorama/images/icons/ui/pause.vsvg" />
+					</Panel>
+					<Image id="HighlightsButton" class="interactive" src="s2r://panorama/images/icons/ui/film.vsvg" onmouseover="UiToolkitAPI.ShowTextTooltip( &apos;HighlightsButton&apos;, &apos;#tooltip_demo_highlights_toggle&apos; );" onmouseout="UiToolkitAPI.HideTextTooltip();" onactivate="HudDemoController.OnHighlightsToggle()" />
+					<Label id="TimeLabel" text="#CSGO_Demo_Time" />
+					<Panel id="TimeControls">
+						<Label class="interactive" text="#CSGO_Demo_MinusSeconds" onactivate="HudDemoController.OnStepTimeBackward()" />
+						<Image id="TimeIcon" src="s2r://panorama/images/icons/ui/clock.vsvg" />
+						<Label class="interactive" text="#CSGO_Demo_PlusSeconds" onactivate="HudDemoController.OnStepTimeForward()" />
+					</Panel>
+					<Panel id="RoundControls">
+						<Image id="RoundPrev" class="interactive" src="s2r://panorama/images/icons/ui/skip.vsvg" onactivate="HudDemoController.OnStepInterval(-1)" />
+						<Panel id="RoundRestart" class="interactive" onactivate="HudDemoController.OnStepInterval(0)">
+							<Label id="IntervalLabel" text="#CSGO_Demo_Round" />
+							<Label id="RoundNumber" text="{d:round_number}" />
+						</Panel>
+						<Image id="RoundNext" class="interactive" src="s2r://panorama/images/icons/ui/skip.vsvg" onactivate="HudDemoController.OnStepInterval(1)" />
+					</Panel>
+					<Panel id="SpeedControls">
+						<Label id="TimeScale" class="interactive" onactivate="HudDemoController.OnShowTimeScaleContextMenu()" />
+					</Panel>
+					<Panel id="HotKeyLabels">
+						<Label id="HotKey_Next_Camera" class="hotkeylabel" text="#CSGO_Demo_Next_Camera" />
+						<Label id="HotKey_Player_Next" class="hotkeylabel" text="#CSGO_Demo_Player_Next" />
+						<Label id="HotKey_Toggle_Mouse_Cursor" class="hotkeylabel" text="{s:mouse-mode}" />
+					</Panel>
+					<Panel id="SettingsButton" class="interactive" onactivate="HudDemoController.ToggleSettingsVisible()">
+						<Image id="TimeIcon" src="s2r://panorama/images/icons/ui/settings.vsvg" />
+					</Panel>
+					<Label id="EndPlayback" class="interactive" text="{s:end-playback}" onactivate="HudDemoController.OnStopPlayback()" />
+				</Panel>
+			</Panel>
+		</Panel>
+		<Panel id="SwiftDemoVoiceMenu" class="swift-demo-voice demo-active" hittest="true" hittestchildren="true" onload="SwiftDemoVoice.OnLoad()">
+			<Panel id="SwiftDemoVoiceHeader" class="swift-demo-voice__header" hittest="true" onactivate="SwiftDemoVoice.ToggleOpen()">
+				<Panel class="swift-demo-voice__brand">
+					<Image class="swift-demo-voice__brand-icon" src="s2r://panorama/images/icons/ui/sound_3.vsvg" />
+				</Panel>
+				<Panel class="swift-demo-voice__title-block" hittest="false">
+					<Label class="swift-demo-voice__title" text="DEMO VOICE" />
+					<Label class="swift-demo-voice__subtitle" text="PLAYER AUDIO &amp; POV" />
+				</Panel>
+				<Label id="SwiftDemoVoiceCount" class="swift-demo-voice__count" text="0 PLAYERS" />
+				<Image id="SwiftDemoVoiceChevron" class="swift-demo-voice__chevron" src="s2r://panorama/images/icons/ui/expand.vsvg" />
+			</Panel>
+			<Panel id="SwiftDemoVoiceBody" class="swift-demo-voice__body" hittest="true" hittestchildren="true">
+				<Panel class="swift-demo-voice__notice">
+					<Panel class="swift-demo-voice__live-dot" />
+					<Label id="SwiftDemoVoiceStatus" class="swift-demo-voice__status" text="Loading demo players..." />
+				</Panel>
+				<Panel class="swift-demo-voice__toolbar" hittest="true" hittestchildren="true">
+					<Button class="swift-demo-voice__tool swift-demo-voice__tool--primary" onactivate="SwiftDemoVoice.SelectAll()"><Label text="HEAR ALL" /></Button>
+					<Button class="swift-demo-voice__tool" onactivate="SwiftDemoVoice.SelectNone()"><Label text="MUTE ALL" /></Button>
+					<Button class="swift-demo-voice__tool swift-demo-voice__tool--team-t" onactivate="SwiftDemoVoice.SelectTeam('TERRORIST')"><Label text="T ONLY" /></Button>
+					<Button class="swift-demo-voice__tool swift-demo-voice__tool--team-ct" onactivate="SwiftDemoVoice.SelectTeam('CT')"><Label text="CT ONLY" /></Button>
+				</Panel>
+				<Panel class="swift-demo-voice__section-header">
+					<Label text="PLAYERS  ·  CLICK NAME FOR POV" />
+					<Button class="swift-demo-voice__refresh" onactivate="SwiftDemoVoice.Refresh(true)"><Image src="s2r://panorama/images/icons/ui/refresh.vsvg" /><Label text="REFRESH" /></Button>
+				</Panel>
+				<Panel id="SwiftDemoVoicePlayerList" class="swift-demo-voice__players" hittest="true" hittestchildren="true" />
+				<Panel class="swift-demo-voice__footer">
+					<Label id="SwiftDemoVoiceMask" class="swift-demo-voice__mask" text="LOW  -1     HIGH  -1" />
+					<Label class="swift-demo-voice__hint" text="Eye = current POV  ·  blue audio button = enabled slot" />
+				</Panel>
+			</Panel>
+		</Panel>
+	</CSGOHudDemoController>
+</root>
