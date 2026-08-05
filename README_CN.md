@@ -12,6 +12,12 @@
 > [!IMPORTANT]
 > Swift DemoUI Pro 会使用 `-insecure` 启动 CS2，并在 Demo 会话期间临时向 `gameinfo.gi` 添加 override SearchPath。请勿使用该会话进行正常匹配。观看结束后，请先彻底退出 CS2，再回到启动器点击**停止观看 Demo**，以清理 VPK、SearchPath 和临时文件。
 
+## 界面预览
+
+![Swift DemoUI Pro 在 CS2 Demo 回放中的玩家语音、POV 与回合导航面板](docs/images/demo-voice-ui.png)
+
+游戏内面板会保留原生 DemoUI 控件，同时加入按玩家控制已录制语音、一键切换 POV 和直接跳转回合等功能。
+
 ## 功能
 
 - Demo 打开后自动启用低位和高位两组语音掩码：

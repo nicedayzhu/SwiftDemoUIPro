@@ -12,6 +12,12 @@ The project does not require SwiftlyS2, a server plugin, or a Workshop resource.
 > [!IMPORTANT]
 > Swift DemoUI Pro launches CS2 with `-insecure` and temporarily adds an override SearchPath to `gameinfo.gi`. Do not use that session for normal matchmaking. After watching, fully exit CS2 and choose **Stop Watching Demo** in the launcher so it can remove the VPK, SearchPath, and temporary files.
 
+## Interface Preview
+
+![Swift DemoUI Pro player voice, POV, and round navigation panel during CS2 Demo playback](docs/images/demo-voice-ui.png)
+
+The in-game panel keeps the native DemoUI controls available while adding per-player recorded-voice controls, one-click POV switching, and direct round navigation.
+
 ## Features
 
 - Automatically enables both recorded voice masks when a demo opens:
