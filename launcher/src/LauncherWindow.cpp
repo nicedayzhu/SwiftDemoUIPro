@@ -884,6 +884,47 @@ void LauncherWindow::applyStyle()
             background: #ffffff;
             color: #20242b;
         }
+        QMessageBox QLabel {
+            background: transparent;
+            color: #20242b;
+        }
+        QMessageBox QLabel#qt_msgbox_label {
+            color: #20242b;
+            font-size: 14px;
+            font-weight: 650;
+        }
+        QMessageBox QLabel#qt_msgbox_informativelabel {
+            color: #66707c;
+            font-size: 12px;
+            font-weight: 400;
+        }
+        QMessageBox QPushButton {
+            min-width: 84px;
+            min-height: 34px;
+            border: 1px solid #d5dae1;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #48515e;
+            padding: 0 14px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        QMessageBox QPushButton:hover {
+            border-color: #aeb7c3;
+            background: #f7f9fb;
+            color: #242a32;
+        }
+        QMessageBox QPushButton#DialogPrimaryButton,
+        QMessageBox QPushButton:default {
+            border-color: #347fd8;
+            background: #347fd8;
+            color: #ffffff;
+        }
+        QMessageBox QPushButton#DialogPrimaryButton:hover,
+        QMessageBox QPushButton:default:hover {
+            border-color: #438ee6;
+            background: #438ee6;
+        }
         QToolTip {
             border: 1px solid #d9dde3;
             background: #ffffff;
@@ -1123,6 +1164,8 @@ void LauncherWindow::startWatchingDemo()
     confirmation.setText(tr("CS2 will start in -insecure mode"));
     confirmation.setInformativeText(tr("This session cannot be used for normal matchmaking. After watching, exit CS2 and return to the launcher to stop Demo playback.\n\nThe launcher does not change permanent Steam launch options."));
     auto *continueButton = confirmation.addButton(tr("Continue"), QMessageBox::AcceptRole);
+    continueButton->setObjectName(QStringLiteral("DialogPrimaryButton"));
+    confirmation.setDefaultButton(continueButton);
     confirmation.addButton(tr("Cancel"), QMessageBox::RejectRole);
     confirmation.exec();
     if (confirmation.clickedButton() != continueButton)
