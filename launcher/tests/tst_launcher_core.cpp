@@ -127,6 +127,11 @@ void LauncherCoreTest::buildsTemporaryInsecureLaunch()
     const QString cfg = Cs2Manager::buildDemoCfg();
     QVERIFY(cfg.contains(QStringLiteral("playdemo \"demos/swift_demo_launcher/current.dem\"")));
     QVERIFY(cfg.contains(QStringLiteral("tv_listen_voice_indices -1")));
+    QVERIFY(cfg.contains(QStringLiteral("cl_demo_predict 0")));
+
+    const QString trueViewCfg = Cs2Manager::buildDemoCfg(true);
+    QVERIFY(trueViewCfg.contains(QStringLiteral("cl_demo_predict 1")));
+    QVERIFY(!trueViewCfg.contains(QStringLiteral("cl_demo_predict 0")));
 }
 
 void LauncherCoreTest::installsAndPreparesIsolatedSession()
@@ -167,7 +172,9 @@ void LauncherCoreTest::installsAndPreparesIsolatedSession()
     const LauncherResult prepared = Cs2Manager::prepareDemoSession(paths, sourceDemo.fileName());
     QVERIFY2(prepared.ok, qPrintable(prepared.message));
     QVERIFY(Cs2Manager::isSessionActive(paths));
-    QVERIFY(QFileInfo::exists(root.filePath(QStringLiteral("game/csgo/cfg/swift_demo_launcher.cfg"))));
+    QFile generatedCfg(root.filePath(QStringLiteral("game/csgo/cfg/swift_demo_launcher.cfg")));
+    QVERIFY(generatedCfg.open(QIODevice::ReadOnly));
+    QVERIFY(generatedCfg.readAll().contains("cl_demo_predict 0"));
     QVERIFY(QFileInfo::exists(root.filePath(QStringLiteral("game/csgo/demos/swift_demo_launcher/current.dem"))));
 }
 

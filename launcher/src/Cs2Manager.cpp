@@ -698,14 +698,16 @@ LauncherResult Cs2Manager::installOverride(const Cs2Paths &paths, const QString 
     return LauncherResult::success(QCoreApplication::translate("Cs2Manager", "The DemoUI VPK has been installed and verified."));
 }
 
-QString Cs2Manager::buildDemoCfg()
+QString Cs2Manager::buildDemoCfg(bool trueViewEnabled)
 {
     return QStringLiteral(
         "echo \"Swift DemoUI Pro session\"\n"
         "demo_ui_mode 2\n"
+        "cl_demo_predict %1\n"
         "tv_listen_voice_indices -1\n"
         "tv_listen_voice_indices_h -1\n"
-        "playdemo \"demos/swift_demo_launcher/current.dem\"\n");
+        "playdemo \"demos/swift_demo_launcher/current.dem\"\n")
+        .arg(trueViewEnabled ? 1 : 0);
 }
 
 LauncherResult Cs2Manager::inspectDemoArchive(const QString &archivePath, QList<DemoArchiveEntry> *entries)
@@ -735,7 +737,7 @@ LauncherResult Cs2Manager::inspectDemoArchive(const QString &archivePath, QList<
     return LauncherResult::success(QCoreApplication::translate("Cs2Manager", "The ZIP archive is ready."));
 }
 
-LauncherResult Cs2Manager::prepareDemoSession(const Cs2Paths &paths, const QString &demoPath, const QString &archiveEntry)
+LauncherResult Cs2Manager::prepareDemoSession(const Cs2Paths &paths, const QString &demoPath, const QString &archiveEntry, bool trueViewEnabled)
 {
     const QFileInfo demoInfo(demoPath);
     if (!demoInfo.exists() || !demoInfo.isFile())
@@ -760,7 +762,7 @@ LauncherResult Cs2Manager::prepareDemoSession(const Cs2Paths &paths, const QStri
     if (!QDir().mkpath(QFileInfo(cfgPath(paths)).absolutePath()))
         return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to create the CS2 cfg folder."));
     QSaveFile cfg(cfgPath(paths));
-    if (!cfg.open(QIODevice::WriteOnly) || cfg.write(buildDemoCfg().toUtf8()) < 0 || !cfg.commit())
+    if (!cfg.open(QIODevice::WriteOnly) || cfg.write(buildDemoCfg(trueViewEnabled).toUtf8()) < 0 || !cfg.commit())
         return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to create the Demo launch configuration: %1").arg(cfg.errorString()));
 
     if (!QDir().mkpath(QFileInfo(markerPath(paths)).absolutePath()))
@@ -768,7 +770,8 @@ LauncherResult Cs2Manager::prepareDemoSession(const Cs2Paths &paths, const QStri
     QSaveFile marker(markerPath(paths));
     QJsonObject state {
         { QStringLiteral("demo"), demoInfo.absoluteFilePath() },
-        { QStringLiteral("createdUtc"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate) }
+        { QStringLiteral("createdUtc"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate) },
+        { QStringLiteral("trueViewEnabled"), trueViewEnabled }
     };
     if (isZip)
         state.insert(QStringLiteral("archiveEntry"), archiveEntry);

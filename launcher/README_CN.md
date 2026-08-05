@@ -8,19 +8,39 @@
 
 1. 选择或拖入一个 `.dem` 文件或 `.zip` 压缩包。ZIP 中只有一个 Demo 时会自动选择；存在多个时，请从列表中选择一个。
 2. 确认自动检测到的 CS2 路径，必要时选择其他安装目录。
-3. 点击**开始观看 Demo**。启动器会安装/校验 VPK，把 Demo 复制到专用临时目录；如果选择的是 ZIP，则只流式写入所选条目。随后创建 `swift_demo_launcher.cfg` 并执行：
+3. 为获得最佳兼容性，建议保持 **TrueView 预测**关闭。启动器会在临时 CFG 中写入 `cl_demo_predict 0`，避免缺少 TrueView 指令数据的 Demo 出现预测闪烁。只有确认录像支持时再启用；启动器会记住该选项。
+4. 点击**开始观看 Demo**。启动器会安装/校验 VPK，把 Demo 复制到专用临时目录；如果选择的是 ZIP，则只流式写入所选条目。随后创建 `swift_demo_launcher.cfg` 并执行：
 
    ```text
    steam.exe -applaunch 730 -insecure -novid +exec swift_demo_launcher.cfg
    ```
 
-4. 观看结束后先彻底退出 CS2，再点击**停止观看 Demo**。启动器会移除自己拥有的精确 SearchPath、VPK、临时 CFG、会话标记和 Demo 副本。
+5. 观看结束后先彻底退出 CS2，再点击**停止观看 Demo**。启动器会移除自己拥有的精确 SearchPath、VPK、临时 CFG、会话标记和 Demo 副本。
+
+如果控制台持续出现 `Not enough TrueView command lookahead`，或者画面不断闪烁，请停止回放、关闭 **TrueView 预测**，再重新启动 Demo。
 
 `-insecure` 只存在于本次启动命令中，不会写入 Steam 的永久启动项。DemoUI VPK 的 SearchPath 会持续存在到清理完成，因此请勿跳过最后一步。如果启动器意外中断，重新打开即可继续清理。
 
 ## 构建
 
-请使用 Qt 6.5 或更高版本的 64 位 MSVC Desktop kit、Visual Studio C++ 工具和 CMake。先在项目根目录构建 VPK，再运行：
+请使用 Qt 6.5 或更高版本的 64 位 MSVC Desktop kit、Visual Studio C++ 工具和 CMake，并从仓库根目录执行以下命令。
+
+### 编译并测试
+
+如需进行不依赖 Panorama VPK 的快速、接近 CI 的构建：
+
+```powershell
+.\launcher\build-launcher.ps1 `
+  -QtRoot "<Qt Desktop kit>" `
+  -Configuration Release `
+  -SkipVpkCheck
+```
+
+脚本会配置 CMake、编译启动器和翻译，并运行 CTest。`-SkipVpkCheck` 只适用于非打包构建，它不会执行 `windeployqt`；因此 `launcher\build\Release\SwiftDemoUIPro.exe` 依赖 Qt 开发环境，不应直接双击运行。出现缺少 `Qt6Gui.dll` 的提示，通常就是误用了裸编译目录。
+
+### 生成可运行包
+
+先构建 VPK，再打包启动器：
 
 ```powershell
 .\demo-menu.ps1 `
@@ -33,10 +53,13 @@
 打包产物：
 
 ```text
+launcher\package\SwiftDemoUIPro-v<版本号>\SwiftDemoUIPro.exe
 launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
 ```
 
-构建脚本会运行 Qt 单元测试，并通过 `windeployqt` 收集所需的运行库。发布目录中的 `SwiftDemoUIPro.exe` 与 `swift_demo_menu_override.vpk` 必须放在一起。
+本地端到端测试请运行展开版本目录中的 EXE。打包步骤会通过 `windeployqt` 收集 `Qt6Core.dll`、`Qt6Gui.dll`、`Qt6Widgets.dll` 和 `platforms\qwindows.dll`。`SwiftDemoUIPro.exe`、DLL/插件、翻译和 `swift_demo_menu_override.vpk` 必须保持在同一完整目录结构中。
+
+仓库根目录的 `release.ps1` 用于已经提交的 Release 候选版本，而不是日常开发测试。由于源码包从 `HEAD` 生成，只要 Git 工作区不干净，它就会拒绝继续。
 
 ZIP 支持由项目内置的 miniz 3.1.2 源码直接编译进 `SwiftDemoUIPro.exe`，用户不需要安装 7-Zip、调用 PowerShell 解压或携带其他可执行程序。发布包会包含 `licenses/miniz-MIT.txt`。
 

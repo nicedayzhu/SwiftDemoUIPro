@@ -8,19 +8,39 @@ A lightweight Windows Qt 6 Widgets application that safely installs this project
 
 1. Select or drag in a `.dem` file or `.zip` archive. A ZIP containing one Demo is selected automatically; if it contains several, choose one from the displayed list.
 2. Confirm the automatically detected CS2 path, or choose a different installation.
-3. Select **Start Watching Demo**. The launcher installs/verifies the VPK, copies the Demo—or streams only the selected ZIP entry—into a dedicated staging directory, creates `swift_demo_launcher.cfg`, and runs:
+3. Leave **TrueView prediction** off for maximum compatibility. This writes `cl_demo_predict 0` to the temporary CFG and prevents prediction flicker in Demos without TrueView command data. Enable it only for a supported recording; the preference is remembered.
+4. Select **Start Watching Demo**. The launcher installs/verifies the VPK, copies the Demo—or streams only the selected ZIP entry—into a dedicated staging directory, creates `swift_demo_launcher.cfg`, and runs:
 
    ```text
    steam.exe -applaunch 730 -insecure -novid +exec swift_demo_launcher.cfg
    ```
 
-4. When finished, fully exit CS2 before selecting **Stop Watching Demo**. The launcher removes the exact SearchPath it owns, the VPK, temporary CFG, session marker, and staged demo.
+5. When finished, fully exit CS2 before selecting **Stop Watching Demo**. The launcher removes the exact SearchPath it owns, the VPK, temporary CFG, session marker, and staged demo.
+
+If the console repeatedly reports `Not enough TrueView command lookahead` or the picture flickers, stop playback, turn **TrueView prediction** off, and start the Demo again.
 
 `-insecure` is used only by that launch command and is not written to Steam's permanent launch options. The DemoUI VPK SearchPath remains active until cleanup completes, so do not skip the final step. If the launcher was interrupted, reopen it to resume cleanup.
 
 ## Build
 
-Use Qt 6.5 or newer with a 64-bit MSVC Desktop kit, Visual Studio C++ tools, and CMake. Build the VPK from the project root first, then run:
+Use Qt 6.5 or newer with a 64-bit MSVC Desktop kit, Visual Studio C++ tools, and CMake. Run all commands from the repository root.
+
+### Compile and test
+
+For a fast CI-like build that does not require the Panorama VPK:
+
+```powershell
+.\launcher\build-launcher.ps1 `
+  -QtRoot "<Qt Desktop kit>" `
+  -Configuration Release `
+  -SkipVpkCheck
+```
+
+The script configures CMake, builds the launcher and translations, and runs CTest. `-SkipVpkCheck` is only for a non-packaging build. It does not call `windeployqt`, so `launcher\build\Release\SwiftDemoUIPro.exe` depends on the Qt development environment and is not intended to be launched by double-clicking. A missing `Qt6Gui.dll` message means the raw build output was used instead of a deployed package.
+
+### Create a runnable package
+
+Build the VPK and then package the launcher:
 
 ```powershell
 .\demo-menu.ps1 `
@@ -30,13 +50,16 @@ Use Qt 6.5 or newer with a 64-bit MSVC Desktop kit, Visual Studio C++ tools, and
 .\launcher\build-launcher.ps1 -QtRoot "C:\Qt\6.8.3\msvc2022_64" -Package
 ```
 
-Package output:
+Package outputs:
 
 ```text
+launcher\package\SwiftDemoUIPro-v<version>\SwiftDemoUIPro.exe
 launcher\package\SwiftDemoUIPro-v<version>-win64.zip
 ```
 
-The build script runs the Qt unit tests and uses `windeployqt` to collect required runtime libraries. `SwiftDemoUIPro.exe` and `swift_demo_menu_override.vpk` must remain together in the release directory.
+Run the EXE from the unpacked version directory for local end-to-end testing. The packaging step uses `windeployqt` to collect `Qt6Core.dll`, `Qt6Gui.dll`, `Qt6Widgets.dll`, and `platforms\qwindows.dll`. `SwiftDemoUIPro.exe`, its DLLs/plugins, translations, and `swift_demo_menu_override.vpk` must remain together.
+
+The repository-level `release.ps1` command is for committed release candidates, not ordinary development testing. It refuses a dirty Git working tree because the source archive is generated from `HEAD`.
 
 ZIP support is compiled into `SwiftDemoUIPro.exe` from the vendored miniz 3.1.2 source, so users do not need 7-Zip, PowerShell extraction, or another executable. The package includes `licenses/miniz-MIT.txt`.
 

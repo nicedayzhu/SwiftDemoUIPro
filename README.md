@@ -37,6 +37,7 @@ The in-game panel keeps the native DemoUI controls available while adding per-pl
 - Uses a restrained graphite-and-gold interface with clear CT/T and voice-state indicators.
 - Includes **Swift DemoUI Pro**, a native Qt 6 launcher with Steam-library detection, drag-and-drop `.dem`/`.zip` selection, automatic cleanup, English/Chinese UI, and system-language detection.
 - Opens downloaded ZIP archives directly. A single Demo is selected automatically; archives containing multiple Demos show a selection list, and only the chosen `.dem` is streamed into the launcher's staging directory.
+- Disables CS2 TrueView prediction by default for compatibility with third-party Demos that do not contain its command data; players can opt in for supported recordings.
 
 ## Quick Start
 
@@ -45,8 +46,9 @@ For end users, extract a packaged `SwiftDemoUIPro-v<version>-win64.zip`, then:
 1. Run `SwiftDemoUIPro.exe` with `swift_demo_menu_override.vpk` beside it.
 2. Select or drag in a `.dem` file or a `.zip` archive. If the ZIP contains multiple Demos, choose one from the list.
 3. Confirm the detected CS2 installation.
-4. Choose **Start Watching Demo**. The launcher starts CS2 with a one-time `-insecure` argument; it does not change Steam's permanent launch options.
-5. When finished, fully exit CS2, return to the launcher, and choose **Stop Watching Demo**.
+4. Leave **TrueView prediction** disabled for downloaded or third-party Demos. Enable it only for a recording known to contain compatible TrueView command data.
+5. Choose **Start Watching Demo**. The launcher starts CS2 with a one-time `-insecure` argument; it does not change Steam's permanent launch options.
+6. When finished, fully exit CS2, return to the launcher, and choose **Stop Watching Demo**.
 
 If the launcher is interrupted, reopen it to continue the pending cleanup.
 
@@ -108,17 +110,31 @@ Fully restart CS2 after installing, updating, or uninstalling the Panorama overr
 
 ## Build the Launcher
 
-Build the VPK first, then run:
+For a quick compile-and-test cycle that does not require a VPK, run:
+
+```powershell
+.\launcher\build-launcher.ps1 `
+  -QtRoot "<Qt Desktop kit>" `
+  -Configuration Release `
+  -SkipVpkCheck
+```
+
+This configures CMake, builds the launcher, compiles translations, and runs the Qt tests. It does **not** run `windeployqt`; therefore `launcher\build\Release\SwiftDemoUIPro.exe` is a raw build artifact and is not a standalone executable. Double-clicking it outside a Qt development environment can report missing files such as `Qt6Gui.dll`.
+
+To create something that can be launched directly, build the VPK first and then package the launcher:
 
 ```powershell
 .\launcher\build-launcher.ps1 -QtRoot "C:\Qt\6.8.3\msvc2022_64" -Package
 ```
 
-The script configures CMake, builds the launcher, runs its Qt tests, collects the required dynamic Qt libraries with `windeployqt`, and creates:
+Packaging reruns the build and tests, collects the required dynamic Qt libraries and platform plugin with `windeployqt`, and creates both an unpacked test directory and a distributable ZIP:
 
 ```text
+launcher\package\SwiftDemoUIPro-v<version>\SwiftDemoUIPro.exe
 launcher\package\SwiftDemoUIPro-v<version>-win64.zip
 ```
+
+Run the EXE from the unpacked `launcher\package\SwiftDemoUIPro-v<version>` directory for local end-to-end testing. Keep that directory together; do not copy only the EXE.
 
 See [launcher/README.md](launcher/README.md) for launcher architecture, localization, and packaging details.
 
@@ -134,6 +150,8 @@ Create a complete local release candidate with one command:
   -VpkEditCli "C:\Tools\VPKEdit\vpkeditcli.exe" `
   -QtRoot "C:\Qt\6.8.3\msvc2022_64"
 ```
+
+`release.ps1` intentionally requires `git status --short` to be empty because its source archive is created from `HEAD`. It is not the command for testing uncommitted changes: use `build-launcher.ps1` during development, then commit the completed change before building a release candidate. Stashing a change excludes it from the release build.
 
 This runs all JavaScript and Qt tests, rebuilds the VPK and launcher, then creates these files under `release\v<version>`:
 

@@ -5,6 +5,7 @@
 #include <QMainWindow>
 
 class QCloseEvent;
+class QCheckBox;
 class QComboBox;
 class QDragEnterEvent;
 class QDragLeaveEvent;
@@ -56,6 +57,7 @@ private:
     qint64 demoSize_ = 0;
     QString lastStatus_;
     QString currentLanguage_;
+    bool trueViewEnabled_ = false;
 
     QLabel *securityBadge_ = nullptr;
     QFrame *warningCard_ = nullptr;
@@ -73,6 +75,7 @@ private:
     QPushButton *installButton_ = nullptr;
     QPushButton *startButton_ = nullptr;
     QPushButton *stopButton_ = nullptr;
+    QCheckBox *trueViewCheckBox_ = nullptr;
     QPushButton *navReplayButton_ = nullptr;
     QPushButton *navMenuButton_ = nullptr;
     QPushButton *navAboutButton_ = nullptr;

@@ -37,6 +37,7 @@
 - 使用克制的石墨灰与金色界面，并清晰区分 CT/T 阵营和语音状态。
 - 附带原生 Qt 6 启动器 **Swift DemoUI Pro**，支持 Steam 多库检测、拖放 `.dem`/`.zip`、自动清理、中英文界面和系统语言识别。
 - 可直接打开下载的 ZIP 压缩包：包内只有一个 Demo 时自动选择，存在多个 Demo 时显示选择列表，并且只把所选 `.dem` 流式写入启动器的临时目录。
+- 默认关闭 CS2 TrueView 预测，以兼容未包含预测指令数据的第三方 Demo；确认录像支持时，玩家仍可主动启用。
 
 ## 快速开始
 
@@ -45,8 +46,9 @@
 1. 确保 `SwiftDemoUIPro.exe` 与 `swift_demo_menu_override.vpk` 位于同一目录，运行程序。
 2. 选择或拖入一个 `.dem` 文件或 `.zip` 压缩包；如果 ZIP 中包含多个 Demo，请从列表中选择一个。
 3. 确认自动检测到的 CS2 安装目录。
-4. 点击**开始观看 Demo**。启动器只会为本次启动附加 `-insecure`，不会修改 Steam 的永久启动项。
-5. 观看结束后彻底退出 CS2，回到启动器并点击**停止观看 Demo**。
+4. 对下载或第三方 Demo，建议保持 **TrueView 预测**关闭；只有确认录像包含兼容的 TrueView 指令数据时再启用。
+5. 点击**开始观看 Demo**。启动器只会为本次启动附加 `-insecure`，不会修改 Steam 的永久启动项。
+6. 观看结束后彻底退出 CS2，回到启动器并点击**停止观看 Demo**。
 
 如果启动器意外中断，重新打开它即可继续完成待处理的清理。
 
@@ -108,17 +110,31 @@ dist\swift_demo_menu_override.vpk
 
 ## 构建启动器
 
-先构建 VPK，再运行：
+如果只需要快速编译并运行测试，不要求已经生成 VPK，可执行：
+
+```powershell
+.\launcher\build-launcher.ps1 `
+  -QtRoot "<Qt Desktop kit>" `
+  -Configuration Release `
+  -SkipVpkCheck
+```
+
+该命令会配置 CMake、编译启动器和翻译，并运行 Qt 测试，但**不会**执行 `windeployqt`。因此 `launcher\build\Release\SwiftDemoUIPro.exe` 只是裸编译产物，并非可独立运行的程序；在未配置 Qt 开发环境时直接双击，可能提示缺少 `Qt6Gui.dll` 等文件。
+
+如需生成可以直接运行的程序，请先构建 VPK，再打包启动器：
 
 ```powershell
 .\launcher\build-launcher.ps1 -QtRoot "C:\Qt\6.8.3\msvc2022_64" -Package
 ```
 
-脚本会配置 CMake、构建启动器、运行 Qt 测试、通过 `windeployqt` 收集所需的动态 Qt 库，并生成：
+打包流程会重新构建并测试，通过 `windeployqt` 收集 Qt 动态库和平台插件，同时生成可直接测试的展开目录和发布 ZIP：
 
 ```text
+launcher\package\SwiftDemoUIPro-v<版本号>\SwiftDemoUIPro.exe
 launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
 ```
+
+本地端到端测试请运行展开目录中的 EXE，并保持整个目录完整；不要只复制一个 EXE。
 
 启动器的架构、国际化和打包细节见 [launcher/README_CN.md](launcher/README_CN.md)。
 
@@ -134,6 +150,8 @@ launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
   -VpkEditCli "C:\Tools\VPKEdit\vpkeditcli.exe" `
   -QtRoot "C:\Qt\6.8.3\msvc2022_64"
 ```
+
+`release.ps1` 会强制要求 `git status --short` 没有任何输出，因为源码包从 `HEAD` 生成。它不用于测试尚未提交的修改：开发阶段请使用 `build-launcher.ps1`，完成并提交改动后再生成 Release 候选包。若使用 stash，暂存的改动不会进入本次 Release。
 
 脚本会运行全部 JavaScript 与 Qt 测试，重新构建 VPK 和启动器，然后在 `release\v<版本号>` 下生成：
 

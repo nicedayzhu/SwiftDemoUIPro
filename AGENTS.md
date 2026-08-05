@@ -66,6 +66,7 @@ The launcher must never imply that an `-insecure` session is suitable for matchm
 - ZIP files are opened in process through statically linked miniz. The launcher lists only `.dem` entries and streams only the selected entry to a fixed staged path; it never expands the full archive.
 - Preserve ZIP protections: reject encrypted/unsupported/invalid entries, empty Demos, size mismatches, insufficient disk space, and extracted Demos larger than 8 GB.
 - A ZIP with one Demo is selected automatically; multiple Demos require explicit selection.
+- The launcher defaults TrueView prediction off by writing `cl_demo_predict 0` to the session CFG. Keep this compatibility default unless the player explicitly enables TrueView for a supported recording.
 - The UI must remain readable under Windows light and dark system palettes. When changing QSS, explicitly style dialog child labels/buttons and visually check important states.
 - Existing QA options in `main.cpp` include `--ui-language`, `--preview-page`, and `--render-preview`.
 
@@ -132,6 +133,8 @@ Use this for CI-like launcher work:
 
 The script configures CMake with tests enabled, builds the requested configuration, and runs CTest. `-SkipVpkCheck` is for a non-packaging build only.
 
+Do not tell users to double-click `launcher/build/Release/SwiftDemoUIPro.exe`. That directory is a raw build tree and does not contain the Qt runtime deployed by `windeployqt`; launching it outside a configured Qt environment can fail with a missing `Qt6Gui.dll` or platform-plugin error.
+
 ### Build and package the launcher
 
 Build the VPK first, then run:
@@ -146,10 +149,11 @@ Build the VPK first, then run:
 Output:
 
 ```text
+launcher\package\SwiftDemoUIPro-v<version>\SwiftDemoUIPro.exe
 launcher\package\SwiftDemoUIPro-v<version>-win64.zip
 ```
 
-Packaging uses `windeployqt` and must include the launcher EXE, VPK, translations, README files, project license, third-party notices, Qt LGPL text, Noto Sans SC OFL text, and miniz MIT text.
+Packaging uses `windeployqt` and must include the launcher EXE, Qt DLLs, `platforms/qwindows.dll`, VPK, translations, README files, project license, third-party notices, Qt LGPL text, Noto Sans SC OFL text, and miniz MIT text. Launch the EXE from the unpacked package directory for end-to-end testing.
 
 ## Testing Expectations
 

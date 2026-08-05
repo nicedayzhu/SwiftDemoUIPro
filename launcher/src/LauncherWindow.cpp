@@ -1,6 +1,7 @@
 #include "LauncherWindow.h"
 
 #include <QApplication>
+#include <QCheckBox>
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QCoreApplication>
@@ -156,6 +157,7 @@ LauncherWindow::LauncherWindow(QWidget *parent)
     currentLanguage_ = languageOverride.isEmpty()
         ? settings.value(QStringLiteral("uiLanguage"), QStringLiteral("system")).toString()
         : languageOverride;
+    trueViewEnabled_ = settings.value(QStringLiteral("trueViewEnabled"), false).toBool();
     if (!loadLanguage(currentLanguage_)) {
         currentLanguage_ = QStringLiteral("system");
         loadLanguage(currentLanguage_);
@@ -371,6 +373,35 @@ void LauncherWindow::buildInterface()
     statusLabel_->setProperty("state", QStringLiteral("neutral"));
     statusLabel_->setWordWrap(true);
     actions->addWidget(statusLabel_);
+
+    auto *trueViewRow = new QFrame(actionCard);
+    trueViewRow->setObjectName(QStringLiteral("SettingsRow"));
+    trueViewRow->setMinimumHeight(68);
+    auto *trueViewLayout = new QHBoxLayout(trueViewRow);
+    trueViewLayout->setContentsMargins(14, 10, 12, 10);
+    trueViewLayout->setSpacing(14);
+    auto *trueViewCopy = new QVBoxLayout;
+    trueViewCopy->setSpacing(2);
+    auto *trueViewTitle = new QLabel(tr("TrueView prediction"), trueViewRow);
+    trueViewTitle->setObjectName(QStringLiteral("OptionTitle"));
+    auto *trueViewDetail = new QLabel(tr("Off by default to prevent flicker in Demos without TrueView command data"), trueViewRow);
+    trueViewDetail->setObjectName(QStringLiteral("SecondaryText"));
+    trueViewDetail->setWordWrap(true);
+    trueViewCopy->addWidget(trueViewTitle);
+    trueViewCopy->addWidget(trueViewDetail);
+    trueViewLayout->addLayout(trueViewCopy, 1);
+    trueViewCheckBox_ = new QCheckBox(trueViewEnabled_ ? tr("Enabled") : tr("Disabled"), trueViewRow);
+    trueViewCheckBox_->setObjectName(QStringLiteral("TrueViewCheckBox"));
+    trueViewCheckBox_->setChecked(trueViewEnabled_);
+    connect(trueViewCheckBox_, &QCheckBox::toggled, this, [this](bool checked) {
+        trueViewEnabled_ = checked;
+        trueViewCheckBox_->setText(checked ? tr("Enabled") : tr("Disabled"));
+        QSettings settings(QStringLiteral("SwiftTools"), QStringLiteral("SwiftDemoLauncher"));
+        settings.setValue(QStringLiteral("trueViewEnabled"), checked);
+    });
+    trueViewLayout->addWidget(trueViewCheckBox_, 0, Qt::AlignVCenter);
+    actions->addWidget(trueViewRow);
+
     auto *actionRow = new QHBoxLayout;
     actionRow->setSpacing(10);
     startButton_ = new QPushButton(tr("Start playback"), actionCard);
@@ -762,6 +793,39 @@ void LauncherWindow::applyStyle()
             color: #7b8490;
             font-size: 11px;
             font-weight: 600;
+        }
+        QLabel#OptionTitle {
+            color: #4d5662;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        QCheckBox#TrueViewCheckBox {
+            min-width: 72px;
+            border: 1px solid #d5dae1;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #4d5662;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 7px 12px;
+        }
+        QCheckBox#TrueViewCheckBox::indicator {
+            width: 0;
+            height: 0;
+        }
+        QCheckBox#TrueViewCheckBox:hover {
+            border-color: #aeb7c3;
+            background: #f7f9fb;
+        }
+        QCheckBox#TrueViewCheckBox:checked {
+            border-color: #347fd8;
+            background: #347fd8;
+            color: #ffffff;
+        }
+        QCheckBox#TrueViewCheckBox:disabled {
+            border-color: #e4e7eb;
+            background: #f2f4f6;
+            color: #abb1ba;
         }
         QLabel#VpkStatus {
             color: #4d5662;
@@ -1177,7 +1241,7 @@ void LauncherWindow::startWatchingDemo()
         showResult(result);
         return;
     }
-    result = Cs2Manager::prepareDemoSession(paths_, demoPath_, demoArchiveEntry_);
+    result = Cs2Manager::prepareDemoSession(paths_, demoPath_, demoArchiveEntry_, trueViewEnabled_);
     if (!result.ok) {
         showResult(result);
         refreshState();
@@ -1241,6 +1305,7 @@ void LauncherWindow::refreshState()
     installButton_->setEnabled(valid && !running && !active);
     startButton_->setEnabled(valid && !demoPath_.isEmpty() && !running && !active);
     stopButton_->setEnabled(valid && !running && (active || installed));
+    trueViewCheckBox_->setEnabled(!running && !active);
 
     if (!valid) {
         setSecurityState(QStringLiteral("danger"), tr("Path required"), tr("No valid CS2 installation was found. Select Change to choose it manually."));

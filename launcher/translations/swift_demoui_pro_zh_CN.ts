@@ -172,7 +172,7 @@
         <translation>DemoUI VPK 已安装并校验。</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+18"/>
         <source>Unable to return the Demo list for this ZIP archive.</source>
         <translation>无法返回该 ZIP 压缩包中的 Demo 列表。</translation>
     </message>
@@ -217,7 +217,7 @@
         <translation>无法创建 Demo 会话标记。</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
         <source>Unable to save the Demo session state.</source>
         <translation>无法保存 Demo 会话状态。</translation>
     </message>
@@ -275,7 +275,7 @@
 <context>
     <name>LauncherWindow</name>
     <message>
-        <location filename="../src/LauncherWindow.cpp" line="+204"/>
+        <location filename="../src/LauncherWindow.cpp" line="+206"/>
         <source>CS2 Demo Tool</source>
         <translation>CS2 回放工具</translation>
     </message>
@@ -292,23 +292,23 @@
     </message>
     <message>
         <location line="-66"/>
-        <location line="+178"/>
+        <location line="+207"/>
         <source>DemoUI Management</source>
         <translation>DemoUI 管理</translation>
     </message>
     <message>
-        <location line="-171"/>
+        <location line="-200"/>
         <source>More</source>
         <translation>其他</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+255"/>
+        <location line="+284"/>
         <source>About</source>
         <translation>关于</translation>
     </message>
     <message>
-        <location line="-251"/>
+        <location line="-280"/>
         <source>Interface language</source>
         <translation>界面语言</translation>
     </message>
@@ -332,12 +332,12 @@
     </message>
     <message>
         <location line="+15"/>
-        <location line="+856"/>
+        <location line="+961"/>
         <source>✓</source>
         <translation>✓</translation>
     </message>
     <message>
-        <location line="-826"/>
+        <location line="-931"/>
         <source>Choose Demo</source>
         <translation>选择录像</translation>
     </message>
@@ -365,7 +365,19 @@
         <translation>正在检查环境...</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+22"/>
+        <location line="+5"/>
+        <source>Enabled</source>
+        <translation>已开启</translation>
+    </message>
+    <message>
+        <location line="-5"/>
+        <location line="+5"/>
+        <source>Disabled</source>
+        <translation>已关闭</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Start playback</source>
         <translation>开始观看</translation>
     </message>
@@ -489,7 +501,7 @@
         <translation>为 CS2 Demo 社区而制作</translation>
     </message>
     <message>
-        <location line="+372"/>
+        <location line="+446"/>
         <source>Unable to switch language</source>
         <translation>无法切换语言</translation>
     </message>
@@ -530,7 +542,7 @@
         <translation type="vanished">请选择有效的 CS2 .dem 文件。</translation>
     </message>
     <message>
-        <location line="-735"/>
+        <location line="-838"/>
         <source>Swift DemoUI Pro · %1</source>
         <translation>Swift DemoUI Pro · %1</translation>
     </message>
@@ -550,12 +562,22 @@
         <translation>支持 CS2 .dem 文件和 ZIP 压缩包</translation>
     </message>
     <message>
-        <location line="+167"/>
+        <location line="+33"/>
+        <source>TrueView prediction</source>
+        <translation>TrueView 预测</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Off by default to prevent flicker in Demos without TrueView command data</source>
+        <translation>默认关闭，避免缺少 TrueView 指令数据的 Demo 画面闪烁</translation>
+    </message>
+    <message>
+        <location line="+161"/>
         <source>Version %1 (%2) · Qt 6 Widgets</source>
         <translation>版本 %1（%2）· Qt 6 Widgets</translation>
     </message>
     <message>
-        <location line="+473"/>
+        <location line="+547"/>
         <source>CS2 Demo files (*.dem *.zip);;Demo files (*.dem);;ZIP archives (*.zip)</source>
         <translation>CS2 Demo 文件 (*.dem *.zip);;Demo 文件 (*.dem);;ZIP 压缩包 (*.zip)</translation>
     </message>
@@ -662,13 +684,13 @@ The launcher does not change permanent Steam launch options.</source>
         <translation>继续启动</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <location line="+161"/>
+        <location line="+3"/>
+        <location line="+162"/>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
     <message>
-        <location line="-136"/>
+        <location line="-137"/>
         <source>Demo session is still active</source>
         <translation>仍处于 Demo 会话</translation>
     </message>
@@ -698,7 +720,7 @@ The launcher does not change permanent Steam launch options.</source>
         <translation>未安装 · 启动时自动处理</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+11"/>
         <source>Path required</source>
         <translation>需要设置路径</translation>
     </message>

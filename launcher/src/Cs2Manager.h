@@ -48,7 +48,7 @@ public:
 
     static LauncherResult installOverride(const Cs2Paths &paths, const QString &sourceVpk);
     static LauncherResult inspectDemoArchive(const QString &archivePath, QList<DemoArchiveEntry> *entries);
-    static LauncherResult prepareDemoSession(const Cs2Paths &paths, const QString &demoPath, const QString &archiveEntry = {});
+    static LauncherResult prepareDemoSession(const Cs2Paths &paths, const QString &demoPath, const QString &archiveEntry = {}, bool trueViewEnabled = false);
     static LauncherResult removeDemoSession(const Cs2Paths &paths);
     static LauncherResult launchDemo(const Cs2Paths &paths);
 
@@ -56,7 +56,7 @@ public:
     static QStringList parseSteamLibraryFolders(const QString &vdfText);
     static QString addOverrideSearchPath(const QString &gameInfoText, bool *changed, QString *error);
     static QString removeOverrideSearchPath(const QString &gameInfoText, bool *changed);
-    static QString buildDemoCfg();
+    static QString buildDemoCfg(bool trueViewEnabled = false);
     static QStringList buildSteamLaunchArguments();
     static QString displayFileSize(qint64 bytes);
 
