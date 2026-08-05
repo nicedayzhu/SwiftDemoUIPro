@@ -87,6 +87,10 @@ if ($Package) {
     Copy-Item -LiteralPath $vpk -Destination (Join-Path $packageDir "swift_demo_menu_override.vpk")
     Copy-Item -LiteralPath (Join-Path $launcherRoot "README.md") -Destination (Join-Path $packageDir "README.txt")
     Copy-Item -LiteralPath (Join-Path $launcherRoot "THIRD_PARTY_NOTICES.txt") -Destination (Join-Path $packageDir "THIRD_PARTY_NOTICES.txt")
+    $appTranslations = Join-Path $launcherExe.DirectoryName "translations"
+    if (Test-Path -LiteralPath $appTranslations) {
+        Copy-Item -LiteralPath $appTranslations -Destination (Join-Path $packageDir "translations") -Recurse
+    }
 
     $deploy = Join-Path $qt "bin\windeployqt.exe"
     if (-not (Test-Path -LiteralPath $deploy)) { throw "windeployqt.exe was not found in $qt\bin" }
@@ -95,15 +99,13 @@ if ($Package) {
         (Join-Path $packageDir "SwiftDemoUIPro.exe")
     if ($LASTEXITCODE -ne 0) { throw "windeployqt failed." }
 
-    $qtLicense = Join-Path (Split-Path -Parent $qt) "LICENSES\LGPL-3.0-only.txt"
-    if (-not (Test-Path -LiteralPath $qtLicense)) {
-        $qtLicense = Join-Path $qt "LICENSES\LGPL-3.0-only.txt"
-    }
-    if (Test-Path -LiteralPath $qtLicense) {
-        $licenseDir = Join-Path $packageDir "licenses"
-        New-Item -ItemType Directory -Force -Path $licenseDir | Out-Null
-        Copy-Item -LiteralPath $qtLicense -Destination (Join-Path $licenseDir "Qt-LGPL-3.0.txt")
-    }
+    $licenseDir = Join-Path $packageDir "licenses"
+    New-Item -ItemType Directory -Force -Path $licenseDir | Out-Null
+    $fontLicense = Join-Path $launcherRoot "assets\fonts\OFL-1.1.txt"
+    Copy-Item -LiteralPath $fontLicense -Destination (Join-Path $licenseDir "NotoSansSC-OFL-1.1.txt")
+
+    $qtLicense = Join-Path $launcherRoot "licenses\Qt-LGPL-3.0-only.txt"
+    Copy-Item -LiteralPath $qtLicense -Destination (Join-Path $licenseDir "Qt-LGPL-3.0.txt")
 
     $zipPath = Join-Path $launcherRoot "package\SwiftDemoUIPro-win64.zip"
     if (Test-Path -LiteralPath $zipPath) { Remove-Item -LiteralPath $zipPath -Force }

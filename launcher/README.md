@@ -39,6 +39,20 @@ launcher\package\SwiftDemoUIPro-win64.zip
 构建脚本会运行 Qt 单元测试，并通过 `windeployqt` 收集运行所需的 Qt DLL。发布目录中的
 `SwiftDemoUIPro.exe` 与 `swift_demo_menu_override.vpk` 必须放在一起。
 
+## 国际化与字体
+
+- 软件代码和源文本使用英文；默认语言为“跟随系统”。中文系统自动加载简体中文，其他
+  系统在没有对应翻译时使用内置英文。
+- 用户可在侧栏手动选择“跟随系统 / 简体中文 / English”，选择结果会保存到本机设置。
+- 翻译源文件位于 `translations/swift_demoui_pro_<locale>.ts`。新增一个符合该命名规则的
+  `.ts` 文件后，CMake 会自动发现并编译为外置 `.qm` 文件；程序启动时也会自动扫描这些
+  文件并加入语言列表。
+- 更新源文本后，可构建 CMake 的 `update_translations` 目标，再使用 Qt Linguist 编辑
+  `.ts` 文件。请保留 `%1`、`%2` 等占位符。
+
+界面嵌入 Noto Sans SC 可变字体，同一字体同时覆盖简体中文与拉丁字符，避免不同系统的
+字体回退造成字重、行高不一致。字体按 SIL Open Font License 1.1 使用，发布包会附带许可。
+
 ## 安全边界
 
 - 启动器不会编辑 Steam 永久启动选项。
@@ -55,3 +69,4 @@ launcher\package\SwiftDemoUIPro-win64.zip
   Demo 解析或 Web 前端代码。
 - 启动器动态链接 Qt 6（LGPL v3）。打包脚本会保留可替换的 Qt DLL，并在发布目录附带 Qt
   许可文本。
+- 界面字体使用 SIL Open Font License 1.1 许可的 Noto Sans SC，字体许可同样随发布包提供。

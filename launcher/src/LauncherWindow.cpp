@@ -2,6 +2,8 @@
 
 #include <QApplication>
 #include <QCloseEvent>
+#include <QComboBox>
+#include <QCoreApplication>
 #include <QDesktopServices>
 #include <QDir>
 #include <QDragEnterEvent>
@@ -13,6 +15,7 @@
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QLabel>
+#include <QLocale>
 #include <QMessageBox>
 #include <QMimeData>
 #include <QPainter>
@@ -22,6 +25,7 @@
 #include <QStackedWidget>
 #include <QStyle>
 #include <QTimer>
+#include <QTranslator>
 #include <QUrl>
 #include <QVBoxLayout>
 
@@ -135,11 +139,21 @@ LauncherWindow::LauncherWindow(QWidget *parent)
     resize(1000, 720);
     setAcceptDrops(true);
 
+    translator_ = new QTranslator(this);
+    QSettings settings(QStringLiteral("SwiftTools"), QStringLiteral("SwiftDemoLauncher"));
+    const QString languageOverride = qApp->property("uiLanguageOverride").toString();
+    currentLanguage_ = languageOverride.isEmpty()
+        ? settings.value(QStringLiteral("uiLanguage"), QStringLiteral("system")).toString()
+        : languageOverride;
+    if (!loadLanguage(currentLanguage_)) {
+        currentLanguage_ = QStringLiteral("system");
+        loadLanguage(currentLanguage_);
+    }
+
     buildInterface();
     applyStyle();
     detectEnvironment();
 
-    QSettings settings(QStringLiteral("SwiftTools"), QStringLiteral("SwiftDemoLauncher"));
     const QString rememberedDemo = settings.value(QStringLiteral("lastDemo")).toString();
     if (QFileInfo::exists(rememberedDemo))
         setDemoPath(rememberedDemo);
@@ -161,7 +175,7 @@ void LauncherWindow::buildInterface()
 
     auto *sidebar = new QFrame(central);
     sidebar->setObjectName(QStringLiteral("Sidebar"));
-    sidebar->setFixedWidth(220);
+    sidebar->setFixedWidth(252);
     auto *sideLayout = new QVBoxLayout(sidebar);
     sideLayout->setContentsMargins(18, 22, 18, 18);
     sideLayout->setSpacing(8);
@@ -176,7 +190,7 @@ void LauncherWindow::buildInterface()
     brandCopy->setSpacing(1);
     auto *brandTitle = new QLabel(QStringLiteral("Swift DemoUI Pro"), sidebar);
     brandTitle->setObjectName(QStringLiteral("BrandTitle"));
-    auto *brandSubtitle = new QLabel(QStringLiteral("CS2 回放工具"), sidebar);
+    auto *brandSubtitle = new QLabel(tr("CS2 Demo Tool"), sidebar);
     brandSubtitle->setObjectName(QStringLiteral("BrandSubtitle"));
     brandCopy->addWidget(brandTitle);
     brandCopy->addWidget(brandSubtitle);
@@ -184,7 +198,7 @@ void LauncherWindow::buildInterface()
     sideLayout->addLayout(brand);
     sideLayout->addSpacing(22);
 
-    auto *workspaceCaption = new QLabel(QStringLiteral("工作区"), sidebar);
+    auto *workspaceCaption = new QLabel(tr("Workspace"), sidebar);
     workspaceCaption->setObjectName(QStringLiteral("NavCaption"));
     sideLayout->addWidget(workspaceCaption);
 
@@ -199,19 +213,54 @@ void LauncherWindow::buildInterface()
         return button;
     };
 
-    navReplayButton_ = makeNavButton(QStringLiteral("Demo 回放"), Glyph::Demo);
-    navMenuButton_ = makeNavButton(QStringLiteral("DemoUI 管理"), Glyph::Menu);
+    navReplayButton_ = makeNavButton(tr("Demo Playback"), Glyph::Demo);
+    navMenuButton_ = makeNavButton(tr("DemoUI Management"), Glyph::Menu);
+    navReplayButton_->setProperty("pageIndex", 0);
+    navMenuButton_->setProperty("pageIndex", 1);
     sideLayout->addWidget(navReplayButton_);
     sideLayout->addWidget(navMenuButton_);
     sideLayout->addStretch(1);
 
-    auto *moreCaption = new QLabel(QStringLiteral("其他"), sidebar);
+    auto *moreCaption = new QLabel(tr("More"), sidebar);
     moreCaption->setObjectName(QStringLiteral("NavCaption"));
     sideLayout->addWidget(moreCaption);
-    navAboutButton_ = makeNavButton(QStringLiteral("关于"), Glyph::About);
+    navAboutButton_ = makeNavButton(tr("About"), Glyph::About);
+    navAboutButton_->setProperty("pageIndex", 2);
     sideLayout->addWidget(navAboutButton_);
 
-    auto *version = new QLabel(QStringLiteral("Swift DemoUI Pro  ·  0.1.0"), sidebar);
+    auto *languageCaption = new QLabel(tr("Interface language"), sidebar);
+    languageCaption->setObjectName(QStringLiteral("NavCaption"));
+    sideLayout->addSpacing(10);
+    sideLayout->addWidget(languageCaption);
+    languageCombo_ = new QComboBox(sidebar);
+    languageCombo_->setObjectName(QStringLiteral("LanguageCombo"));
+    languageCombo_->addItem(tr("System default"), QStringLiteral("system"));
+    languageCombo_->addItem(QStringLiteral("English"), QStringLiteral("en"));
+
+    const QDir translationsDir(QDir(QCoreApplication::applicationDirPath()).filePath(QStringLiteral("translations")));
+    const QStringList translationFiles = translationsDir.entryList({QStringLiteral("swift_demoui_pro_*.qm")}, QDir::Files);
+    for (const QString &fileName : translationFiles) {
+        QString localeName = fileName;
+        localeName.remove(QStringLiteral("swift_demoui_pro_"));
+        localeName.chop(3);
+        if (languageCombo_->findData(localeName) >= 0)
+            continue;
+        QLocale locale(localeName);
+        QString displayName = locale.nativeLanguageName();
+        if (displayName.isEmpty())
+            displayName = localeName;
+        else
+            displayName[0] = displayName[0].toUpper();
+        languageCombo_->addItem(displayName, localeName);
+    }
+    const int languageIndex = languageCombo_->findData(currentLanguage_);
+    languageCombo_->setCurrentIndex(languageIndex >= 0 ? languageIndex : 0);
+    connect(languageCombo_, &QComboBox::currentIndexChanged, this, [this](int index) {
+        changeLanguage(languageCombo_->itemData(index).toString());
+    });
+    sideLayout->addWidget(languageCombo_);
+
+    auto *version = new QLabel(tr("Swift DemoUI Pro  ·  0.1.0"), sidebar);
     version->setObjectName(QStringLiteral("SidebarFooter"));
     version->setAlignment(Qt::AlignCenter);
     sideLayout->addSpacing(8);
@@ -231,15 +280,15 @@ void LauncherWindow::buildInterface()
     auto *replayHeader = new QHBoxLayout;
     auto *replayTitleCopy = new QVBoxLayout;
     replayTitleCopy->setSpacing(3);
-    auto *replayTitle = new QLabel(QStringLiteral("Demo 回放"), replayPage);
+    auto *replayTitle = new QLabel(tr("Demo Playback"), replayPage);
     replayTitle->setObjectName(QStringLiteral("PageTitle"));
-    auto *replaySubtitle = new QLabel(QStringLiteral("选择录像，并以安全可恢复的方式启动 CS2"), replayPage);
+    auto *replaySubtitle = new QLabel(tr("Choose a Demo and start CS2 with a safe, reversible setup"), replayPage);
     replaySubtitle->setObjectName(QStringLiteral("PageSubtitle"));
     replayTitleCopy->addWidget(replayTitle);
     replayTitleCopy->addWidget(replaySubtitle);
     replayHeader->addLayout(replayTitleCopy, 1);
 
-    securityBadge_ = new QLabel(QStringLiteral("正在检查"), replayPage);
+    securityBadge_ = new QLabel(tr("Checking"), replayPage);
     securityBadge_->setObjectName(QStringLiteral("SecurityBadge"));
     securityBadge_->setProperty("state", QStringLiteral("neutral"));
     securityBadge_->setAlignment(Qt::AlignCenter);
@@ -254,7 +303,7 @@ void LauncherWindow::buildInterface()
     auto *warningLayout = new QHBoxLayout(warningCard_);
     warningLayout->setContentsMargins(16, 12, 18, 12);
     warningLayout->setSpacing(12);
-    warningIcon_ = new QLabel(QStringLiteral("✓"), warningCard_);
+    warningIcon_ = new QLabel(tr("✓"), warningCard_);
     warningIcon_->setObjectName(QStringLiteral("WarningIcon"));
     warningIcon_->setAlignment(Qt::AlignCenter);
     warningIcon_->setFixedSize(28, 28);
@@ -284,15 +333,15 @@ void LauncherWindow::buildInterface()
     dropLayout->addWidget(fileIcon);
     auto *fileCopy = new QVBoxLayout;
     fileCopy->setSpacing(3);
-    fileCopy->addWidget(sectionEyebrow(QStringLiteral("选择录像"), dropCard_));
-    demoName_ = new QLabel(QStringLiteral("拖放 Demo 到这里"), dropCard_);
+    fileCopy->addWidget(sectionEyebrow(tr("Choose Demo"), dropCard_));
+    demoName_ = new QLabel(tr("Drop a Demo here"), dropCard_);
     demoName_->setObjectName(QStringLiteral("PrimaryText"));
-    demoMeta_ = new QLabel(QStringLiteral("支持 CS2 .dem 文件，也可以点击右侧浏览"), dropCard_);
+    demoMeta_ = new QLabel(tr("Supports CS2 .dem files, or browse from your computer"), dropCard_);
     demoMeta_->setObjectName(QStringLiteral("SecondaryText"));
     fileCopy->addWidget(demoName_);
     fileCopy->addWidget(demoMeta_);
     dropLayout->addLayout(fileCopy, 1);
-    chooseDemoButton_ = new QPushButton(QStringLiteral("浏览…"), dropCard_);
+    chooseDemoButton_ = new QPushButton(tr("Browse…"), dropCard_);
     chooseDemoButton_->setObjectName(QStringLiteral("SecondaryButton"));
     chooseDemoButton_->setIcon(makeGlyphIcon(Glyph::Folder, QColor(QStringLiteral("#5d6775"))));
     chooseDemoButton_->setIconSize(QSize(18, 18));
@@ -305,22 +354,22 @@ void LauncherWindow::buildInterface()
     auto *actions = new QVBoxLayout(actionCard);
     actions->setContentsMargins(18, 17, 18, 18);
     actions->setSpacing(12);
-    actions->addWidget(sectionEyebrow(QStringLiteral("观看控制"), actionCard));
-    statusLabel_ = new QLabel(QStringLiteral("正在检查环境..."), actionCard);
+    actions->addWidget(sectionEyebrow(tr("Playback controls"), actionCard));
+    statusLabel_ = new QLabel(tr("Checking the environment..."), actionCard);
     statusLabel_->setObjectName(QStringLiteral("StatusText"));
     statusLabel_->setProperty("state", QStringLiteral("neutral"));
     statusLabel_->setWordWrap(true);
     actions->addWidget(statusLabel_);
     auto *actionRow = new QHBoxLayout;
     actionRow->setSpacing(10);
-    startButton_ = new QPushButton(QStringLiteral("开始观看"), actionCard);
+    startButton_ = new QPushButton(tr("Start playback"), actionCard);
     startButton_->setObjectName(QStringLiteral("PrimaryButton"));
     startButton_->setIcon(makeGlyphIcon(Glyph::Play, QColor(QStringLiteral("#ffffff"))));
     startButton_->setIconSize(QSize(18, 18));
     startButton_->setMinimumHeight(50);
     connect(startButton_, &QPushButton::clicked, this, &LauncherWindow::startWatchingDemo);
     actionRow->addWidget(startButton_, 3);
-    stopButton_ = new QPushButton(QStringLiteral("停止观看并恢复"), actionCard);
+    stopButton_ = new QPushButton(tr("Stop and restore"), actionCard);
     stopButton_->setObjectName(QStringLiteral("StopButton"));
     stopButton_->setIcon(makeGlyphIcon(Glyph::Stop, QColor(QStringLiteral("#657080"))));
     stopButton_->setIconSize(QSize(17, 17));
@@ -331,7 +380,7 @@ void LauncherWindow::buildInterface()
     replay->addWidget(actionCard);
     replay->addStretch(1);
 
-    auto *replayFooter = new QLabel(QStringLiteral("仅本次使用 -insecure  ·  不会修改 Steam 永久启动项"), replayPage);
+    auto *replayFooter = new QLabel(tr("-insecure is used for this session only  ·  Steam launch options are not changed"), replayPage);
     replayFooter->setObjectName(QStringLiteral("FooterText"));
     replayFooter->setAlignment(Qt::AlignCenter);
     replay->addWidget(replayFooter);
@@ -343,9 +392,9 @@ void LauncherWindow::buildInterface()
     menu->setContentsMargins(36, 30, 36, 24);
     menu->setSpacing(18);
 
-    auto *menuTitle = new QLabel(QStringLiteral("DemoUI 管理"), menuPage);
+    auto *menuTitle = new QLabel(tr("DemoUI Management"), menuPage);
     menuTitle->setObjectName(QStringLiteral("PageTitle"));
-    auto *menuSubtitle = new QLabel(QStringLiteral("管理 CS2 路径和 Swift DemoUI 组件"), menuPage);
+    auto *menuSubtitle = new QLabel(tr("Manage the CS2 path and Swift DemoUI component"), menuPage);
     menuSubtitle->setObjectName(QStringLiteral("PageSubtitle"));
     menu->addWidget(menuTitle);
     menu->addWidget(menuSubtitle);
@@ -356,7 +405,7 @@ void LauncherWindow::buildInterface()
     auto *environment = new QVBoxLayout(environmentCard);
     environment->setContentsMargins(18, 17, 18, 18);
     environment->setSpacing(10);
-    environment->addWidget(sectionEyebrow(QStringLiteral("游戏环境"), environmentCard));
+    environment->addWidget(sectionEyebrow(tr("Game environment"), environmentCard));
 
     auto *pathRow = new QFrame(environmentCard);
     pathRow->setObjectName(QStringLiteral("SettingsRow"));
@@ -366,15 +415,15 @@ void LauncherWindow::buildInterface()
     pathLayout->setSpacing(14);
     auto *pathCopy = new QVBoxLayout;
     pathCopy->setSpacing(2);
-    auto *pathCaption = new QLabel(QStringLiteral("CS2 路径"), pathRow);
+    auto *pathCaption = new QLabel(tr("CS2 path"), pathRow);
     pathCaption->setObjectName(QStringLiteral("FieldLabel"));
     pathCopy->addWidget(pathCaption);
-    cs2Path_ = new QLabel(QStringLiteral("正在检测..."), pathRow);
+    cs2Path_ = new QLabel(tr("Detecting..."), pathRow);
     cs2Path_->setObjectName(QStringLiteral("PathText"));
     cs2Path_->setTextInteractionFlags(Qt::TextSelectableByMouse);
     pathCopy->addWidget(cs2Path_);
     pathLayout->addLayout(pathCopy, 1);
-    chooseCs2Button_ = new QPushButton(QStringLiteral("更改"), pathRow);
+    chooseCs2Button_ = new QPushButton(tr("Change"), pathRow);
     chooseCs2Button_->setObjectName(QStringLiteral("GhostButton"));
     connect(chooseCs2Button_, &QPushButton::clicked, this, &LauncherWindow::chooseCs2Directory);
     pathLayout->addWidget(chooseCs2Button_);
@@ -388,14 +437,14 @@ void LauncherWindow::buildInterface()
     vpkLayout->setSpacing(14);
     auto *vpkCopy = new QVBoxLayout;
     vpkCopy->setSpacing(2);
-    auto *vpkCaption = new QLabel(QStringLiteral("DemoUI 组件"), vpkRow);
+    auto *vpkCaption = new QLabel(tr("DemoUI component"), vpkRow);
     vpkCaption->setObjectName(QStringLiteral("FieldLabel"));
     vpkCopy->addWidget(vpkCaption);
-    vpkStatus_ = new QLabel(QStringLiteral("正在检查..."), vpkRow);
+    vpkStatus_ = new QLabel(tr("Checking..."), vpkRow);
     vpkStatus_->setObjectName(QStringLiteral("VpkStatus"));
     vpkCopy->addWidget(vpkStatus_);
     vpkLayout->addLayout(vpkCopy, 1);
-    installButton_ = new QPushButton(QStringLiteral("安装 / 修复"), vpkRow);
+    installButton_ = new QPushButton(tr("Install / Repair"), vpkRow);
     installButton_->setObjectName(QStringLiteral("SecondaryButton"));
     connect(installButton_, &QPushButton::clicked, this, &LauncherWindow::installOrRepairMenu);
     vpkLayout->addWidget(installButton_);
@@ -407,16 +456,16 @@ void LauncherWindow::buildInterface()
     auto *infoLayout = new QVBoxLayout(managementInfo);
     infoLayout->setContentsMargins(18, 16, 18, 17);
     infoLayout->setSpacing(8);
-    auto *infoTitle = new QLabel(QStringLiteral("启动器会自动处理"), managementInfo);
+    auto *infoTitle = new QLabel(tr("Handled automatically"), managementInfo);
     infoTitle->setObjectName(QStringLiteral("InfoTitle"));
     infoLayout->addWidget(infoTitle);
     const QStringList details = {
-        QStringLiteral("启动 Demo 时自动安装或修复 DemoUI 组件"),
-        QStringLiteral("停止观看后移除临时录像、配置和 DemoUI 覆盖"),
-        QStringLiteral("不会写入或修改 Steam 的永久启动参数")
+        tr("Install or repair the DemoUI component automatically when starting a Demo"),
+        tr("Remove the temporary Demo, configuration, and DemoUI override after playback"),
+        tr("Never writes or changes permanent Steam launch options")
     };
     for (const QString &detail : details) {
-        auto *label = new QLabel(QStringLiteral("•  %1").arg(detail), managementInfo);
+        auto *label = new QLabel(tr("•  %1").arg(detail), managementInfo);
         label->setObjectName(QStringLiteral("InfoText"));
         infoLayout->addWidget(label);
     }
@@ -430,9 +479,9 @@ void LauncherWindow::buildInterface()
     about->setContentsMargins(36, 30, 36, 24);
     about->setSpacing(18);
 
-    auto *aboutTitle = new QLabel(QStringLiteral("关于"), aboutPage);
+    auto *aboutTitle = new QLabel(tr("About"), aboutPage);
     aboutTitle->setObjectName(QStringLiteral("PageTitle"));
-    auto *aboutSubtitle = new QLabel(QStringLiteral("项目信息、作者主页与支持方式"), aboutPage);
+    auto *aboutSubtitle = new QLabel(tr("Project details, author profiles, and ways to support"), aboutPage);
     aboutSubtitle->setObjectName(QStringLiteral("PageSubtitle"));
     about->addWidget(aboutTitle);
     about->addWidget(aboutSubtitle);
@@ -451,9 +500,9 @@ void LauncherWindow::buildInterface()
     heroCopy->setSpacing(3);
     auto *heroTitle = new QLabel(QStringLiteral("Swift DemoUI Pro"), aboutHero);
     heroTitle->setObjectName(QStringLiteral("AboutTitle"));
-    auto *heroDescription = new QLabel(QStringLiteral("轻量、原生的 Counter-Strike 2 DemoUI 增强与回放工具"), aboutHero);
+    auto *heroDescription = new QLabel(tr("A lightweight, native DemoUI enhancement and playback tool for Counter-Strike 2"), aboutHero);
     heroDescription->setObjectName(QStringLiteral("AboutDescription"));
-    auto *heroVersion = new QLabel(QStringLiteral("版本 0.1.0  ·  Qt 6 Widgets"), aboutHero);
+    auto *heroVersion = new QLabel(tr("Version 0.1.0  ·  Qt 6 Widgets"), aboutHero);
     heroVersion->setObjectName(QStringLiteral("AboutVersion"));
     heroCopy->addWidget(heroTitle);
     heroCopy->addWidget(heroDescription);
@@ -466,7 +515,7 @@ void LauncherWindow::buildInterface()
     auto *socials = new QVBoxLayout(socialCard);
     socials->setContentsMargins(18, 17, 18, 18);
     socials->setSpacing(10);
-    socials->addWidget(sectionEyebrow(QStringLiteral("找到我"), socialCard));
+    socials->addWidget(sectionEyebrow(tr("Find me"), socialCard));
 
     const auto addSocial = [this, socials, socialCard](const QString &name, const QString &detail, const QString &url, bool support) {
         auto *row = new QFrame(socialCard);
@@ -483,7 +532,7 @@ void LauncherWindow::buildInterface()
         copy->addWidget(title);
         copy->addWidget(description);
         rowLayout->addLayout(copy, 1);
-        auto *openButton = new QPushButton(support ? QStringLiteral("支持我") : QStringLiteral("打开"), row);
+        auto *openButton = new QPushButton(support ? tr("Support me") : tr("Open"), row);
         openButton->setObjectName(support ? QStringLiteral("SupportButton") : QStringLiteral("SocialButton"));
         openButton->setIcon(makeGlyphIcon(support ? Glyph::Coffee : Glyph::External, QColor(support ? QStringLiteral("#ffffff") : QStringLiteral("#5d6775"))));
         openButton->setIconSize(QSize(17, 17));
@@ -495,12 +544,12 @@ void LauncherWindow::buildInterface()
     };
 
     addSocial(QStringLiteral("GitHub"), QStringLiteral("github.com/nicedayzhu"), QStringLiteral("https://github.com/nicedayzhu"), false);
-    addSocial(QStringLiteral("哔哩哔哩"), QStringLiteral("space.bilibili.com/1405728"), QStringLiteral("https://space.bilibili.com/1405728"), false);
-    addSocial(QStringLiteral("Ko-fi"), QStringLiteral("如果这个工具对你有帮助，可以请我喝杯咖啡"), QStringLiteral("https://ko-fi.com/K6C623WHCQ"), true);
+    addSocial(tr("Bilibili"), QStringLiteral("space.bilibili.com/1405728"), QStringLiteral("https://space.bilibili.com/1405728"), false);
+    addSocial(QStringLiteral("Ko-fi"), tr("If this tool helps you, you can buy me a coffee"), QStringLiteral("https://ko-fi.com/K6C623WHCQ"), true);
     about->addWidget(socialCard);
     about->addStretch(1);
 
-    auto *aboutFooter = new QLabel(QStringLiteral("Made for the CS2 demo community"), aboutPage);
+    auto *aboutFooter = new QLabel(tr("Made for the CS2 Demo community"), aboutPage);
     aboutFooter->setObjectName(QStringLiteral("FooterText"));
     aboutFooter->setAlignment(Qt::AlignCenter);
     about->addWidget(aboutFooter);
@@ -519,7 +568,7 @@ void LauncherWindow::applyStyle()
         QWidget#Root {
             background: #f5f7fa;
             color: #1a1d23;
-            font-family: "Segoe UI Variable", "Microsoft YaHei UI", "Segoe UI";
+            font-family: "Noto Sans SC";
             font-size: 14px;
         }
         QFrame#Sidebar {
@@ -565,6 +614,28 @@ void LauncherWindow::applyStyle()
         QLabel#SidebarFooter {
             color: #a3a9b2;
             font-size: 10px;
+        }
+        QComboBox#LanguageCombo {
+            min-height: 36px;
+            border: 1px solid #dde1e7;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #4f5865;
+            padding: 0 10px;
+            font-size: 12px;
+        }
+        QComboBox#LanguageCombo:hover { border-color: #b8c0cb; }
+        QComboBox#LanguageCombo::drop-down {
+            width: 24px;
+            border: none;
+        }
+        QComboBox#LanguageCombo QAbstractItemView {
+            border: 1px solid #dde1e7;
+            background: #ffffff;
+            color: #303640;
+            selection-background-color: #e5f0ff;
+            selection-color: #1769c2;
+            outline: none;
         }
         QStackedWidget#PageStack {
             border: none;
@@ -807,6 +878,75 @@ void LauncherWindow::applyStyle()
         }
     )CSS"));
 }
+
+bool LauncherWindow::loadLanguage(const QString &language)
+{
+    if (translator_) {
+        qApp->removeTranslator(translator_);
+        delete translator_;
+    }
+    translator_ = new QTranslator(this);
+
+    QString effectiveLanguage = language;
+    const bool followsSystem = language.compare(QStringLiteral("system"), Qt::CaseInsensitive) == 0;
+    if (followsSystem)
+        effectiveLanguage = QLocale::system().name();
+
+    if (effectiveLanguage.startsWith(QStringLiteral("en"), Qt::CaseInsensitive))
+        return true;
+
+    QStringList candidates { effectiveLanguage };
+    const QString languageOnly = effectiveLanguage.section(QLatin1Char('_'), 0, 0);
+    if (languageOnly != effectiveLanguage)
+        candidates.append(languageOnly);
+
+    const QDir translationsDir(QDir(QCoreApplication::applicationDirPath()).filePath(QStringLiteral("translations")));
+    for (const QString &candidate : candidates) {
+        const QString fileName = QStringLiteral("swift_demoui_pro_%1.qm").arg(candidate);
+        if (translator_->load(translationsDir.filePath(fileName))) {
+            qApp->installTranslator(translator_);
+            return true;
+        }
+    }
+
+    return followsSystem;
+}
+
+void LauncherWindow::changeLanguage(const QString &language)
+{
+    if (language.isEmpty() || language == currentLanguage_)
+        return;
+
+    const QString previousLanguage = currentLanguage_;
+    const int previousPage = pages_ ? pages_->currentIndex() : 0;
+    if (!loadLanguage(language)) {
+        loadLanguage(previousLanguage);
+        QMessageBox::warning(this, tr("Unable to switch language"), tr("The translation file for the selected language was not found. Reinstall the app or check the translations folder."));
+        if (languageCombo_) {
+            languageCombo_->blockSignals(true);
+            languageCombo_->setCurrentIndex(languageCombo_->findData(previousLanguage));
+            languageCombo_->blockSignals(false);
+        }
+        return;
+    }
+
+    currentLanguage_ = language;
+    QSettings settings(QStringLiteral("SwiftTools"), QStringLiteral("SwiftDemoLauncher"));
+    settings.setValue(QStringLiteral("uiLanguage"), currentLanguage_);
+
+    QWidget *oldCentral = takeCentralWidget();
+    buildInterface();
+    if (oldCentral)
+        oldCentral->deleteLater();
+
+    lastStatus_.clear();
+    refreshDemoDetails();
+    if (!demoPath_.isEmpty())
+        lastStatus_ = tr("Demo selected. Start playback to install DemoUI automatically and launch CS2.");
+    selectPage(previousPage);
+    refreshState();
+}
+
 void LauncherWindow::detectEnvironment()
 {
     QSettings settings(QStringLiteral("SwiftTools"), QStringLiteral("SwiftDemoLauncher"));
@@ -816,9 +956,9 @@ void LauncherWindow::detectEnvironment()
     if (paths_.isValid()) {
         settings.setValue(QStringLiteral("cs2Root"), paths_.cs2Root);
         cs2Path_->setText(QDir::toNativeSeparators(paths_.cs2Root));
-        lastStatus_ = QStringLiteral("已自动检测到 CS2，可以选择 Demo。");
+        lastStatus_ = tr("CS2 was detected automatically. You can now choose a Demo.");
     } else {
-        cs2Path_->setText(QStringLiteral("未找到 CS2"));
+        cs2Path_->setText(tr("CS2 not found"));
         lastStatus_ = error;
     }
 }
@@ -829,7 +969,7 @@ void LauncherWindow::chooseDemo()
     const QString startDirectory = QFileInfo(demoPath_).exists()
         ? QFileInfo(demoPath_).absolutePath()
         : settings.value(QStringLiteral("lastDemoDirectory"), QDir::homePath()).toString();
-    const QString path = QFileDialog::getOpenFileName(this, QStringLiteral("选择 CS2 Demo"), startDirectory, QStringLiteral("CS2 Demo (*.dem)"));
+    const QString path = QFileDialog::getOpenFileName(this, tr("Choose a CS2 Demo"), startDirectory, QStringLiteral("CS2 Demo (*.dem)"));
     if (!path.isEmpty())
         setDemoPath(path);
 }
@@ -838,33 +978,41 @@ void LauncherWindow::setDemoPath(const QString &path)
 {
     const QFileInfo info(path);
     if (!info.exists() || !info.isFile() || info.suffix().compare(QStringLiteral("dem"), Qt::CaseInsensitive) != 0) {
-        QMessageBox::warning(this, QStringLiteral("无法使用该文件"), QStringLiteral("请选择有效的 CS2 .dem 文件。"));
+        QMessageBox::warning(this, tr("Unable to use this file"), tr("Select a valid CS2 .dem file."));
         return;
     }
 
     demoPath_ = info.absoluteFilePath();
-    demoName_->setText(info.fileName());
-    demoMeta_->setText(QStringLiteral("%1  ·  %2").arg(Cs2Manager::displayFileSize(info.size()), info.dir().dirName()));
-    demoMeta_->setToolTip(QDir::toNativeSeparators(demoPath_));
+    refreshDemoDetails();
     QSettings settings(QStringLiteral("SwiftTools"), QStringLiteral("SwiftDemoLauncher"));
     settings.setValue(QStringLiteral("lastDemo"), demoPath_);
     settings.setValue(QStringLiteral("lastDemoDirectory"), info.absolutePath());
-    lastStatus_ = QStringLiteral("Demo 已选择。点击“开始观看”会自动安装 DemoUI 并启动 CS2。");
+    lastStatus_ = tr("Demo selected. Start playback to install DemoUI automatically and launch CS2.");
     selectPage(0);
     refreshState();
+}
+
+void LauncherWindow::refreshDemoDetails()
+{
+    const QFileInfo info(demoPath_);
+    if (!info.exists() || !info.isFile())
+        return;
+    demoName_->setText(info.fileName());
+    demoMeta_->setText(tr("%1  ·  %2").arg(Cs2Manager::displayFileSize(info.size()), info.dir().dirName()));
+    demoMeta_->setToolTip(QDir::toNativeSeparators(demoPath_));
 }
 
 void LauncherWindow::chooseCs2Directory()
 {
     const QString initial = paths_.isValid() ? paths_.cs2Root : QDir::homePath();
-    const QString selected = QFileDialog::getExistingDirectory(this, QStringLiteral("选择 CS2 安装目录"), initial);
+    const QString selected = QFileDialog::getExistingDirectory(this, tr("Choose the CS2 installation folder"), initial);
     if (selected.isEmpty())
         return;
 
     QString error;
     const Cs2Paths selectedPaths = Cs2Manager::fromSelection(selected, &error);
     if (!selectedPaths.isValid()) {
-        QMessageBox::warning(this, QStringLiteral("目录无效"), error);
+        QMessageBox::warning(this, tr("Invalid folder"), error);
         return;
     }
 
@@ -872,14 +1020,14 @@ void LauncherWindow::chooseCs2Directory()
     QSettings settings(QStringLiteral("SwiftTools"), QStringLiteral("SwiftDemoLauncher"));
     settings.setValue(QStringLiteral("cs2Root"), paths_.cs2Root);
     cs2Path_->setText(QDir::toNativeSeparators(paths_.cs2Root));
-    lastStatus_ = QStringLiteral("CS2 路径已更新。");
+    lastStatus_ = tr("The CS2 path has been updated.");
     refreshState();
 }
 
 void LauncherWindow::installOrRepairMenu()
 {
     if (Cs2Manager::isCs2Running()) {
-        QMessageBox::warning(this, QStringLiteral("请先退出 CS2"), QStringLiteral("CS2 运行时不会替换 VPK。请完全退出游戏后再安装或修复。"));
+        QMessageBox::warning(this, tr("Exit CS2 first"), tr("The VPK cannot be replaced while CS2 is running. Fully exit the game before installing or repairing it."));
         return;
     }
     const QString vpk = Cs2Manager::findBundledVpk();
@@ -890,21 +1038,21 @@ void LauncherWindow::installOrRepairMenu()
 void LauncherWindow::startWatchingDemo()
 {
     if (!paths_.isValid() || demoPath_.isEmpty()) {
-        QMessageBox::warning(this, QStringLiteral("尚未准备好"), QStringLiteral("请先选择有效的 Demo，并确认 CS2 安装目录。"));
+        QMessageBox::warning(this, tr("Not ready"), tr("Choose a valid Demo and confirm the CS2 installation folder first."));
         return;
     }
     if (Cs2Manager::isCs2Running()) {
-        QMessageBox::warning(this, QStringLiteral("CS2 已在运行"), QStringLiteral("要启用 -insecure，必须完全退出当前 CS2，再由启动器重新打开。"));
+        QMessageBox::warning(this, tr("CS2 is already running"), tr("To enable -insecure, fully exit CS2 and let the launcher reopen it."));
         return;
     }
 
     QMessageBox confirmation(this);
     confirmation.setIcon(QMessageBox::Warning);
-    confirmation.setWindowTitle(QStringLiteral("启动 Demo 观看模式"));
-    confirmation.setText(QStringLiteral("CS2 将以 -insecure 模式启动"));
-    confirmation.setInformativeText(QStringLiteral("此会话不能用于正常匹配。看完后请先退出 CS2，再回到启动器点击“停止观看 Demo”。\n\n启动器不会修改 Steam 的永久启动参数。"));
-    auto *continueButton = confirmation.addButton(QStringLiteral("继续启动"), QMessageBox::AcceptRole);
-    confirmation.addButton(QStringLiteral("取消"), QMessageBox::RejectRole);
+    confirmation.setWindowTitle(tr("Start Demo playback mode"));
+    confirmation.setText(tr("CS2 will start in -insecure mode"));
+    confirmation.setInformativeText(tr("This session cannot be used for normal matchmaking. After watching, exit CS2 and return to the launcher to stop Demo playback.\n\nThe launcher does not change permanent Steam launch options."));
+    auto *continueButton = confirmation.addButton(tr("Continue"), QMessageBox::AcceptRole);
+    confirmation.addButton(tr("Cancel"), QMessageBox::RejectRole);
     confirmation.exec();
     if (confirmation.clickedButton() != continueButton)
         return;
@@ -929,7 +1077,7 @@ void LauncherWindow::startWatchingDemo()
 void LauncherWindow::stopWatchingDemo()
 {
     if (Cs2Manager::isCs2Running()) {
-        QMessageBox::warning(this, QStringLiteral("仍处于 Demo 会话"), QStringLiteral("请先从游戏菜单退出 CS2，并等待进程完全关闭，然后再点击“停止观看 Demo”。"));
+        QMessageBox::warning(this, tr("Demo session is still active"), tr("Exit CS2 from the game menu and wait for the process to close completely before stopping Demo playback."));
         return;
     }
 
@@ -943,7 +1091,7 @@ void LauncherWindow::showResult(const LauncherResult &result, bool dialogOnFailu
     lastStatus_ = result.message;
     statusLabel_->setText(lastStatus_);
     if (!result.ok && dialogOnFailure)
-        QMessageBox::critical(this, QStringLiteral("操作未完成"), result.message);
+        QMessageBox::critical(this, tr("Operation not completed"), result.message);
 }
 
 void LauncherWindow::setSecurityState(const QString &state, const QString &title, const QString &detail)
@@ -951,7 +1099,7 @@ void LauncherWindow::setSecurityState(const QString &state, const QString &title
     securityBadge_->setProperty("state", state);
     warningCard_->setProperty("state", state == QStringLiteral("safe") ? QStringLiteral("ready") : state);
     statusLabel_->setProperty("state", state);
-    warningIcon_->setText(state == QStringLiteral("safe") ? QStringLiteral("✓") : QStringLiteral("!"));
+    warningIcon_->setText(state == QStringLiteral("safe") ? tr("✓") : QStringLiteral("!"));
     securityBadge_->setText(title);
     warningTitle_->setText(title);
     warningDetail_->setText(detail);
@@ -970,8 +1118,8 @@ void LauncherWindow::refreshState()
     if (valid)
         cs2Path_->setText(QDir::toNativeSeparators(paths_.cs2Root));
     vpkStatus_->setProperty("installed", installed);
-    vpkStatus_->setText(!valid ? QStringLiteral("等待设置 CS2 路径")
-                               : installed ? QStringLiteral("已安装，可用") : QStringLiteral("未安装 · 启动时自动处理"));
+    vpkStatus_->setText(!valid ? tr("Waiting for the CS2 path")
+                               : installed ? tr("Installed and ready") : tr("Not installed · handled automatically at launch"));
     repolish(vpkStatus_);
 
     chooseDemoButton_->setEnabled(!active);
@@ -981,23 +1129,23 @@ void LauncherWindow::refreshState()
     stopButton_->setEnabled(valid && !running && (active || installed));
 
     if (!valid) {
-        setSecurityState(QStringLiteral("danger"), QStringLiteral("需要设置路径"), QStringLiteral("没有找到有效的 CS2 安装目录，请点击“更改”手动选择。"));
+        setSecurityState(QStringLiteral("danger"), tr("Path required"), tr("No valid CS2 installation was found. Select Change to choose it manually."));
         statusLabel_->setText(lastStatus_);
     } else if (active && running) {
-        setSecurityState(QStringLiteral("active"), QStringLiteral("Demo 模式运行中"), QStringLiteral("CS2 正在以 -insecure 运行，请勿进入正常匹配。观看结束后先退出游戏。"));
-        statusLabel_->setText(QStringLiteral("Demo 会话进行中。游戏退出后，请回到这里点击“停止观看 Demo”。"));
+        setSecurityState(QStringLiteral("active"), tr("Demo mode is active"), tr("CS2 is running with -insecure. Do not enter normal matchmaking. Exit the game after playback."));
+        statusLabel_->setText(tr("A Demo session is active. After exiting the game, return here and stop Demo playback."));
     } else if (active && !running) {
-        setSecurityState(QStringLiteral("danger"), QStringLiteral("需要完成清理"), QStringLiteral("CS2 已退出，但 Demo 资源仍在启用。请点击“停止观看并恢复”。"));
-        statusLabel_->setText(QStringLiteral("现在可以安全清理 Demo 资源并恢复正常游戏环境。"));
+        setSecurityState(QStringLiteral("danger"), tr("Cleanup required"), tr("CS2 has exited, but Demo resources are still enabled. Select Stop and restore."));
+        statusLabel_->setText(tr("Demo resources can now be removed safely to restore the normal game environment."));
     } else if (running) {
-        setSecurityState(QStringLiteral("active"), QStringLiteral("CS2 正在运行"), QStringLiteral("请先退出当前游戏，再从这里启动 Demo 观看模式。"));
-        statusLabel_->setText(QStringLiteral("等待 CS2 退出。"));
+        setSecurityState(QStringLiteral("active"), tr("CS2 is running"), tr("Exit the current game before starting Demo playback mode here."));
+        statusLabel_->setText(tr("Waiting for CS2 to exit."));
     } else if (installed) {
-        setSecurityState(QStringLiteral("active"), QStringLiteral("DemoUI 已准备"), QStringLiteral("可以开始观看 Demo。若要正常游戏，请先点击“停止观看并恢复”。"));
-        statusLabel_->setText(lastStatus_.isEmpty() ? QStringLiteral("DemoUI 已准备好。") : lastStatus_);
+        setSecurityState(QStringLiteral("active"), tr("DemoUI is ready"), tr("You can start Demo playback. To play normally, select Stop and restore first."));
+        statusLabel_->setText(lastStatus_.isEmpty() ? tr("DemoUI is ready.") : lastStatus_);
     } else {
-        setSecurityState(QStringLiteral("safe"), QStringLiteral("可以正常游戏"), QStringLiteral("当前没有 Demo 会话或 DemoUI 覆盖，可以正常启动 CS2。"));
-        statusLabel_->setText(lastStatus_.isEmpty() ? QStringLiteral("请选择一个 Demo。") : lastStatus_);
+        setSecurityState(QStringLiteral("safe"), tr("Ready for normal play"), tr("No Demo session or DemoUI override is active. CS2 can be started normally."));
+        statusLabel_->setText(lastStatus_.isEmpty() ? tr("Choose a Demo.") : lastStatus_);
     }
 }
 
@@ -1060,13 +1208,14 @@ void LauncherWindow::dropEvent(QDropEvent *event)
 void LauncherWindow::closeEvent(QCloseEvent *event)
 {
     if (paths_.isValid() && (Cs2Manager::isSessionActive(paths_) || Cs2Manager::isOverrideInstalled(paths_))) {
-        const QMessageBox::StandardButton answer = QMessageBox::warning(
-            this,
-            QStringLiteral("Demo 模式尚未清理"),
-            QStringLiteral("关闭启动器不会自动恢复正常匹配环境。\n\n观看结束后仍需退出 CS2、重新打开启动器并点击“停止观看 Demo”。"),
-            QMessageBox::Close | QMessageBox::Cancel,
-            QMessageBox::Cancel);
-        if (answer != QMessageBox::Close) {
+        QMessageBox warning(this);
+        warning.setIcon(QMessageBox::Warning);
+        warning.setWindowTitle(tr("Demo mode has not been cleaned up"));
+        warning.setText(tr("Closing the launcher does not restore the normal matchmaking environment automatically.\n\nAfter watching, exit CS2, reopen the launcher, and stop Demo playback."));
+        auto *closeButton = warning.addButton(tr("Close launcher"), QMessageBox::AcceptRole);
+        warning.addButton(tr("Cancel"), QMessageBox::RejectRole);
+        warning.exec();
+        if (warning.clickedButton() != closeButton) {
             event->ignore();
             return;
         }

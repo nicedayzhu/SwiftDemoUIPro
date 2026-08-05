@@ -103,7 +103,7 @@ bool readTextFile(const QString &path, QString *text, TextEncoding *encoding, QS
 {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        *error = QStringLiteral("无法读取 %1：%2").arg(QDir::toNativeSeparators(path), file.errorString());
+        *error = QCoreApplication::translate("Cs2Manager", "Unable to read %1: %2").arg(QDir::toNativeSeparators(path), file.errorString());
         return false;
     }
     *text = decodeText(file.readAll(), encoding);
@@ -114,11 +114,11 @@ bool writeTextFile(const QString &path, const QString &text, TextEncoding encodi
 {
     QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly)) {
-        *error = QStringLiteral("无法写入 %1：%2").arg(QDir::toNativeSeparators(path), file.errorString());
+        *error = QCoreApplication::translate("Cs2Manager", "Unable to write %1: %2").arg(QDir::toNativeSeparators(path), file.errorString());
         return false;
     }
     if (file.write(encodeText(text, encoding)) < 0 || !file.commit()) {
-        *error = QStringLiteral("保存 %1 失败：%2").arg(QDir::toNativeSeparators(path), file.errorString());
+        *error = QCoreApplication::translate("Cs2Manager", "Failed to save %1: %2").arg(QDir::toNativeSeparators(path), file.errorString());
         return false;
     }
     return true;
@@ -144,7 +144,7 @@ bool copyFileAtomically(const QString &source, const QString &target, QString *e
 {
     const QFileInfo targetInfo(target);
     if (!QDir().mkpath(targetInfo.absolutePath())) {
-        *error = QStringLiteral("无法创建目录：%1").arg(QDir::toNativeSeparators(targetInfo.absolutePath()));
+        *error = QCoreApplication::translate("Cs2Manager", "Unable to create directory: %1").arg(QDir::toNativeSeparators(targetInfo.absolutePath()));
         return false;
     }
 
@@ -154,18 +154,18 @@ bool copyFileAtomically(const QString &source, const QString &target, QString *e
     const QString temporary = target + QStringLiteral(".part");
     QFile::remove(temporary);
     if (!QFile::copy(source, temporary)) {
-        *error = QStringLiteral("复制文件失败：%1").arg(QDir::toNativeSeparators(target));
+        *error = QCoreApplication::translate("Cs2Manager", "Failed to copy file: %1").arg(QDir::toNativeSeparators(target));
         return false;
     }
 
     if (QFileInfo::exists(target) && !QFile::remove(target)) {
         QFile::remove(temporary);
-        *error = QStringLiteral("无法替换文件：%1。请确认 CS2 已完全退出。").arg(QDir::toNativeSeparators(target));
+        *error = QCoreApplication::translate("Cs2Manager", "Unable to replace %1. Make sure CS2 has fully exited.").arg(QDir::toNativeSeparators(target));
         return false;
     }
     if (!QFile::rename(temporary, target)) {
         QFile::remove(temporary);
-        *error = QStringLiteral("无法完成文件安装：%1").arg(QDir::toNativeSeparators(target));
+        *error = QCoreApplication::translate("Cs2Manager", "Unable to finish installing: %1").arg(QDir::toNativeSeparators(target));
         return false;
     }
     return true;
@@ -307,8 +307,8 @@ Cs2Paths Cs2Manager::detect(const QString &preferredRoot, QString *error)
 
     if (error) {
         *error = steamRoot.isEmpty()
-            ? QStringLiteral("未在注册表中找到 Steam。请手动选择 CS2 安装目录。")
-            : QStringLiteral("已找到 Steam，但未找到 CS2。请手动选择 Counter-Strike Global Offensive 目录。");
+            ? QCoreApplication::translate("Cs2Manager", "Steam was not found in the registry. Select the CS2 installation folder manually.")
+            : QCoreApplication::translate("Cs2Manager", "Steam was found, but CS2 was not. Select the Counter-Strike Global Offensive folder manually.");
     }
     return {};
 }
@@ -321,7 +321,7 @@ Cs2Paths Cs2Manager::fromSelection(const QString &selectedPath, QString *error)
     const QString root = normalizedRoot(input);
     if (root.isEmpty()) {
         if (error)
-            *error = QStringLiteral("所选目录不是有效的 CS2 安装目录。请选择 Counter-Strike Global Offensive、game 或 game\\csgo 目录。");
+            *error = QCoreApplication::translate("Cs2Manager", "The selected folder is not a valid CS2 installation. Select the Counter-Strike Global Offensive, game, or game\\csgo folder.");
         return {};
     }
     return pathsForRoot(root, registrySteamRoot());
@@ -417,7 +417,7 @@ QString Cs2Manager::addOverrideSearchPath(const QString &gameInfoText, bool *cha
     }
 
     if (error)
-        *error = QStringLiteral("gameinfo.gi 中找不到基础的 'Game csgo' SearchPath，已停止安装以避免破坏文件。");
+        *error = QCoreApplication::translate("Cs2Manager", "The base 'Game csgo' SearchPath was not found in gameinfo.gi. Installation was stopped to avoid damaging the file.");
     return gameInfoText;
 }
 
@@ -442,14 +442,14 @@ QString Cs2Manager::removeOverrideSearchPath(const QString &gameInfoText, bool *
 LauncherResult Cs2Manager::installOverride(const Cs2Paths &paths, const QString &sourceVpk)
 {
     if (!paths.isValid())
-        return LauncherResult::failure(QStringLiteral("CS2 安装目录无效。"));
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "The CS2 installation folder is invalid."));
     if (!QFileInfo::exists(sourceVpk))
-        return LauncherResult::failure(QStringLiteral("找不到 DemoUI VPK。请先构建项目，或将 %1 放在启动器旁边。").arg(QString::fromLatin1(kVpkName)));
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "The DemoUI VPK was not found. Build the project first, or place %1 next to the launcher.").arg(QString::fromLatin1(kVpkName)));
 
     QString error;
     const QString backup = paths.gameInfo + QStringLiteral(".swift_demo_launcher.restore.bak");
     if (!QFileInfo::exists(backup) && !QFile::copy(paths.gameInfo, backup))
-        return LauncherResult::failure(QStringLiteral("无法备份 gameinfo.gi。请检查目录权限。"));
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to back up gameinfo.gi. Check the folder permissions."));
 
     QString text;
     TextEncoding encoding = TextEncoding::Utf8;
@@ -471,7 +471,7 @@ LauncherResult Cs2Manager::installOverride(const Cs2Paths &paths, const QString 
         return LauncherResult::failure(error);
     }
 
-    return LauncherResult::success(QStringLiteral("DemoUI VPK 已安装并校验。"));
+    return LauncherResult::success(QCoreApplication::translate("Cs2Manager", "The DemoUI VPK has been installed and verified."));
 }
 
 QString Cs2Manager::buildDemoCfg()
@@ -488,29 +488,29 @@ LauncherResult Cs2Manager::prepareDemoSession(const Cs2Paths &paths, const QStri
 {
     const QFileInfo demoInfo(demoPath);
     if (!demoInfo.exists() || !demoInfo.isFile() || demoInfo.suffix().compare(QStringLiteral("dem"), Qt::CaseInsensitive) != 0)
-        return LauncherResult::failure(QStringLiteral("请选择有效的 .dem 文件。"));
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Select a valid .dem file."));
 
     QString error;
     if (!copyFileAtomically(demoInfo.absoluteFilePath(), stagedDemoPath(paths), &error))
         return LauncherResult::failure(error);
 
     if (!QDir().mkpath(QFileInfo(cfgPath(paths)).absolutePath()))
-        return LauncherResult::failure(QStringLiteral("无法创建 CS2 cfg 目录。"));
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to create the CS2 cfg folder."));
     QSaveFile cfg(cfgPath(paths));
     if (!cfg.open(QIODevice::WriteOnly) || cfg.write(buildDemoCfg().toUtf8()) < 0 || !cfg.commit())
-        return LauncherResult::failure(QStringLiteral("无法生成 Demo 启动配置：%1").arg(cfg.errorString()));
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to create the Demo launch configuration: %1").arg(cfg.errorString()));
 
     if (!QDir().mkpath(QFileInfo(markerPath(paths)).absolutePath()))
-        return LauncherResult::failure(QStringLiteral("无法创建 Demo 会话标记。"));
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to create the Demo session marker."));
     QSaveFile marker(markerPath(paths));
     const QJsonObject state {
         { QStringLiteral("demo"), demoInfo.absoluteFilePath() },
         { QStringLiteral("createdUtc"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate) }
     };
     if (!marker.open(QIODevice::WriteOnly) || marker.write(QJsonDocument(state).toJson(QJsonDocument::Compact)) < 0 || !marker.commit())
-        return LauncherResult::failure(QStringLiteral("无法保存 Demo 会话状态。"));
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to save the Demo session state."));
 
-    return LauncherResult::success(QStringLiteral("Demo 与启动配置已准备完成。"));
+    return LauncherResult::success(QCoreApplication::translate("Cs2Manager", "The Demo and launch configuration are ready."));
 }
 
 QStringList Cs2Manager::buildSteamLaunchArguments()
@@ -539,16 +539,16 @@ LauncherResult Cs2Manager::launchDemo(const Cs2Paths &paths)
     }
 
     if (!launched)
-        return LauncherResult::failure(QStringLiteral("无法启动 Steam/CS2。请确认 Steam 已安装并尝试以管理员身份运行启动器。"));
-    return LauncherResult::success(QStringLiteral("CS2 正在以 -insecure Demo 模式启动。"));
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to start Steam/CS2. Make sure Steam is installed and try running the launcher as administrator."));
+    return LauncherResult::success(QCoreApplication::translate("Cs2Manager", "CS2 is starting in -insecure Demo mode."));
 }
 
 LauncherResult Cs2Manager::removeDemoSession(const Cs2Paths &paths)
 {
     if (!paths.isValid())
-        return LauncherResult::failure(QStringLiteral("CS2 安装目录无效，无法安全清理。"));
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "The CS2 installation folder is invalid, so cleanup cannot be completed safely."));
     if (isCs2Running())
-        return LauncherResult::failure(QStringLiteral("CS2 仍在运行。请先完全退出游戏，再点击停止观看 Demo。"));
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "CS2 is still running. Fully exit the game before stopping Demo playback."));
 
     QStringList errors;
     QString text;
@@ -565,26 +565,26 @@ LauncherResult Cs2Manager::removeDemoSession(const Cs2Paths &paths)
 
     const QString vpk = targetVpkPath(paths);
     if (QFileInfo::exists(vpk) && !QFile::remove(vpk))
-        errors.append(QStringLiteral("无法删除 DemoUI VPK：%1").arg(QDir::toNativeSeparators(vpk)));
+        errors.append(QCoreApplication::translate("Cs2Manager", "Unable to remove the DemoUI VPK: %1").arg(QDir::toNativeSeparators(vpk)));
 
     const QString config = cfgPath(paths);
     if (QFileInfo::exists(config) && !QFile::remove(config))
-        errors.append(QStringLiteral("无法删除临时 CFG。"));
+        errors.append(QCoreApplication::translate("Cs2Manager", "Unable to remove the temporary CFG."));
 
     const QString marker = markerPath(paths);
     if (QFileInfo::exists(marker) && !QFile::remove(marker))
-        errors.append(QStringLiteral("无法删除 Demo 会话标记。"));
+        errors.append(QCoreApplication::translate("Cs2Manager", "Unable to remove the Demo session marker."));
 
     QDir demoDirectory(QFileInfo(stagedDemoPath(paths)).absolutePath());
     const QString expectedSuffix = QDir::cleanPath(QStringLiteral("demos/swift_demo_launcher"));
     if (QDir::cleanPath(demoDirectory.path()).endsWith(expectedSuffix, Qt::CaseInsensitive)
         && demoDirectory.exists() && !demoDirectory.removeRecursively()) {
-        errors.append(QStringLiteral("无法删除复制的 Demo 文件。"));
+        errors.append(QCoreApplication::translate("Cs2Manager", "Unable to remove the copied Demo file."));
     }
 
     if (!errors.isEmpty())
         return LauncherResult::failure(errors.join(QStringLiteral("\n")));
-    return LauncherResult::success(QStringLiteral("Demo 模式已停止。VPK 与临时文件均已移除，现在可以从 Steam 正常启动 CS2。"));
+    return LauncherResult::success(QCoreApplication::translate("Cs2Manager", "Demo mode has stopped. The VPK and temporary files were removed, and CS2 can now be started normally from Steam."));
 }
 
 QString Cs2Manager::displayFileSize(qint64 bytes)

@@ -14,6 +14,15 @@ https://www.qt.io/licensing/open-source-lgpl-obligations
 https://code.qt.io/cgit/qt/qtbase.git/tree/LICENSES/LGPL-3.0-only.txt
 https://code.qt.io/cgit/qt/qtbase.git/
 
+Noto Sans SC
+------------
+This application embeds Noto Sans SC, part of the Noto CJK font project.
+The font is licensed under the SIL Open Font License, Version 1.1.
+A copy of the license is included as licenses/NotoSansSC-OFL-1.1.txt.
+
+https://github.com/notofonts/noto-cjk
+https://github.com/notofonts/noto-cjk/blob/main/Sans/LICENSE
+
 cs2-demo-opener reference
 -------------------------
 The Steam/CS2 launch flow was informed by the MIT-licensed open-source project

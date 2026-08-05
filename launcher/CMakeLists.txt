@@ -8,7 +8,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets LinguistTools)
 
 add_library(swift_demo_launcher_core STATIC
     src/Cs2Manager.cpp
@@ -31,6 +31,35 @@ target_link_libraries(SwiftDemoLauncher PRIVATE
     Qt6::Widgets
 )
 set_target_properties(SwiftDemoLauncher PROPERTIES OUTPUT_NAME "SwiftDemoUIPro")
+qt_add_resources(SwiftDemoLauncher "embedded_fonts"
+    PREFIX "/fonts"
+    BASE "${CMAKE_CURRENT_SOURCE_DIR}/assets/fonts"
+    FILES assets/fonts/NotoSansSC-VF.ttf
+)
+
+file(GLOB APP_TS_FILES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/translations/swift_demoui_pro_*.ts"
+)
+set_source_files_properties(${APP_TS_FILES}
+    PROPERTIES OUTPUT_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/translations"
+)
+qt_add_translations(SwiftDemoLauncher
+    TS_FILES ${APP_TS_FILES}
+    SOURCES
+        src/LauncherWindow.cpp
+        src/LauncherWindow.h
+        src/Cs2Manager.cpp
+        src/Cs2Manager.h
+    QM_FILES_OUTPUT_VARIABLE APP_QM_FILES
+    LUPDATE_OPTIONS -source-language en
+)
+add_custom_command(TARGET SwiftDemoLauncher POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:SwiftDemoLauncher>/translations"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${APP_QM_FILES}
+        "$<TARGET_FILE_DIR:SwiftDemoLauncher>/translations"
+    COMMENT "Copying application translations next to the executable"
+)
 
 if(WIN32)
     target_compile_definitions(swift_demo_launcher_core PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX UNICODE _UNICODE)
@@ -71,6 +100,15 @@ if(BUILD_TESTING)
 endif()
 
 install(TARGETS SwiftDemoLauncher RUNTIME DESTINATION .)
+install(FILES ${APP_QM_FILES} DESTINATION translations)
+install(FILES assets/fonts/OFL-1.1.txt
+    DESTINATION licenses
+    RENAME NotoSansSC-OFL-1.1.txt
+)
+install(FILES licenses/Qt-LGPL-3.0-only.txt
+    DESTINATION licenses
+    RENAME Qt-LGPL-3.0.txt
+)
 if(EXISTS "${MENU_VPK}")
     install(FILES "${MENU_VPK}" DESTINATION .)
 endif()

@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QDir>
 #include <QFont>
+#include <QFontDatabase>
 #include <QPushButton>
 #include <QStackedWidget>
 #include <QTimer>
@@ -15,14 +16,20 @@ int main(int argc, char *argv[])
     application.setOrganizationName(QStringLiteral("SwiftTools"));
     application.setStyle(QStringLiteral("Fusion"));
 
-    QFont font(QStringLiteral("Segoe UI"));
+    const int fontId = QFontDatabase::addApplicationFont(QStringLiteral(":/fonts/NotoSansSC-VF.ttf"));
+    const QStringList fontFamilies = QFontDatabase::applicationFontFamilies(fontId);
+    QFont font(fontFamilies.isEmpty() ? QStringLiteral("Microsoft YaHei UI") : fontFamilies.constFirst());
     font.setStyleHint(QFont::SansSerif);
     application.setFont(font);
+
+    const QStringList arguments = application.arguments();
+    const int languageIndex = arguments.indexOf(QStringLiteral("--ui-language"));
+    if (languageIndex >= 0 && languageIndex + 1 < arguments.size())
+        application.setProperty("uiLanguageOverride", arguments[languageIndex + 1]);
 
     LauncherWindow window;
     window.show();
 
-    const QStringList arguments = application.arguments();
     const int pageIndex = arguments.indexOf(QStringLiteral("--preview-page"));
     if (pageIndex >= 0 && pageIndex + 1 < arguments.size()) {
         bool validPage = false;
@@ -30,9 +37,8 @@ int main(int argc, char *argv[])
         if (validPage) {
             if (auto *stack = window.findChild<QStackedWidget *>(QStringLiteral("PageStack")))
                 stack->setCurrentIndex(requestedPage);
-            const QStringList pageNames = {QStringLiteral("Demo 回放"), QStringLiteral("DemoUI 管理"), QStringLiteral("关于")};
             for (QPushButton *button : window.findChildren<QPushButton *>(QStringLiteral("NavButton")))
-                button->setChecked(requestedPage >= 0 && requestedPage < pageNames.size() && button->text() == pageNames[requestedPage]);
+                button->setChecked(button->property("pageIndex").toInt() == requestedPage);
         }
     }
     const int previewIndex = arguments.indexOf(QStringLiteral("--render-preview"));

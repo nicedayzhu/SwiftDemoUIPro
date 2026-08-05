@@ -5,6 +5,7 @@
 #include <QMainWindow>
 
 class QCloseEvent;
+class QComboBox;
 class QDragEnterEvent;
 class QDragLeaveEvent;
 class QDropEvent;
@@ -13,6 +14,7 @@ class QLabel;
 class QPushButton;
 class QStackedWidget;
 class QTimer;
+class QTranslator;
 
 class LauncherWindow final : public QMainWindow
 {
@@ -40,14 +42,18 @@ private:
     void applyStyle();
     void detectEnvironment();
     void setDemoPath(const QString &path);
+    void refreshDemoDetails();
     void showResult(const LauncherResult &result, bool dialogOnFailure = true);
     void setSecurityState(const QString &state, const QString &title, const QString &detail);
+    bool loadLanguage(const QString &language);
+    void changeLanguage(const QString &language);
     void selectPage(int index);
     void repolish(QWidget *widget);
 
     Cs2Paths paths_;
     QString demoPath_;
     QString lastStatus_;
+    QString currentLanguage_;
 
     QLabel *securityBadge_ = nullptr;
     QFrame *warningCard_ = nullptr;
@@ -68,6 +74,8 @@ private:
     QPushButton *navReplayButton_ = nullptr;
     QPushButton *navMenuButton_ = nullptr;
     QPushButton *navAboutButton_ = nullptr;
+    QComboBox *languageCombo_ = nullptr;
     QStackedWidget *pages_ = nullptr;
     QTimer *stateTimer_ = nullptr;
+    QTranslator *translator_ = nullptr;
 };

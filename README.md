@@ -109,6 +109,8 @@ dist\swift_demo_menu_override.vpk
 
 `launcher` 目录包含一个原生 Qt 6 Widgets Windows 启动器。它可以选择/拖入 `.dem`、自动
 检测 Steam 多库中的 CS2、安装或修复菜单 VPK，并只为本次启动附加 `-insecure` 参数。
+启动器以英文作为源码与后备语言，默认跟随系统自动选择简体中文或可用翻译，并允许用户在
+侧栏手动切换；翻译采用 Qt Linguist 的外置 `.ts/.qm` 文件，便于开源贡献者新增语言。
 
 观看结束后，玩家必须先退出 CS2，再点击“停止观看 Demo”。启动器会移除自己添加的 VPK
 SearchPath、VPK 和临时文件，使环境恢复为可正常游戏的状态。构建与发布方法见
