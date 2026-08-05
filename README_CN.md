@@ -29,14 +29,15 @@
 - 读取原生 `RoundIntervals`，可直接跳转到任意回合的起始 tick。
 - 保留原生时间轴、播放控制、设置和默认镜头模式热键。
 - 使用克制的石墨灰与金色界面，并清晰区分 CT/T 阵营和语音状态。
-- 附带原生 Qt 6 启动器 **Swift DemoUI Pro**，支持 Steam 多库检测、拖放 `.dem`、自动清理、中英文界面和系统语言识别。
+- 附带原生 Qt 6 启动器 **Swift DemoUI Pro**，支持 Steam 多库检测、拖放 `.dem`/`.zip`、自动清理、中英文界面和系统语言识别。
+- 可直接打开下载的 ZIP 压缩包：包内只有一个 Demo 时自动选择，存在多个 Demo 时显示选择列表，并且只把所选 `.dem` 流式写入启动器的临时目录。
 
 ## 快速开始
 
 普通用户可解压已经打包的 `SwiftDemoUIPro-win64.zip`，然后：
 
 1. 确保 `SwiftDemoUIPro.exe` 与 `swift_demo_menu_override.vpk` 位于同一目录，运行程序。
-2. 选择或拖入一个 `.dem` 文件。
+2. 选择或拖入一个 `.dem` 文件或 `.zip` 压缩包；如果 ZIP 中包含多个 Demo，请从列表中选择一个。
 3. 确认自动检测到的 CS2 安装目录。
 4. 点击**开始观看 Demo**。启动器只会为本次启动附加 `-insecure`，不会修改 Steam 的永久启动项。
 5. 观看结束后彻底退出 CS2，回到启动器并点击**停止观看 Demo**。
@@ -147,6 +148,7 @@ ctest --test-dir .\launcher\build -C Release --output-on-failure
 - Valve 随时可能调整原生 `huddemocontroller` 资源。发生变化后，应先与当前游戏文件重新同步布局，再构建 override。
 - `GameStateAPI.GetPlayerDataJSO()` 尚未准备好时，菜单会显示等待状态，并每 0.75 秒重试。
 - 本项目是非官方客户端修改，与 Valve 或 FACEIT 没有隶属、授权或背书关系。
+- ZIP 播放支持未加密且压缩方式受内置 miniz 库支持的条目。启动器不会展开包内其他文件，并会拒绝解压后超过 8 GB 的 Demo。
 
 原理参考：[FACEITcom 关于 CS2 Demo 语音 indices 的讨论](https://www.reddit.com/r/FACEITcom/comments/16vvidt/no_recorded_voice_chat_in_faceit_cs2_demos/)。
 

@@ -1,5 +1,7 @@
 #include "Cs2Manager.h"
 
+#include "miniz.h"
+
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -13,8 +15,11 @@
 #include <QSaveFile>
 #include <QSettings>
 #include <QSet>
+#include <QStorageInfo>
 #include <QVector>
 
+#include <algorithm>
+#include <limits>
 #include <utility>
 
 #ifdef Q_OS_WIN
@@ -236,6 +241,225 @@ QString cfgPath(const Cs2Paths &paths)
 QString stagedDemoPath(const Cs2Paths &paths)
 {
     return QDir(paths.csgoDir).filePath(QStringLiteral("demos/swift_demo_launcher/current.dem"));
+}
+
+constexpr qint64 kMaximumArchivedDemoSize = 8LL * 1024 * 1024 * 1024;
+constexpr qint64 kExtractionDiskReserve = 64LL * 1024 * 1024;
+
+class MinizArchiveReader
+{
+public:
+    ~MinizArchiveReader()
+    {
+        if (initialized_)
+            mz_zip_reader_end(&archive_);
+    }
+
+    bool open(const QString &path, QString *error)
+    {
+        file_.setFileName(path);
+        if (!file_.open(QIODevice::ReadOnly)) {
+            *error = QCoreApplication::translate("Cs2Manager", "Unable to open the ZIP archive: %1").arg(file_.errorString());
+            return false;
+        }
+
+        mz_zip_zero_struct(&archive_);
+        archive_.m_pRead = &MinizArchiveReader::readAt;
+        archive_.m_pIO_opaque = &file_;
+        if (!mz_zip_reader_init(&archive_, static_cast<mz_uint64>(file_.size()), 0)) {
+            *error = QCoreApplication::translate("Cs2Manager", "Unable to read the ZIP archive: %1").arg(lastError());
+            return false;
+        }
+        initialized_ = true;
+        return true;
+    }
+
+    mz_zip_archive *archive() { return &archive_; }
+
+    QString lastError()
+    {
+        return QString::fromLatin1(mz_zip_get_error_string(mz_zip_peek_last_error(&archive_)));
+    }
+
+private:
+    static size_t readAt(void *opaque, mz_uint64 offset, void *buffer, size_t byteCount)
+    {
+        auto *file = static_cast<QFile *>(opaque);
+        if (offset > static_cast<mz_uint64>(std::numeric_limits<qint64>::max())
+            || byteCount > static_cast<size_t>(std::numeric_limits<qint64>::max())
+            || !file->seek(static_cast<qint64>(offset))) {
+            return 0;
+        }
+        const qint64 bytesRead = file->read(static_cast<char *>(buffer), static_cast<qint64>(byteCount));
+        return bytesRead > 0 ? static_cast<size_t>(bytesRead) : 0;
+    }
+
+    QFile file_;
+    mz_zip_archive archive_ {};
+    bool initialized_ = false;
+};
+
+struct ArchiveDemoRecord
+{
+    DemoArchiveEntry entry;
+    mz_uint index = 0;
+};
+
+QString archiveEntryName(mz_zip_archive *archive, mz_uint index, QString *error)
+{
+    const mz_uint required = mz_zip_reader_get_filename(archive, index, nullptr, 0);
+    if (required == 0 || required > 65536) {
+        *error = QCoreApplication::translate("Cs2Manager", "The ZIP archive contains an invalid file name.");
+        return {};
+    }
+
+    QByteArray encoded(static_cast<qsizetype>(required), Qt::Uninitialized);
+    if (mz_zip_reader_get_filename(archive, index, encoded.data(), required) != required) {
+        *error = QCoreApplication::translate("Cs2Manager", "Unable to read a file name from the ZIP archive.");
+        return {};
+    }
+    if (!encoded.isEmpty() && encoded.back() == '\0')
+        encoded.chop(1);
+    if (encoded.isEmpty() || encoded.contains('\0')) {
+        *error = QCoreApplication::translate("Cs2Manager", "The ZIP archive contains an invalid file name.");
+        return {};
+    }
+
+    QString decoded = QString::fromUtf8(encoded);
+    if (decoded.contains(QChar::ReplacementCharacter))
+        decoded = QString::fromLocal8Bit(encoded);
+    return QDir::fromNativeSeparators(decoded);
+}
+
+LauncherResult listArchiveDemos(MinizArchiveReader *reader, QList<ArchiveDemoRecord> *records)
+{
+    records->clear();
+    QSet<QString> names;
+    int unsupportedDemoCount = 0;
+    mz_zip_archive *archive = reader->archive();
+    const mz_uint fileCount = mz_zip_reader_get_num_files(archive);
+    if (fileCount > 100000) {
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "The ZIP archive contains too many files."));
+    }
+
+    for (mz_uint index = 0; index < fileCount; ++index) {
+        mz_zip_archive_file_stat stat {};
+        if (!mz_zip_reader_file_stat(archive, index, &stat)) {
+            return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to inspect the ZIP archive: %1").arg(reader->lastError()));
+        }
+        if (stat.m_is_directory)
+            continue;
+
+        QString nameError;
+        const QString name = archiveEntryName(archive, index, &nameError);
+        if (name.isEmpty())
+            return LauncherResult::failure(nameError);
+        if (QFileInfo(name).suffix().compare(QStringLiteral("dem"), Qt::CaseInsensitive) != 0)
+            continue;
+        if (!stat.m_is_supported || stat.m_is_encrypted) {
+            ++unsupportedDemoCount;
+            continue;
+        }
+        if (names.contains(name)) {
+            return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "The ZIP archive contains duplicate Demo paths: %1").arg(name));
+        }
+        if (stat.m_uncomp_size > static_cast<mz_uint64>(std::numeric_limits<qint64>::max())) {
+            return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "A Demo in the ZIP archive is too large to use."));
+        }
+
+        names.insert(name);
+        records->append({ { name, static_cast<qint64>(stat.m_uncomp_size) }, index });
+    }
+
+    if (records->isEmpty()) {
+        if (unsupportedDemoCount > 0) {
+            return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "The ZIP contains .dem files, but they are encrypted or use an unsupported compression method."));
+        }
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "The ZIP archive does not contain a CS2 .dem file."));
+    }
+
+    std::sort(records->begin(), records->end(), [](const ArchiveDemoRecord &left, const ArchiveDemoRecord &right) {
+        return left.entry.path.compare(right.entry.path, Qt::CaseInsensitive) < 0;
+    });
+    return LauncherResult::success();
+}
+
+LauncherResult stageArchiveDemo(const QString &archivePath, const QString &entryPath, const QString &targetPath)
+{
+    MinizArchiveReader reader;
+    QString openError;
+    if (!reader.open(archivePath, &openError))
+        return LauncherResult::failure(openError);
+
+    QList<ArchiveDemoRecord> records;
+    const LauncherResult inspected = listArchiveDemos(&reader, &records);
+    if (!inspected.ok)
+        return inspected;
+
+    const auto selected = std::find_if(records.cbegin(), records.cend(), [&entryPath](const ArchiveDemoRecord &record) {
+        return record.entry.path == entryPath;
+    });
+    if (selected == records.cend()) {
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "The selected Demo is no longer present in the ZIP archive."));
+    }
+    if (selected->entry.size <= 0) {
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "The selected Demo in the ZIP archive is empty."));
+    }
+    if (selected->entry.size > kMaximumArchivedDemoSize) {
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "The selected Demo exceeds the 8 GB extraction safety limit."));
+    }
+
+    const QFileInfo targetInfo(targetPath);
+    if (!QDir().mkpath(targetInfo.absolutePath())) {
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to create directory: %1").arg(QDir::toNativeSeparators(targetInfo.absolutePath())));
+    }
+    const QStorageInfo storage(targetInfo.absolutePath());
+    if (storage.isValid() && storage.isReady()
+        && (storage.bytesAvailable() < kExtractionDiskReserve
+            || selected->entry.size > storage.bytesAvailable() - kExtractionDiskReserve)) {
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Not enough free disk space to extract the selected Demo."));
+    }
+
+    QSaveFile output(targetPath);
+    if (!output.open(QIODevice::WriteOnly)) {
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to create the staged Demo file: %1").arg(output.errorString()));
+    }
+
+    mz_zip_reader_extract_iter_state *iterator = mz_zip_reader_extract_iter_new(reader.archive(), selected->index, 0);
+    if (!iterator) {
+        output.cancelWriting();
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to extract the selected Demo: %1").arg(reader.lastError()));
+    }
+
+    QByteArray buffer(1024 * 1024, Qt::Uninitialized);
+    qint64 totalWritten = 0;
+    bool writeFailed = false;
+    while (true) {
+        const size_t extracted = mz_zip_reader_extract_iter_read(iterator, buffer.data(), static_cast<size_t>(buffer.size()));
+        if (extracted == 0)
+            break;
+        if (extracted > static_cast<size_t>(std::numeric_limits<qint64>::max() - totalWritten)
+            || totalWritten + static_cast<qint64>(extracted) > selected->entry.size
+            || output.write(buffer.constData(), static_cast<qint64>(extracted)) != static_cast<qint64>(extracted)) {
+            writeFailed = true;
+            break;
+        }
+        totalWritten += static_cast<qint64>(extracted);
+    }
+    const bool extractionFinished = mz_zip_reader_extract_iter_free(iterator) == MZ_TRUE;
+
+    if (writeFailed) {
+        output.cancelWriting();
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to write the staged Demo file: %1").arg(output.errorString()));
+    }
+    if (!extractionFinished || totalWritten != selected->entry.size) {
+        output.cancelWriting();
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to extract the selected Demo: %1").arg(reader.lastError()));
+    }
+    if (!output.commit()) {
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to finish staging the Demo: %1").arg(output.errorString()));
+    }
+    return LauncherResult::success();
 }
 }
 
@@ -484,15 +708,54 @@ QString Cs2Manager::buildDemoCfg()
         "playdemo \"demos/swift_demo_launcher/current.dem\"\n");
 }
 
-LauncherResult Cs2Manager::prepareDemoSession(const Cs2Paths &paths, const QString &demoPath)
+LauncherResult Cs2Manager::inspectDemoArchive(const QString &archivePath, QList<DemoArchiveEntry> *entries)
+{
+    if (!entries)
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to return the Demo list for this ZIP archive."));
+    entries->clear();
+
+    const QFileInfo archiveInfo(archivePath);
+    if (!archiveInfo.exists() || !archiveInfo.isFile()
+        || archiveInfo.suffix().compare(QStringLiteral("zip"), Qt::CaseInsensitive) != 0) {
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Select a valid .zip file."));
+    }
+
+    MinizArchiveReader reader;
+    QString openError;
+    if (!reader.open(archiveInfo.absoluteFilePath(), &openError))
+        return LauncherResult::failure(openError);
+
+    QList<ArchiveDemoRecord> records;
+    const LauncherResult result = listArchiveDemos(&reader, &records);
+    if (!result.ok)
+        return result;
+    entries->reserve(records.size());
+    for (const ArchiveDemoRecord &record : std::as_const(records))
+        entries->append(record.entry);
+    return LauncherResult::success(QCoreApplication::translate("Cs2Manager", "The ZIP archive is ready."));
+}
+
+LauncherResult Cs2Manager::prepareDemoSession(const Cs2Paths &paths, const QString &demoPath, const QString &archiveEntry)
 {
     const QFileInfo demoInfo(demoPath);
-    if (!demoInfo.exists() || !demoInfo.isFile() || demoInfo.suffix().compare(QStringLiteral("dem"), Qt::CaseInsensitive) != 0)
-        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Select a valid .dem file."));
+    if (!demoInfo.exists() || !demoInfo.isFile())
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Select a valid .dem or .zip file."));
 
     QString error;
-    if (!copyFileAtomically(demoInfo.absoluteFilePath(), stagedDemoPath(paths), &error))
-        return LauncherResult::failure(error);
+    const bool isDemo = demoInfo.suffix().compare(QStringLiteral("dem"), Qt::CaseInsensitive) == 0;
+    const bool isZip = demoInfo.suffix().compare(QStringLiteral("zip"), Qt::CaseInsensitive) == 0;
+    if (isDemo) {
+        if (!copyFileAtomically(demoInfo.absoluteFilePath(), stagedDemoPath(paths), &error))
+            return LauncherResult::failure(error);
+    } else if (isZip) {
+        if (archiveEntry.isEmpty())
+            return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Choose a Demo from the ZIP archive first."));
+        const LauncherResult staged = stageArchiveDemo(demoInfo.absoluteFilePath(), archiveEntry, stagedDemoPath(paths));
+        if (!staged.ok)
+            return staged;
+    } else {
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Select a valid .dem or .zip file."));
+    }
 
     if (!QDir().mkpath(QFileInfo(cfgPath(paths)).absolutePath()))
         return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to create the CS2 cfg folder."));
@@ -503,10 +766,12 @@ LauncherResult Cs2Manager::prepareDemoSession(const Cs2Paths &paths, const QStri
     if (!QDir().mkpath(QFileInfo(markerPath(paths)).absolutePath()))
         return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to create the Demo session marker."));
     QSaveFile marker(markerPath(paths));
-    const QJsonObject state {
+    QJsonObject state {
         { QStringLiteral("demo"), demoInfo.absoluteFilePath() },
         { QStringLiteral("createdUtc"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate) }
     };
+    if (isZip)
+        state.insert(QStringLiteral("archiveEntry"), archiveEntry);
     if (!marker.open(QIODevice::WriteOnly) || marker.write(QJsonDocument(state).toJson(QJsonDocument::Compact)) < 0 || !marker.commit())
         return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to save the Demo session state."));
 

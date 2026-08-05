@@ -14,6 +14,7 @@
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QIcon>
+#include <QInputDialog>
 #include <QLabel>
 #include <QLocale>
 #include <QMessageBox>
@@ -29,8 +30,18 @@
 #include <QUrl>
 #include <QVBoxLayout>
 
+#include <algorithm>
+#include <utility>
+
 namespace
 {
+bool isDemoSource(const QString &path)
+{
+    const QString suffix = QFileInfo(path).suffix();
+    return suffix.compare(QStringLiteral("dem"), Qt::CaseInsensitive) == 0
+        || suffix.compare(QStringLiteral("zip"), Qt::CaseInsensitive) == 0;
+}
+
 QPixmap makeLogo()
 {
     QPixmap pixmap(48, 48);
@@ -156,7 +167,7 @@ LauncherWindow::LauncherWindow(QWidget *parent)
 
     const QString rememberedDemo = settings.value(QStringLiteral("lastDemo")).toString();
     if (QFileInfo::exists(rememberedDemo))
-        setDemoPath(rememberedDemo);
+        setDemoPath(rememberedDemo, settings.value(QStringLiteral("lastDemoArchiveEntry")).toString());
 
     stateTimer_ = new QTimer(this);
     stateTimer_->setInterval(1000);
@@ -282,7 +293,7 @@ void LauncherWindow::buildInterface()
     replayTitleCopy->setSpacing(3);
     auto *replayTitle = new QLabel(tr("Demo Playback"), replayPage);
     replayTitle->setObjectName(QStringLiteral("PageTitle"));
-    auto *replaySubtitle = new QLabel(tr("Choose a Demo and start CS2 with a safe, reversible setup"), replayPage);
+    auto *replaySubtitle = new QLabel(tr("Choose a Demo or ZIP archive and start CS2 with a safe, reversible setup"), replayPage);
     replaySubtitle->setObjectName(QStringLiteral("PageSubtitle"));
     replayTitleCopy->addWidget(replayTitle);
     replayTitleCopy->addWidget(replaySubtitle);
@@ -334,9 +345,9 @@ void LauncherWindow::buildInterface()
     auto *fileCopy = new QVBoxLayout;
     fileCopy->setSpacing(3);
     fileCopy->addWidget(sectionEyebrow(tr("Choose Demo"), dropCard_));
-    demoName_ = new QLabel(tr("Drop a Demo here"), dropCard_);
+    demoName_ = new QLabel(tr("Drop a Demo or ZIP here"), dropCard_);
     demoName_->setObjectName(QStringLiteral("PrimaryText"));
-    demoMeta_ = new QLabel(tr("Supports CS2 .dem files, or browse from your computer"), dropCard_);
+    demoMeta_ = new QLabel(tr("Supports CS2 .dem files and ZIP archives"), dropCard_);
     demoMeta_->setObjectName(QStringLiteral("SecondaryText"));
     fileCopy->addWidget(demoName_);
     fileCopy->addWidget(demoMeta_);
@@ -969,24 +980,75 @@ void LauncherWindow::chooseDemo()
     const QString startDirectory = QFileInfo(demoPath_).exists()
         ? QFileInfo(demoPath_).absolutePath()
         : settings.value(QStringLiteral("lastDemoDirectory"), QDir::homePath()).toString();
-    const QString path = QFileDialog::getOpenFileName(this, tr("Choose a CS2 Demo"), startDirectory, QStringLiteral("CS2 Demo (*.dem)"));
+    const QString path = QFileDialog::getOpenFileName(
+        this,
+        tr("Choose a CS2 Demo"),
+        startDirectory,
+        tr("CS2 Demo files (*.dem *.zip);;Demo files (*.dem);;ZIP archives (*.zip)"));
     if (!path.isEmpty())
         setDemoPath(path);
 }
 
-void LauncherWindow::setDemoPath(const QString &path)
+void LauncherWindow::setDemoPath(const QString &path, const QString &preferredArchiveEntry)
 {
     const QFileInfo info(path);
-    if (!info.exists() || !info.isFile() || info.suffix().compare(QStringLiteral("dem"), Qt::CaseInsensitive) != 0) {
-        QMessageBox::warning(this, tr("Unable to use this file"), tr("Select a valid CS2 .dem file."));
+    if (!info.exists() || !info.isFile() || !isDemoSource(path)) {
+        QMessageBox::warning(this, tr("Unable to use this file"), tr("Select a valid CS2 .dem or .zip file."));
         return;
     }
 
+    QString selectedArchiveEntry;
+    qint64 selectedDemoSize = info.size();
+    if (info.suffix().compare(QStringLiteral("zip"), Qt::CaseInsensitive) == 0) {
+        QList<DemoArchiveEntry> entries;
+        const LauncherResult inspected = Cs2Manager::inspectDemoArchive(info.absoluteFilePath(), &entries);
+        if (!inspected.ok) {
+            QMessageBox::warning(this, tr("Unable to use this file"), inspected.message);
+            return;
+        }
+
+        auto selected = std::find_if(entries.cbegin(), entries.cend(), [&preferredArchiveEntry](const DemoArchiveEntry &entry) {
+            return !preferredArchiveEntry.isEmpty() && entry.path == preferredArchiveEntry;
+        });
+        if (selected == entries.cend() && entries.size() == 1) {
+            selected = entries.cbegin();
+        } else if (selected == entries.cend()) {
+            QStringList choices;
+            choices.reserve(entries.size());
+            for (const DemoArchiveEntry &entry : std::as_const(entries))
+                choices.append(tr("%1  ·  %2").arg(entry.path, Cs2Manager::displayFileSize(entry.size)));
+
+            bool accepted = false;
+            const QString choice = QInputDialog::getItem(
+                this,
+                tr("Choose a Demo from the ZIP"),
+                tr("This ZIP contains multiple Demo files. Choose one to play:"),
+                choices,
+                0,
+                false,
+                &accepted);
+            if (!accepted)
+                return;
+            const int selectedIndex = choices.indexOf(choice);
+            if (selectedIndex < 0)
+                return;
+            selected = entries.cbegin() + selectedIndex;
+        }
+        selectedArchiveEntry = selected->path;
+        selectedDemoSize = selected->size;
+    }
+
     demoPath_ = info.absoluteFilePath();
+    demoArchiveEntry_ = selectedArchiveEntry;
+    demoSize_ = selectedDemoSize;
     refreshDemoDetails();
     QSettings settings(QStringLiteral("SwiftTools"), QStringLiteral("SwiftDemoLauncher"));
     settings.setValue(QStringLiteral("lastDemo"), demoPath_);
     settings.setValue(QStringLiteral("lastDemoDirectory"), info.absolutePath());
+    if (demoArchiveEntry_.isEmpty())
+        settings.remove(QStringLiteral("lastDemoArchiveEntry"));
+    else
+        settings.setValue(QStringLiteral("lastDemoArchiveEntry"), demoArchiveEntry_);
     lastStatus_ = tr("Demo selected. Start playback to install DemoUI automatically and launch CS2.");
     selectPage(0);
     refreshState();
@@ -997,9 +1059,15 @@ void LauncherWindow::refreshDemoDetails()
     const QFileInfo info(demoPath_);
     if (!info.exists() || !info.isFile())
         return;
-    demoName_->setText(info.fileName());
-    demoMeta_->setText(tr("%1  ·  %2").arg(Cs2Manager::displayFileSize(info.size()), info.dir().dirName()));
-    demoMeta_->setToolTip(QDir::toNativeSeparators(demoPath_));
+    if (demoArchiveEntry_.isEmpty()) {
+        demoName_->setText(info.fileName());
+        demoMeta_->setText(tr("%1  ·  %2").arg(Cs2Manager::displayFileSize(info.size()), info.dir().dirName()));
+        demoMeta_->setToolTip(QDir::toNativeSeparators(demoPath_));
+    } else {
+        demoName_->setText(QFileInfo(demoArchiveEntry_).fileName());
+        demoMeta_->setText(tr("%1  ·  ZIP ·  %2").arg(Cs2Manager::displayFileSize(demoSize_), info.fileName()));
+        demoMeta_->setToolTip(tr("Archive: %1\nDemo: %2").arg(QDir::toNativeSeparators(demoPath_), demoArchiveEntry_));
+    }
 }
 
 void LauncherWindow::chooseCs2Directory()
@@ -1063,7 +1131,7 @@ void LauncherWindow::startWatchingDemo()
         showResult(result);
         return;
     }
-    result = Cs2Manager::prepareDemoSession(paths_, demoPath_);
+    result = Cs2Manager::prepareDemoSession(paths_, demoPath_, demoArchiveEntry_);
     if (!result.ok) {
         showResult(result);
         refreshState();
@@ -1172,7 +1240,7 @@ void LauncherWindow::dragEnterEvent(QDragEnterEvent *event)
         return;
     bool acceptsDemo = false;
     for (const QUrl &url : event->mimeData()->urls()) {
-        if (QFileInfo(url.toLocalFile()).suffix().compare(QStringLiteral("dem"), Qt::CaseInsensitive) == 0) {
+        if (isDemoSource(url.toLocalFile())) {
             acceptsDemo = true;
             break;
         }
@@ -1197,7 +1265,7 @@ void LauncherWindow::dropEvent(QDropEvent *event)
     repolish(dropCard_);
     for (const QUrl &url : event->mimeData()->urls()) {
         const QString path = url.toLocalFile();
-        if (QFileInfo(path).suffix().compare(QStringLiteral("dem"), Qt::CaseInsensitive) == 0) {
+        if (isDemoSource(path)) {
             setDemoPath(path);
             event->acceptProposedAction();
             return;

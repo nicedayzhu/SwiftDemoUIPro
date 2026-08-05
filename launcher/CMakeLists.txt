@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(SwiftDemoUIPro VERSION 0.1.0 LANGUAGES CXX)
+project(SwiftDemoUIPro VERSION 0.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,11 +10,21 @@ set(CMAKE_AUTORCC ON)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets LinguistTools)
 
+add_library(miniz STATIC
+    third_party/miniz/miniz.c
+    third_party/miniz/miniz.h
+)
+target_include_directories(miniz PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/third_party/miniz")
+set_target_properties(miniz PROPERTIES
+    C_STANDARD 99
+    C_STANDARD_REQUIRED ON
+)
+
 add_library(swift_demo_launcher_core STATIC
     src/Cs2Manager.cpp
     src/Cs2Manager.h
 )
-target_link_libraries(swift_demo_launcher_core PUBLIC Qt6::Core)
+target_link_libraries(swift_demo_launcher_core PUBLIC Qt6::Core PRIVATE miniz)
 target_include_directories(swift_demo_launcher_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 qt_add_executable(SwiftDemoLauncher WIN32
@@ -94,6 +104,7 @@ if(BUILD_TESTING)
     )
     target_link_libraries(SwiftDemoLauncherTests PRIVATE
         swift_demo_launcher_core
+        miniz
         Qt6::Test
     )
     add_test(NAME SwiftDemoLauncherTests COMMAND SwiftDemoLauncherTests)
@@ -108,6 +119,10 @@ install(FILES assets/fonts/OFL-1.1.txt
 install(FILES licenses/Qt-LGPL-3.0-only.txt
     DESTINATION licenses
     RENAME Qt-LGPL-3.0.txt
+)
+install(FILES third_party/miniz/LICENSE
+    DESTINATION licenses
+    RENAME miniz-MIT.txt
 )
 if(EXISTS "${MENU_VPK}")
     install(FILES "${MENU_VPK}" DESTINATION .)

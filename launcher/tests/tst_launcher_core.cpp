@@ -1,10 +1,43 @@
 #include "Cs2Manager.h"
 
+#include "miniz.h"
+
 #include <QDir>
 #include <QFile>
 #include <QRegularExpression>
 #include <QTemporaryDir>
 #include <QtTest>
+
+#include <algorithm>
+
+namespace
+{
+bool createZip(const QString &path, const QList<QPair<QByteArray, QByteArray>> &files)
+{
+    mz_zip_archive archive {};
+    mz_zip_zero_struct(&archive);
+    const QByteArray encodedPath = QFile::encodeName(path);
+    if (!mz_zip_writer_init_file(&archive, encodedPath.constData(), 0))
+        return false;
+
+    bool ok = true;
+    for (const auto &file : files) {
+        if (!mz_zip_writer_add_mem(
+                &archive,
+                file.first.constData(),
+                file.second.constData(),
+                static_cast<size_t>(file.second.size()),
+                MZ_DEFAULT_COMPRESSION)) {
+            ok = false;
+            break;
+        }
+    }
+    if (ok)
+        ok = mz_zip_writer_finalize_archive(&archive) == MZ_TRUE;
+    const bool ended = mz_zip_writer_end(&archive) == MZ_TRUE;
+    return ok && ended;
+}
+}
 
 class LauncherCoreTest final : public QObject
 {
@@ -17,6 +50,8 @@ private slots:
     void removesOnlyOwnedSearchPath();
     void buildsTemporaryInsecureLaunch();
     void installsAndPreparesIsolatedSession();
+    void listsAndPreparesDemoFromZip();
+    void rejectsInvalidDemoArchives();
 };
 
 void LauncherCoreTest::parsesSteamLibraries()
@@ -134,6 +169,78 @@ void LauncherCoreTest::installsAndPreparesIsolatedSession()
     QVERIFY(Cs2Manager::isSessionActive(paths));
     QVERIFY(QFileInfo::exists(root.filePath(QStringLiteral("game/csgo/cfg/swift_demo_launcher.cfg"))));
     QVERIFY(QFileInfo::exists(root.filePath(QStringLiteral("game/csgo/demos/swift_demo_launcher/current.dem"))));
+}
+
+void LauncherCoreTest::listsAndPreparesDemoFromZip()
+{
+    QTemporaryDir temporary;
+    QVERIFY(temporary.isValid());
+    const QDir root(temporary.path());
+    QVERIFY(root.mkpath(QStringLiteral("game/csgo")));
+
+    const QString archivePath = root.filePath(QStringLiteral("downloaded matches.zip"));
+    const QString unicodeDemo = QString::fromUtf8("比赛.dem");
+    QVERIFY(createZip(archivePath, {
+        { QByteArrayLiteral("readme.txt"), QByteArrayLiteral("not a demo") },
+        { QByteArrayLiteral("nested/first.DEM"), QByteArrayLiteral("first-demo") },
+        { unicodeDemo.toUtf8(), QByteArrayLiteral("selected-demo") }
+    }));
+
+    QList<DemoArchiveEntry> entries;
+    const LauncherResult inspected = Cs2Manager::inspectDemoArchive(archivePath, &entries);
+    QVERIFY2(inspected.ok, qPrintable(inspected.message));
+    QCOMPARE(entries.size(), 2);
+    QVERIFY(std::any_of(entries.cbegin(), entries.cend(), [](const DemoArchiveEntry &entry) {
+        return entry.path == QStringLiteral("nested/first.DEM") && entry.size == 10;
+    }));
+    QVERIFY(std::any_of(entries.cbegin(), entries.cend(), [&unicodeDemo](const DemoArchiveEntry &entry) {
+        return entry.path == unicodeDemo && entry.size == 13;
+    }));
+
+    Cs2Paths paths;
+    paths.csgoDir = root.filePath(QStringLiteral("game/csgo"));
+    const LauncherResult prepared = Cs2Manager::prepareDemoSession(paths, archivePath, unicodeDemo);
+    QVERIFY2(prepared.ok, qPrintable(prepared.message));
+
+    QFile staged(root.filePath(QStringLiteral("game/csgo/demos/swift_demo_launcher/current.dem")));
+    QVERIFY(staged.open(QIODevice::ReadOnly));
+    QCOMPARE(staged.readAll(), QByteArrayLiteral("selected-demo"));
+
+    QFile marker(root.filePath(QStringLiteral("game/csgo/overrides/.swift_demo_launcher_active")));
+    QVERIFY(marker.open(QIODevice::ReadOnly));
+    QVERIFY(marker.readAll().contains(unicodeDemo.toUtf8()));
+}
+
+void LauncherCoreTest::rejectsInvalidDemoArchives()
+{
+    QTemporaryDir temporary;
+    QVERIFY(temporary.isValid());
+    const QDir root(temporary.path());
+
+    const QString noDemoPath = root.filePath(QStringLiteral("no-demo.zip"));
+    QVERIFY(createZip(noDemoPath, {
+        { QByteArrayLiteral("readme.txt"), QByteArrayLiteral("not a demo") }
+    }));
+    QList<DemoArchiveEntry> entries;
+    const LauncherResult noDemo = Cs2Manager::inspectDemoArchive(noDemoPath, &entries);
+    QVERIFY(!noDemo.ok);
+    QVERIFY(entries.isEmpty());
+
+    const QString corruptPath = root.filePath(QStringLiteral("corrupt.zip"));
+    QFile corrupt(corruptPath);
+    QVERIFY(corrupt.open(QIODevice::WriteOnly));
+    QVERIFY(corrupt.write("this is not a zip") > 0);
+    corrupt.close();
+    const LauncherResult corruptResult = Cs2Manager::inspectDemoArchive(corruptPath, &entries);
+    QVERIFY(!corruptResult.ok);
+
+    const QString duplicatePath = root.filePath(QStringLiteral("duplicates.zip"));
+    QVERIFY(createZip(duplicatePath, {
+        { QByteArrayLiteral("same.dem"), QByteArrayLiteral("first") },
+        { QByteArrayLiteral("same.dem"), QByteArrayLiteral("second") }
+    }));
+    const LauncherResult duplicateResult = Cs2Manager::inspectDemoArchive(duplicatePath, &entries);
+    QVERIFY(!duplicateResult.ok);
 }
 
 QTEST_APPLESS_MAIN(LauncherCoreTest)

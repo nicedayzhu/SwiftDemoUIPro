@@ -109,6 +109,9 @@ if ($Package) {
     $qtLicense = Join-Path $launcherRoot "licenses\Qt-LGPL-3.0-only.txt"
     Copy-Item -LiteralPath $qtLicense -Destination (Join-Path $licenseDir "Qt-LGPL-3.0.txt")
 
+    $minizLicense = Join-Path $launcherRoot "third_party\miniz\LICENSE"
+    Copy-Item -LiteralPath $minizLicense -Destination (Join-Path $licenseDir "miniz-MIT.txt")
+
     $zipPath = Join-Path $launcherRoot "package\SwiftDemoUIPro-win64.zip"
     if (Test-Path -LiteralPath $zipPath) { Remove-Item -LiteralPath $zipPath -Force }
     Compress-Archive -LiteralPath $packageDir -DestinationPath $zipPath -CompressionLevel Optimal

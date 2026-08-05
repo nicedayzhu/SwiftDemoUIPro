@@ -2,13 +2,13 @@
 
 [English](README.md) | [简体中文](README_CN.md) | [Project overview](../README.md)
 
-A lightweight Windows Qt 6 Widgets application that safely installs this project's Panorama DemoUI and opens Counter-Strike 2 `.dem` files. It does not include a 2D replay viewer, demo parser, or network service.
+A lightweight Windows Qt 6 Widgets application that safely installs this project's Panorama DemoUI and opens Counter-Strike 2 `.dem` files directly or from downloaded `.zip` archives. It does not include a 2D replay viewer, demo parser, or network service.
 
 ## Workflow
 
-1. Select or drag in a `.dem` file.
+1. Select or drag in a `.dem` file or `.zip` archive. A ZIP containing one Demo is selected automatically; if it contains several, choose one from the displayed list.
 2. Confirm the automatically detected CS2 path, or choose a different installation.
-3. Select **Start Watching Demo**. The launcher installs/verifies the VPK, copies the demo into a dedicated temporary directory, creates `swift_demo_launcher.cfg`, and runs:
+3. Select **Start Watching Demo**. The launcher installs/verifies the VPK, copies the Demo—or streams only the selected ZIP entry—into a dedicated staging directory, creates `swift_demo_launcher.cfg`, and runs:
 
    ```text
    steam.exe -applaunch 730 -insecure -novid +exec swift_demo_launcher.cfg
@@ -38,6 +38,8 @@ launcher\package\SwiftDemoUIPro-win64.zip
 
 The build script runs the Qt unit tests and uses `windeployqt` to collect required runtime libraries. `SwiftDemoUIPro.exe` and `swift_demo_menu_override.vpk` must remain together in the release directory.
 
+ZIP support is compiled into `SwiftDemoUIPro.exe` from the vendored miniz 3.1.2 source, so users do not need 7-Zip, PowerShell extraction, or another executable. The package includes `licenses/miniz-MIT.txt`.
+
 ## Localization and Typography
 
 - Application source and fallback strings are English. **Follow system** automatically selects Simplified Chinese on Chinese systems and falls back to English when no matching translation is available.
@@ -54,6 +56,8 @@ The interface embeds the variable Noto Sans SC font to provide consistent Chines
 - Before the first `gameinfo.gi` modification, it creates `gameinfo.gi.swift_demo_launcher.restore.bak`.
 - Cleanup removes only the project's exact SearchPath and owned temporary files; it does not overwrite unrelated user or tool changes.
 - A persistent session marker allows the application to warn about and recover an interrupted cleanup.
+- ZIP handling enumerates entries without expanding the archive, streams only the selected `.dem` to the owned `current.dem`, verifies the uncompressed size and CRC, reserves free disk space, and enforces an 8 GB safety limit.
+- Encrypted ZIP entries and unsupported compression methods are rejected with an error; unrelated entries are never written to disk.
 - Demo playback runs with `-insecure` and cannot be used for normal matchmaking.
 
 ## Third-Party Components and License
@@ -61,6 +65,7 @@ The interface embeds the variable Noto Sans SC font to provide consistent Chines
 - The project launcher source is licensed under the repository's [MIT License](../LICENSE).
 - Qt 6 is dynamically linked under `LGPL-3.0-only`; packaged DLLs remain replaceable.
 - Noto Sans SC is included under `OFL-1.1`.
+- miniz 3.1.2 is statically compiled into the launcher under the MIT License.
 - The launch flow was informed by the MIT-licensed [drjackild/cs2-demo-opener](https://github.com/drjackild/cs2-demo-opener); none of its replay, parser, web, or source files are included.
 
 See [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt) and the packaged `licenses` directory for the full notices and license texts.

@@ -4,7 +4,7 @@
 <context>
     <name>Cs2Manager</name>
     <message>
-        <location filename="../src/Cs2Manager.cpp" line="+106"/>
+        <location filename="../src/Cs2Manager.cpp" line="+111"/>
         <source>Unable to read %1: %2</source>
         <translation>无法读取 %1：%2</translation>
     </message>
@@ -20,11 +20,12 @@
     </message>
     <message>
         <location line="+26"/>
+        <location line="+262"/>
         <source>Unable to create directory: %1</source>
         <translation>无法创建目录：%1</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="-252"/>
         <source>Failed to copy file: %1</source>
         <translation>复制文件失败：%1</translation>
     </message>
@@ -39,7 +40,99 @@
         <translation>无法完成文件安装：%1</translation>
     </message>
     <message>
-        <location line="+142"/>
+        <location line="+89"/>
+        <source>Unable to open the ZIP archive: %1</source>
+        <translation>无法打开 ZIP 压缩包：%1</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Unable to read the ZIP archive: %1</source>
+        <translation>无法读取 ZIP 压缩包：%1</translation>
+    </message>
+    <message>
+        <location line="+42"/>
+        <location line="+12"/>
+        <source>The ZIP archive contains an invalid file name.</source>
+        <translation>ZIP 压缩包中包含无效的文件名。</translation>
+    </message>
+    <message>
+        <location line="-6"/>
+        <source>Unable to read a file name from the ZIP archive.</source>
+        <translation>无法读取 ZIP 压缩包中的文件名。</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>The ZIP archive contains too many files.</source>
+        <translation>ZIP 压缩包包含的文件过多。</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Unable to inspect the ZIP archive: %1</source>
+        <translation>无法检查 ZIP 压缩包：%1</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>The ZIP archive contains duplicate Demo paths: %1</source>
+        <translation>ZIP 压缩包中存在重复的 Demo 路径：%1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>A Demo in the ZIP archive is too large to use.</source>
+        <translation>ZIP 压缩包中的 Demo 过大，无法使用。</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>The ZIP contains .dem files, but they are encrypted or use an unsupported compression method.</source>
+        <translation>ZIP 压缩包中包含 .dem 文件，但文件已加密或使用了不支持的压缩方式。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The ZIP archive does not contain a CS2 .dem file.</source>
+        <translation>ZIP 压缩包中没有 CS2 .dem 文件。</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>The selected Demo is no longer present in the ZIP archive.</source>
+        <translation>ZIP 压缩包中已找不到所选 Demo。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The selected Demo in the ZIP archive is empty.</source>
+        <translation>ZIP 压缩包中所选的 Demo 是空文件。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The selected Demo exceeds the 8 GB extraction safety limit.</source>
+        <translation>所选 Demo 超过 8 GB 解压安全上限。</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Not enough free disk space to extract the selected Demo.</source>
+        <translation>磁盘可用空间不足，无法解压所选 Demo。</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Unable to create the staged Demo file: %1</source>
+        <translation>无法创建临时 Demo 文件：%1</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+26"/>
+        <source>Unable to extract the selected Demo: %1</source>
+        <translation>无法解压所选 Demo：%1</translation>
+    </message>
+    <message>
+        <location line="-4"/>
+        <source>Unable to write the staged Demo file: %1</source>
+        <translation>无法写入临时 Demo 文件：%1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Unable to finish staging the Demo: %1</source>
+        <translation>无法完成 Demo 临时文件写入：%1</translation>
+    </message>
+    <message>
+        <location line="+74"/>
         <source>Steam was not found in the registry. Select the CS2 installation folder manually.</source>
         <translation>未在注册表中找到 Steam。请手动选择 CS2 安装目录。</translation>
     </message>
@@ -79,12 +172,37 @@
         <translation>DemoUI VPK 已安装并校验。</translation>
     </message>
     <message>
-        <location line="+17"/>
-        <source>Select a valid .dem file.</source>
-        <translation>请选择有效的 .dem 文件。</translation>
+        <location line="+16"/>
+        <source>Unable to return the Demo list for this ZIP archive.</source>
+        <translation>无法返回该 ZIP 压缩包中的 Demo 列表。</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Select a valid .zip file.</source>
+        <translation>请选择有效的 .zip 文件。</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>The ZIP archive is ready.</source>
+        <translation>ZIP 压缩包已准备完成。</translation>
     </message>
     <message>
         <location line="+7"/>
+        <location line="+15"/>
+        <source>Select a valid .dem or .zip file.</source>
+        <translation>请选择有效的 .dem 或 .zip 文件。</translation>
+    </message>
+    <message>
+        <location line="-5"/>
+        <source>Choose a Demo from the ZIP archive first.</source>
+        <translation>请先从 ZIP 压缩包中选择一个 Demo。</translation>
+    </message>
+    <message>
+        <source>Select a valid .dem file.</source>
+        <translation type="vanished">请选择有效的 .dem 文件。</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Unable to create the CS2 cfg folder.</source>
         <translation>无法创建 CS2 cfg 目录。</translation>
     </message>
@@ -99,7 +217,7 @@
         <translation>无法创建 Demo 会话标记。</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+9"/>
         <source>Unable to save the Demo session state.</source>
         <translation>无法保存 Demo 会话状态。</translation>
     </message>
@@ -157,7 +275,7 @@
 <context>
     <name>LauncherWindow</name>
     <message>
-        <location filename="../src/LauncherWindow.cpp" line="+193"/>
+        <location filename="../src/LauncherWindow.cpp" line="+204"/>
         <source>CS2 Demo Tool</source>
         <translation>CS2 回放工具</translation>
     </message>
@@ -205,38 +323,35 @@
         <translation>Swift DemoUI Pro  ·  0.1.0</translation>
     </message>
     <message>
-        <location line="+22"/>
         <source>Choose a Demo and start CS2 with a safe, reversible setup</source>
-        <translation>选择录像，并以安全可恢复的方式启动 CS2</translation>
+        <translation type="vanished">选择录像，并以安全可恢复的方式启动 CS2</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+28"/>
         <source>Checking</source>
         <translation>正在检查</translation>
     </message>
     <message>
         <location line="+15"/>
-        <location line="+796"/>
+        <location line="+850"/>
         <source>✓</source>
         <translation>✓</translation>
     </message>
     <message>
-        <location line="-766"/>
+        <location line="-820"/>
         <source>Choose Demo</source>
         <translation>选择录像</translation>
     </message>
     <message>
-        <location line="+1"/>
         <source>Drop a Demo here</source>
-        <translation>拖放 Demo 到这里</translation>
+        <translation type="vanished">拖放 Demo 到这里</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>Supports CS2 .dem files, or browse from your computer</source>
-        <translation>支持 CS2 .dem 文件，也可以点击右侧浏览</translation>
+        <translation type="vanished">支持 CS2 .dem 文件，也可以点击右侧浏览</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+8"/>
         <source>Browse…</source>
         <translation>浏览…</translation>
     </message>
@@ -387,12 +502,12 @@
     </message>
     <message>
         <location line="+21"/>
-        <location line="+45"/>
+        <location line="+93"/>
         <source>Demo selected. Start playback to install DemoUI automatically and launch CS2.</source>
         <translation>Demo 已选择。点击“开始观看”会自动安装 DemoUI 并启动 CS2。</translation>
     </message>
     <message>
-        <location line="-31"/>
+        <location line="-79"/>
         <source>CS2 was detected automatically. You can now choose a Demo.</source>
         <translation>已自动检测到 CS2，可以选择 Demo。</translation>
     </message>
@@ -402,24 +517,72 @@
         <translation>未找到 CS2</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+13"/>
         <source>Choose a CS2 Demo</source>
         <translation>选择 CS2 Demo</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+11"/>
+        <location line="+10"/>
         <source>Unable to use this file</source>
         <translation>无法使用该文件</translation>
     </message>
     <message>
-        <location line="+0"/>
         <source>Select a valid CS2 .dem file.</source>
-        <translation>请选择有效的 CS2 .dem 文件。</translation>
+        <translation type="vanished">请选择有效的 CS2 .dem 文件。</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="-710"/>
+        <source>Choose a Demo or ZIP archive and start CS2 with a safe, reversible setup</source>
+        <translation>选择 Demo 或 ZIP 压缩包，并通过安全、可恢复的方式启动 CS2</translation>
+    </message>
+    <message>
+        <location line="+52"/>
+        <source>Drop a Demo or ZIP here</source>
+        <translation>将 Demo 或 ZIP 拖放到这里</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Supports CS2 .dem files and ZIP archives</source>
+        <translation>支持 CS2 .dem 文件和 ZIP 压缩包</translation>
+    </message>
+    <message>
+        <location line="+637"/>
+        <source>CS2 Demo files (*.dem *.zip);;Demo files (*.dem);;ZIP archives (*.zip)</source>
+        <translation>CS2 Demo 文件 (*.dem *.zip);;Demo 文件 (*.dem);;ZIP 压缩包 (*.zip)</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Select a valid CS2 .dem or .zip file.</source>
+        <translation>请选择有效的 CS2 .dem 或 .zip 文件。</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <location line="+42"/>
         <source>%1  ·  %2</source>
         <translation>%1  ·  %2</translation>
+    </message>
+    <message>
+        <location line="-37"/>
+        <source>Choose a Demo from the ZIP</source>
+        <translation>从 ZIP 中选择 Demo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>This ZIP contains multiple Demo files. Choose one to play:</source>
+        <translation>该 ZIP 中包含多个 Demo 文件，请选择一个播放：</translation>
+    </message>
+    <message>
+        <location line="+40"/>
+        <source>%1  ·  ZIP ·  %2</source>
+        <translation>%1  ·  ZIP ·  %2</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Archive: %1
+Demo: %2</source>
+        <translation>压缩包：%1
+Demo：%2</translation>
     </message>
     <message>
         <location line="+7"/>

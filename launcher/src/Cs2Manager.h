@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QList>
 #include <QString>
 #include <QStringList>
 
@@ -24,6 +25,12 @@ struct LauncherResult
     static LauncherResult failure(const QString &message);
 };
 
+struct DemoArchiveEntry
+{
+    QString path;
+    qint64 size = 0;
+};
+
 class Cs2Manager
 {
 public:
@@ -40,7 +47,8 @@ public:
     static bool isSessionActive(const Cs2Paths &paths);
 
     static LauncherResult installOverride(const Cs2Paths &paths, const QString &sourceVpk);
-    static LauncherResult prepareDemoSession(const Cs2Paths &paths, const QString &demoPath);
+    static LauncherResult inspectDemoArchive(const QString &archivePath, QList<DemoArchiveEntry> *entries);
+    static LauncherResult prepareDemoSession(const Cs2Paths &paths, const QString &demoPath, const QString &archiveEntry = {});
     static LauncherResult removeDemoSession(const Cs2Paths &paths);
     static LauncherResult launchDemo(const Cs2Paths &paths);
 

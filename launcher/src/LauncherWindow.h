@@ -41,7 +41,7 @@ private:
     void buildInterface();
     void applyStyle();
     void detectEnvironment();
-    void setDemoPath(const QString &path);
+    void setDemoPath(const QString &path, const QString &preferredArchiveEntry = {});
     void refreshDemoDetails();
     void showResult(const LauncherResult &result, bool dialogOnFailure = true);
     void setSecurityState(const QString &state, const QString &title, const QString &detail);
@@ -52,6 +52,8 @@ private:
 
     Cs2Paths paths_;
     QString demoPath_;
+    QString demoArchiveEntry_;
+    qint64 demoSize_ = 0;
     QString lastStatus_;
     QString currentLanguage_;
 

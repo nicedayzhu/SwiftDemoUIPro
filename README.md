@@ -29,14 +29,15 @@ The project does not require SwiftlyS2, a server plugin, or a Workshop resource.
 - Reads native `RoundIntervals` and jumps directly to the start of any round.
 - Preserves the native timeline, playback controls, settings, and default camera-mode hotkeys.
 - Uses a restrained graphite-and-gold interface with clear CT/T and voice-state indicators.
-- Includes **Swift DemoUI Pro**, a native Qt 6 launcher with Steam-library detection, drag-and-drop `.dem` selection, automatic cleanup, English/Chinese UI, and system-language detection.
+- Includes **Swift DemoUI Pro**, a native Qt 6 launcher with Steam-library detection, drag-and-drop `.dem`/`.zip` selection, automatic cleanup, English/Chinese UI, and system-language detection.
+- Opens downloaded ZIP archives directly. A single Demo is selected automatically; archives containing multiple Demos show a selection list, and only the chosen `.dem` is streamed into the launcher's staging directory.
 
 ## Quick Start
 
 For end users, extract a packaged `SwiftDemoUIPro-win64.zip`, then:
 
 1. Run `SwiftDemoUIPro.exe` with `swift_demo_menu_override.vpk` beside it.
-2. Select or drag in a `.dem` file.
+2. Select or drag in a `.dem` file or a `.zip` archive. If the ZIP contains multiple Demos, choose one from the list.
 3. Confirm the detected CS2 installation.
 4. Choose **Start Watching Demo**. The launcher starts CS2 with a one-time `-insecure` argument; it does not change Steam's permanent launch options.
 5. When finished, fully exit CS2, return to the launcher, and choose **Stop Watching Demo**.
@@ -147,6 +148,7 @@ ctest --test-dir .\launcher\build -C Release --output-on-failure
 - Valve can change the native `huddemocontroller` resource at any time. When that happens, resynchronize the layout with the current game files before rebuilding the override.
 - While `GameStateAPI.GetPlayerDataJSO()` is unavailable, the menu shows a waiting state and retries every 0.75 seconds.
 - This is an unofficial client modification and is not affiliated with or endorsed by Valve or FACEIT.
+- ZIP playback supports unencrypted entries that use a compression method supported by the bundled miniz library. The launcher never expands unrelated archive entries and rejects an extracted Demo larger than 8 GB.
 
 Background: [FACEITcom discussion about CS2 demo voice indices](https://www.reddit.com/r/FACEITcom/comments/16vvidt/no_recorded_voice_chat_in_faceit_cs2_demos/).
 
