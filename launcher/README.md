@@ -1,6 +1,6 @@
-# Swift Demo Launcher
+# Swift DemoUI Pro
 
-轻量级 Windows Qt 6 Widgets 启动器，用于安全地安装本项目的 Panorama 菜单并观看 CS2
+轻量级 Windows Qt 6 Widgets 应用，用于安全地安装本项目的 Panorama DemoUI 并观看 CS2
 `.dem` 文件。它不包含 2D 回放、Demo 解析或网络服务。
 
 ## 使用流程
@@ -17,7 +17,7 @@
 4. 观看结束后先完全退出 CS2，再回到启动器点击“停止观看 Demo”。启动器会精确移除自己
    添加的 SearchPath、VPK、临时 CFG、会话标记和复制的 Demo。
 
-`-insecure` 只存在于这一次启动命令中，不会写入 Steam 的永久启动项。但是菜单 VPK 的
+`-insecure` 只存在于这一次启动命令中，不会写入 Steam 的永久启动项。但是 DemoUI VPK 的
 SearchPath 会持续存在，直到执行“停止观看 Demo”；因此不要跳过最后一步。
 
 ## 构建
@@ -33,11 +33,11 @@ SearchPath 会持续存在，直到执行“停止观看 Demo”；因此不要�
 打包产物：
 
 ```text
-launcher\package\SwiftDemoLauncher-win64.zip
+launcher\package\SwiftDemoUIPro-win64.zip
 ```
 
 构建脚本会运行 Qt 单元测试，并通过 `windeployqt` 收集运行所需的 Qt DLL。发布目录中的
-`SwiftDemoLauncher.exe` 与 `swift_demo_menu_override.vpk` 必须放在一起。
+`SwiftDemoUIPro.exe` 与 `swift_demo_menu_override.vpk` 必须放在一起。
 
 ## 安全边界
 

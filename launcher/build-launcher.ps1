@@ -10,7 +10,7 @@ $ErrorActionPreference = "Stop"
 $launcherRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Split-Path -Parent $launcherRoot
 $buildDir = Join-Path $launcherRoot "build"
-$packageDir = Join-Path $launcherRoot "package\SwiftDemoLauncher"
+$packageDir = Join-Path $launcherRoot "package\SwiftDemoUIPro"
 
 function Resolve-CMake {
     $command = Get-Command cmake -ErrorAction SilentlyContinue
@@ -78,12 +78,12 @@ if ($Package) {
     }
     New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
 
-    $launcherExe = Get-ChildItem -LiteralPath $buildDir -Recurse -Filter "SwiftDemoLauncher.exe" |
+    $launcherExe = Get-ChildItem -LiteralPath $buildDir -Recurse -Filter "SwiftDemoUIPro.exe" |
         Where-Object { $_.FullName -notmatch '\\CMakeFiles\\' } |
         Select-Object -First 1
     if (-not $launcherExe) { throw "Built launcher executable was not found." }
 
-    Copy-Item -LiteralPath $launcherExe.FullName -Destination (Join-Path $packageDir "SwiftDemoLauncher.exe")
+    Copy-Item -LiteralPath $launcherExe.FullName -Destination (Join-Path $packageDir "SwiftDemoUIPro.exe")
     Copy-Item -LiteralPath $vpk -Destination (Join-Path $packageDir "swift_demo_menu_override.vpk")
     Copy-Item -LiteralPath (Join-Path $launcherRoot "README.md") -Destination (Join-Path $packageDir "README.txt")
     Copy-Item -LiteralPath (Join-Path $launcherRoot "THIRD_PARTY_NOTICES.txt") -Destination (Join-Path $packageDir "THIRD_PARTY_NOTICES.txt")
@@ -92,7 +92,7 @@ if ($Package) {
     if (-not (Test-Path -LiteralPath $deploy)) { throw "windeployqt.exe was not found in $qt\bin" }
     & $deploy --release --compiler-runtime --no-translations --no-opengl-sw --no-system-dxc-compiler `
         --skip-plugin-types generic,imageformats,networkinformation,tls,styles `
-        (Join-Path $packageDir "SwiftDemoLauncher.exe")
+        (Join-Path $packageDir "SwiftDemoUIPro.exe")
     if ($LASTEXITCODE -ne 0) { throw "windeployqt failed." }
 
     $qtLicense = Join-Path (Split-Path -Parent $qt) "LICENSES\LGPL-3.0-only.txt"
@@ -105,10 +105,10 @@ if ($Package) {
         Copy-Item -LiteralPath $qtLicense -Destination (Join-Path $licenseDir "Qt-LGPL-3.0.txt")
     }
 
-    $zipPath = Join-Path $launcherRoot "package\SwiftDemoLauncher-win64.zip"
+    $zipPath = Join-Path $launcherRoot "package\SwiftDemoUIPro-win64.zip"
     if (Test-Path -LiteralPath $zipPath) { Remove-Item -LiteralPath $zipPath -Force }
     Compress-Archive -LiteralPath $packageDir -DestinationPath $zipPath -CompressionLevel Optimal
     Write-Host "Packaged launcher: $zipPath"
 }
 
-Write-Host "Swift Demo Launcher build complete."
+Write-Host "Swift DemoUI Pro build complete."

@@ -1,4 +1,4 @@
-Swift Demo Launcher - Third-Party Notices
+Swift DemoUI Pro - Third-Party Notices
 =========================================
 
 Qt 6

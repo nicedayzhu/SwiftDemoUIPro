@@ -11,6 +11,7 @@ class QDropEvent;
 class QFrame;
 class QLabel;
 class QPushButton;
+class QStackedWidget;
 class QTimer;
 
 class LauncherWindow final : public QMainWindow
@@ -41,6 +42,7 @@ private:
     void setDemoPath(const QString &path);
     void showResult(const LauncherResult &result, bool dialogOnFailure = true);
     void setSecurityState(const QString &state, const QString &title, const QString &detail);
+    void selectPage(int index);
     void repolish(QWidget *widget);
 
     Cs2Paths paths_;
@@ -63,5 +65,9 @@ private:
     QPushButton *installButton_ = nullptr;
     QPushButton *startButton_ = nullptr;
     QPushButton *stopButton_ = nullptr;
+    QPushButton *navReplayButton_ = nullptr;
+    QPushButton *navMenuButton_ = nullptr;
+    QPushButton *navAboutButton_ = nullptr;
+    QStackedWidget *pages_ = nullptr;
     QTimer *stateTimer_ = nullptr;
 };

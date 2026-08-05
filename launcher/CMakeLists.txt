@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(SwiftDemoLauncher VERSION 0.1.0 LANGUAGES CXX)
+project(SwiftDemoUIPro VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,11 +22,15 @@ qt_add_executable(SwiftDemoLauncher WIN32
     src/LauncherWindow.cpp
     src/LauncherWindow.h
 )
+if(WIN32)
+    target_sources(SwiftDemoLauncher PRIVATE assets/windows_app.rc)
+endif()
 target_link_libraries(SwiftDemoLauncher PRIVATE
     swift_demo_launcher_core
     Qt6::Gui
     Qt6::Widgets
 )
+set_target_properties(SwiftDemoLauncher PROPERTIES OUTPUT_NAME "SwiftDemoUIPro")
 
 if(WIN32)
     target_compile_definitions(swift_demo_launcher_core PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX UNICODE _UNICODE)

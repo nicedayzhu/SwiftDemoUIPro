@@ -444,7 +444,7 @@ LauncherResult Cs2Manager::installOverride(const Cs2Paths &paths, const QString 
     if (!paths.isValid())
         return LauncherResult::failure(QStringLiteral("CS2 安装目录无效。"));
     if (!QFileInfo::exists(sourceVpk))
-        return LauncherResult::failure(QStringLiteral("找不到菜单 VPK。请先构建项目，或将 %1 放在启动器旁边。").arg(QString::fromLatin1(kVpkName)));
+        return LauncherResult::failure(QStringLiteral("找不到 DemoUI VPK。请先构建项目，或将 %1 放在启动器旁边。").arg(QString::fromLatin1(kVpkName)));
 
     QString error;
     const QString backup = paths.gameInfo + QStringLiteral(".swift_demo_launcher.restore.bak");
@@ -471,13 +471,13 @@ LauncherResult Cs2Manager::installOverride(const Cs2Paths &paths, const QString 
         return LauncherResult::failure(error);
     }
 
-    return LauncherResult::success(QStringLiteral("菜单 VPK 已安装并校验。"));
+    return LauncherResult::success(QStringLiteral("DemoUI VPK 已安装并校验。"));
 }
 
 QString Cs2Manager::buildDemoCfg()
 {
     return QStringLiteral(
-        "echo \"Swift Demo Launcher session\"\n"
+        "echo \"Swift DemoUI Pro session\"\n"
         "demo_ui_mode 2\n"
         "tv_listen_voice_indices -1\n"
         "tv_listen_voice_indices_h -1\n"
@@ -565,7 +565,7 @@ LauncherResult Cs2Manager::removeDemoSession(const Cs2Paths &paths)
 
     const QString vpk = targetVpkPath(paths);
     if (QFileInfo::exists(vpk) && !QFile::remove(vpk))
-        errors.append(QStringLiteral("无法删除菜单 VPK：%1").arg(QDir::toNativeSeparators(vpk)));
+        errors.append(QStringLiteral("无法删除 DemoUI VPK：%1").arg(QDir::toNativeSeparators(vpk)));
 
     const QString config = cfgPath(paths);
     if (QFileInfo::exists(config) && !QFile::remove(config))
