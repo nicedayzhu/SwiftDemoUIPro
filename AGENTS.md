@@ -43,7 +43,9 @@ The launcher must never imply that an `-insecure` session is suitable for matchm
 | `VERSION` | Single semantic-version source for CMake, UI, Windows resources, and package names. |
 | `release.ps1` | Full local release-candidate build and optional GitHub publication entry point. |
 | `.github/workflows/ci.yml` | Portable Windows CI for JavaScript and Qt tests; it intentionally does not build the VPK. |
-| `README.md`, `README_CN.md` | Player-facing English and Simplified Chinese documentation; keep them synchronized. |
+| `README.md`, `README_CN.md` | Concise player-facing English and Simplified Chinese documentation; keep them synchronized. |
+| `DEVELOPMENT.md`, `DEVELOPMENT_CN.md` | Developer-facing build, test, localization, versioning, release, and contribution documentation. |
+| `docs/images/` | Screenshots referenced by public documentation; keep relative links portable. |
 
 ## Architecture and Behavior
 
@@ -181,7 +183,7 @@ GitHub CI uses Windows Server 2022, Node 22, Qt 6.8.x/MSVC 2022, and `-SkipVpkCh
 ## Localization Workflow
 
 - Keep translatable C++ source text in English and use `tr(...)` or `QCoreApplication::translate(...)`.
-- Keep `README.md` and `README_CN.md` semantically synchronized for player-facing changes.
+- Keep `README.md` and `README_CN.md` semantically synchronized for player-facing changes, and keep technical detail in the matching `DEVELOPMENT` documents.
 - Preserve Qt placeholders exactly (`%1`, `%2`, and so on), newlines, command names, and paths.
 - After configuring CMake, update translation sources with:
 

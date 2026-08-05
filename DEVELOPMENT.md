@@ -1,0 +1,225 @@
+# Swift DemoUI Pro Developer Guide
+
+[English](DEVELOPMENT.md) | [简体中文](DEVELOPMENT_CN.md) | [Player README](README.md)
+
+This guide contains the technical material for building, testing, packaging, and releasing Swift DemoUI Pro. Player installation and usage are documented in the main [README](README.md).
+
+## Architecture
+
+Swift DemoUI Pro has two cooperating components:
+
+1. A Panorama override that extends Valve's native `huddemocontroller` with recorded-voice controls, validated POV switching, and round navigation.
+2. A C++17/Qt 6 Widgets launcher that discovers CS2, accepts `.dem` and `.zip` files, stages an isolated playback session, starts CS2 with `-insecure`, and restores project-owned changes afterward.
+
+ZIP reading is compiled into the launcher from the vendored miniz source. It enumerates archive entries in process and streams only the selected `.dem`; no external extraction executable is bundled or required.
+
+## Prerequisites
+
+### Panorama/VPK
+
+- Windows PowerShell.
+- A current CS2 installation containing Valve's `resourcecompiler.exe`.
+- [VPKEdit](https://github.com/craftablescience/VPKEdit) command-line tools.
+- Node.js for Panorama tests.
+
+### Qt launcher
+
+- Qt 6.5 or newer with a 64-bit MSVC Desktop kit.
+- Visual Studio with the **Desktop development with C++** workload.
+- CMake on `PATH` or installed by Qt/Visual Studio.
+
+### GitHub publication
+
+- Git and a clean working tree.
+- [GitHub CLI](https://cli.github.com/) authenticated with `gh auth login`.
+- A configured `origin` remote.
+
+Run commands from the repository root. Pass machine-specific paths explicitly in reproducible commands.
+
+## Build and Test
+
+### Panorama tests
+
+```powershell
+node .\tests\test_demo_voice_mask.js
+```
+
+This covers voice-mask generation, player discovery and status behavior, POV commands, round intervals, and required native DemoUI layout integration.
+
+### Build the Panorama VPK
+
+```powershell
+.\demo-menu.ps1 -Action Build `
+  -Cs2Root "<CS2 root>" `
+  -VpkEditCli "<vpkeditcli.exe>"
+```
+
+Output:
+
+```text
+dist\swift_demo_menu_override.vpk
+```
+
+Other lifecycle actions are `Compile`, `Pack`, `Install`, and `Uninstall`. `Install`, `Uninstall`, and `-InstallLocalOverride` modify the local CS2 installation; use them only when that is explicitly intended. Fully restart CS2 after installing, updating, or uninstalling compiled Panorama resources.
+
+### Compile and test the launcher
+
+For a CI-like build that does not require a VPK:
+
+```powershell
+.\launcher\build-launcher.ps1 `
+  -QtRoot "<Qt Desktop kit>" `
+  -Configuration Release `
+  -SkipVpkCheck
+```
+
+The script configures CMake, builds the launcher and translations, and runs CTest. It does not run `windeployqt`. Therefore, `launcher\build\Release\SwiftDemoUIPro.exe` is a raw build artifact and is not a standalone application; launching it outside a configured Qt development environment may report a missing `Qt6Gui.dll` or platform plugin.
+
+For an existing build tree, tests can also be run with:
+
+```powershell
+ctest --test-dir .\launcher\build -C Release --output-on-failure
+```
+
+### Create a runnable package
+
+Build the VPK first, then run:
+
+```powershell
+.\launcher\build-launcher.ps1 `
+  -QtRoot "<Qt Desktop kit>" `
+  -Configuration Release `
+  -Package
+```
+
+Outputs:
+
+```text
+launcher\package\SwiftDemoUIPro-v<version>\SwiftDemoUIPro.exe
+launcher\package\SwiftDemoUIPro-v<version>-win64.zip
+```
+
+Packaging uses `windeployqt`. The output must contain the launcher, Qt runtime DLLs, `platforms\qwindows.dll`, the DemoUI VPK, translations, README files, the project license, third-party notices, and dependency license texts. For end-to-end testing, run the EXE from the unpacked version directory and keep the directory intact.
+
+See the [Launcher Guide](launcher/README.md) for its workflow, localization, ZIP protections, and cleanup boundaries.
+
+## Verification Matrix
+
+| Change | Minimum verification |
+| --- | --- |
+| Panorama JavaScript/layout/style | Run `node .\tests\test_demo_voice_mask.js`; build the VPK when CS2 tools are available. |
+| Launcher core, ZIP, SearchPath, staging, launch, or cleanup | Build the launcher and run CTest; add or update `tst_launcher_core.cpp`. |
+| Launcher UI/QSS/dialogs | Build and test, then inspect an actual rendered or interactive state in each affected language. |
+| Translation strings | Update `.ts`, complete new translations, build `.qm`, and inspect layout/placeholders. |
+| PowerShell/CMake logic | Run the affected command end to end and inspect its artifact. |
+| Packaging/licenses | Open the ZIP and verify required runtime files, notices, and license texts. |
+| Release logic | Create a local release candidate without `-Publish`; verify both ZIPs and every SHA-256 entry. |
+| Documentation only | Validate relative links and assets, then run `git diff --check`. |
+
+GitHub Actions runs portable Panorama and Qt tests on Windows Server 2022. The hosted workflow does not build the VPK because Valve's `resourcecompiler.exe` requires an installed copy of CS2.
+
+## Localization
+
+- Keep C++ source and fallback strings in English; use Qt translation APIs for user-visible text.
+- Keep English and Simplified Chinese documentation semantically aligned.
+- Preserve Qt placeholders such as `%1` and `%2`, as well as newlines, commands, and paths.
+- Update translation sources after configuring CMake:
+
+  ```powershell
+  cmake --build .\launcher\build --target SwiftDemoUIPro_lupdate --config Release
+  ```
+
+- Translate every new unfinished entry in `launcher/translations/swift_demoui_pro_zh_CN.ts`.
+- Build the launcher to generate `.qm` output; generated `.qm` files are not committed.
+- Use `--ui-language en` and `--ui-language zh_CN` for visual language checks.
+
+## Versioning and Local Releases
+
+The root [VERSION](VERSION) file is the only version source and must contain `MAJOR.MINOR.PATCH`. CMake uses it for the application version, About page, Windows metadata, and package names. The launcher also embeds the current short Git commit.
+
+The working tree must be clean before building a release candidate because the source archive is created from `HEAD`:
+
+```powershell
+.\release.ps1 `
+  -Cs2Root "<CS2 root>" `
+  -VpkEditCli "<vpkeditcli.exe>" `
+  -QtRoot "<Qt Desktop kit>"
+```
+
+This runs both test suites, rebuilds the VPK, builds/tests/packages the launcher, creates a Git source archive, and writes:
+
+```text
+release\v<version>\SwiftDemoUIPro-v<version>-win64.zip
+release\v<version>\SwiftDemoUIPro-v<version>-source.zip
+release\v<version>\SHA256SUMS.txt
+```
+
+Use `build-launcher.ps1` while testing uncommitted changes. Commit the completed work before running `release.ps1`; stashed changes are not included in the source archive.
+
+## GitHub Setup and Publication
+
+Initial repository setup:
+
+```powershell
+gh auth login
+gh repo create nicedayzhu/SwiftDemoUIPro --public --source . --remote origin --push
+```
+
+To publish a new semantic version:
+
+```powershell
+.\release.ps1 -Version 0.2.0 `
+  -Cs2Root "<CS2 root>" `
+  -VpkEditCli "<vpkeditcli.exe>" `
+  -QtRoot "<Qt Desktop kit>" `
+  -Publish
+```
+
+Publication may update `VERSION`, create `chore(release): v<version>`, rebuild and test all artifacts, create and push an annotated tag, upload the two ZIPs and `SHA256SUMS.txt` to a draft GitHub Release, and publish only after all uploads succeed. It refuses to overwrite an already published release.
+
+Verify downloaded files with:
+
+```powershell
+Get-FileHash .\SwiftDemoUIPro-v0.2.0-win64.zip -Algorithm SHA256
+Get-Content .\SHA256SUMS.txt
+```
+
+Do not manually edit generated archives or checksums.
+
+## Repository Layout
+
+| Path | Purpose |
+| --- | --- |
+| `addon/` | Panorama layout, JavaScript, and styles compiled into the override VPK. |
+| `launcher/` | Qt launcher source, tests, translations, vendored miniz, and packaging script. |
+| `powershell/` | Shared Panorama compile, pack, install, and uninstall implementation. |
+| `tests/` | Panorama logic and native-layout integration tests. |
+| `demo-menu.ps1` | Repository-level Panorama lifecycle entry point. |
+| `release.ps1` | Versioned local release and optional GitHub publication entry point. |
+| `.github/workflows/ci.yml` | Portable Windows CI. |
+| `VERSION` | Single semantic-version source. |
+
+Generated paths such as `dist/`, `release/`, `launcher/build/`, `launcher/package/`, `launcher/.qt/`, and `launcher/.tools/` must not be committed.
+
+## Contribution and Commit Rules
+
+- Keep C++ compatible with C++17 and Qt 6.5 or newer.
+- Keep filesystem/process behavior in `Cs2Manager` and presentation in `LauncherWindow`.
+- Preserve exact, idempotent, and reversible SearchPath and cleanup behavior.
+- Keep player-facing documentation bilingual and translate new launcher strings in the same change.
+- Run `git diff --check`, review `git status --short`, and run the relevant tests before committing.
+- Use Conventional Commits, for example `feat(launcher): support demos in ZIP archives` or `docs(readme): add launcher preview`.
+- Do not commit generated build, package, translation-binary, or release output.
+
+Coding agents should also follow [AGENTS.md](AGENTS.md), which records the project's safety invariants and operational rules.
+
+## Licensing and Redistribution
+
+- Original project code is MIT licensed; keep [LICENSE](LICENSE) intact.
+- miniz is vendored under MIT in `launcher/third_party/miniz/`.
+- Noto Sans SC is distributed under the SIL Open Font License 1.1.
+- Packaged Qt libraries are dynamically linked under `LGPL-3.0-only`; keep them replaceable and retain the Qt notice/license text.
+- VPKEdit is a build-time tool and is not bundled in the release package.
+- Valve game resources, names, and trademarks are not relicensed by this repository's MIT license.
+
+Keep [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [launcher/THIRD_PARTY_NOTICES.txt](launcher/THIRD_PARTY_NOTICES.txt) aligned with dependency or distribution changes.

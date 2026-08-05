@@ -4,6 +4,12 @@
 
 这是一个轻量级 Windows Qt 6 Widgets 应用，用于安全地安装本项目的 Panorama DemoUI，并直接打开 Counter-Strike 2 `.dem` 文件或下载的 `.zip` 压缩包。它不包含 2D 回放、Demo 解析器或网络服务。
 
+## 界面预览
+
+![Swift DemoUI Pro 启动器的 Demo、ZIP 选择与 TrueView 兼容控制](../docs/images/launcher-playback-ui.png)
+
+启动器把整个回放流程集中在同一页面：选择 Demo，确认兼容选项，启动 CS2，并在观看结束后恢复临时会话。
+
 ## 使用流程
 
 1. 选择或拖入一个 `.dem` 文件或 `.zip` 压缩包。ZIP 中只有一个 Demo 时会自动选择；存在多个时，请从列表中选择一个。
@@ -22,6 +28,8 @@
 `-insecure` 只存在于本次启动命令中，不会写入 Steam 的永久启动项。DemoUI VPK 的 SearchPath 会持续存在到清理完成，因此请勿跳过最后一步。如果启动器意外中断，重新打开即可继续清理。
 
 ## 构建
+
+完整的项目构建、测试、版本和发布流程见[开发者指南](../DEVELOPMENT_CN.md)。
 
 请使用 Qt 6.5 或更高版本的 64 位 MSVC Desktop kit、Visual Studio C++ 工具和 CMake，并从仓库根目录执行以下命令。
 

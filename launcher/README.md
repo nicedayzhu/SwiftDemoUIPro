@@ -4,6 +4,12 @@
 
 A lightweight Windows Qt 6 Widgets application that safely installs this project's Panorama DemoUI and opens Counter-Strike 2 `.dem` files directly or from downloaded `.zip` archives. It does not include a 2D replay viewer, demo parser, or network service.
 
+## Interface Preview
+
+![Swift DemoUI Pro launcher with Demo and ZIP selection and TrueView compatibility control](../docs/images/launcher-playback-ui.png)
+
+The launcher keeps the playback workflow on one page: choose a Demo, review the compatibility option, start CS2, then restore the temporary session when finished.
+
 ## Workflow
 
 1. Select or drag in a `.dem` file or `.zip` archive. A ZIP containing one Demo is selected automatically; if it contains several, choose one from the displayed list.
@@ -22,6 +28,8 @@ If the console repeatedly reports `Not enough TrueView command lookahead` or the
 `-insecure` is used only by that launch command and is not written to Steam's permanent launch options. The DemoUI VPK SearchPath remains active until cleanup completes, so do not skip the final step. If the launcher was interrupted, reopen it to resume cleanup.
 
 ## Build
+
+For the complete project build, test, versioning, and release workflow, see the [Developer Guide](../DEVELOPMENT.md).
 
 Use Qt 6.5 or newer with a 64-bit MSVC Desktop kit, Visual Studio C++ tools, and CMake. Run all commands from the repository root.
 
