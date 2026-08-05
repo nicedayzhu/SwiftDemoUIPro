@@ -34,7 +34,7 @@
 
 ## 快速开始
 
-普通用户可解压已经打包的 `SwiftDemoUIPro-win64.zip`，然后：
+普通用户可解压已经打包的 `SwiftDemoUIPro-v<版本号>-win64.zip`，然后：
 
 1. 确保 `SwiftDemoUIPro.exe` 与 `swift_demo_menu_override.vpk` 位于同一目录，运行程序。
 2. 选择或拖入一个 `.dem` 文件或 `.zip` 压缩包；如果 ZIP 中包含多个 Demo，请从列表中选择一个。
@@ -111,10 +111,59 @@ dist\swift_demo_menu_override.vpk
 脚本会配置 CMake、构建启动器、运行 Qt 测试、通过 `windeployqt` 收集所需的动态 Qt 库，并生成：
 
 ```text
-launcher\package\SwiftDemoUIPro-win64.zip
+launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
 ```
 
 启动器的架构、国际化和打包细节见 [launcher/README_CN.md](launcher/README_CN.md)。
+
+## 版本与 Release
+
+仓库根目录的 [VERSION](VERSION) 是唯一版本来源。CMake 会把它自动用于应用版本、关于页面、Windows 文件属性和带版本号的包名；启动器还会嵌入当前 Git commit。
+
+使用一条命令生成完整的本地 Release 候选包：
+
+```powershell
+.\release.ps1 `
+  -Cs2Root "C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive" `
+  -VpkEditCli "C:\Tools\VPKEdit\vpkeditcli.exe" `
+  -QtRoot "C:\Qt\6.8.3\msvc2022_64"
+```
+
+脚本会运行全部 JavaScript 与 Qt 测试，重新构建 VPK 和启动器，然后在 `release\v<版本号>` 下生成：
+
+```text
+SwiftDemoUIPro-v<版本号>-win64.zip
+SwiftDemoUIPro-v<版本号>-source.zip
+SHA256SUMS.txt
+```
+
+首次关联 GitHub 时，安装 [GitHub CLI](https://cli.github.com/)，然后运行：
+
+```powershell
+gh auth login
+gh repo create nicedayzhu/SwiftDemoUIPro --public --source . --remote origin --push
+```
+
+以后每次发布只需选择一个[语义化版本号](https://semver.org/lang/zh-CN/)，再给同一命令增加 `-Version` 和 `-Publish`：
+
+```powershell
+.\release.ps1 -Version 0.2.0 `
+  -Cs2Root "<CS2 根目录>" `
+  -VpkEditCli "<vpkeditcli.exe>" `
+  -QtRoot "<Qt Desktop kit>" `
+  -Publish
+```
+
+发布脚本会在需要时更新 `VERSION`，创建规范提交 `chore(release): v<版本号>`，重新构建并测试全部内容，创建带注释的 Git tag，推送分支与 tag，把三个文件上传到 GitHub Release 草稿，并且只在全部上传成功后正式发布。失败的草稿可以安全重跑；已经发布的 Release 不会被覆盖。
+
+下载 Release 后，可把文件 SHA-256 与 `SHA256SUMS.txt` 对照：
+
+```powershell
+Get-FileHash .\SwiftDemoUIPro-v0.2.0-win64.zip -Algorithm SHA256
+Get-Content .\SHA256SUMS.txt
+```
+
+GitHub Actions 会在每次 push 和 Pull Request 时运行可移植的 JavaScript 与 Qt 测试。VPK 和最终 Release 包仍由本地发布命令生成，因为它们依赖已安装的 CS2 和 Valve `resourcecompiler.exe`。
 
 ## 测试
 

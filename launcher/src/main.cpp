@@ -1,4 +1,5 @@
 #include "LauncherWindow.h"
+#include "AppVersion.h"
 
 #include <QApplication>
 #include <QDir>
@@ -12,7 +13,8 @@ int main(int argc, char *argv[])
 {
     QApplication application(argc, argv);
     application.setApplicationName(QStringLiteral("Swift DemoUI Pro"));
-    application.setApplicationVersion(QStringLiteral("0.1.0"));
+    application.setApplicationVersion(QString::fromLatin1(SwiftDemoUIBuild::kVersion));
+    application.setProperty("gitCommit", QString::fromLatin1(SwiftDemoUIBuild::kGitCommit));
     application.setOrganizationName(QStringLiteral("SwiftTools"));
     application.setStyle(QStringLiteral("Fusion"));
 

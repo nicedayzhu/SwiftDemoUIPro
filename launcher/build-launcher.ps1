@@ -2,7 +2,8 @@ param(
     [string]$QtRoot = "",
     [ValidateSet("Debug", "Release")]
     [string]$Configuration = "Release",
-    [switch]$Package
+    [switch]$Package,
+    [switch]$SkipVpkCheck
 )
 
 $ErrorActionPreference = "Stop"
@@ -10,7 +11,12 @@ $ErrorActionPreference = "Stop"
 $launcherRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Split-Path -Parent $launcherRoot
 $buildDir = Join-Path $launcherRoot "build"
-$packageDir = Join-Path $launcherRoot "package\SwiftDemoUIPro"
+$versionPath = Join-Path $projectRoot "VERSION"
+$version = (Get-Content -Raw -LiteralPath $versionPath).Trim()
+if ($version -notmatch '^\d+\.\d+\.\d+$') {
+    throw "VERSION must contain a semantic version such as 1.2.3."
+}
+$packageDir = Join-Path $launcherRoot "package\SwiftDemoUIPro-v$version"
 
 function Resolve-CMake {
     $command = Get-Command cmake -ErrorAction SilentlyContinue
@@ -54,7 +60,7 @@ function Resolve-QtRoot {
 }
 
 $vpk = Join-Path $projectRoot "dist\swift_demo_menu_override.vpk"
-if (-not (Test-Path -LiteralPath $vpk)) {
+if (-not (Test-Path -LiteralPath $vpk) -and ($Package -or -not $SkipVpkCheck)) {
     throw "Missing menu VPK. Run ..\demo-menu.ps1 first."
 }
 
@@ -112,7 +118,7 @@ if ($Package) {
     $minizLicense = Join-Path $launcherRoot "third_party\miniz\LICENSE"
     Copy-Item -LiteralPath $minizLicense -Destination (Join-Path $licenseDir "miniz-MIT.txt")
 
-    $zipPath = Join-Path $launcherRoot "package\SwiftDemoUIPro-win64.zip"
+    $zipPath = Join-Path $launcherRoot "package\SwiftDemoUIPro-v$version-win64.zip"
     if (Test-Path -LiteralPath $zipPath) { Remove-Item -LiteralPath $zipPath -Force }
     Compress-Archive -LiteralPath $packageDir -DestinationPath $zipPath -CompressionLevel Optimal
     Write-Host "Packaged launcher: $zipPath"

@@ -318,27 +318,26 @@
         <translation>跟随系统</translation>
     </message>
     <message>
-        <location line="+26"/>
         <source>Swift DemoUI Pro  ·  0.1.0</source>
-        <translation>Swift DemoUI Pro  ·  0.1.0</translation>
+        <translation type="vanished">Swift DemoUI Pro  ·  0.1.0</translation>
     </message>
     <message>
         <source>Choose a Demo and start CS2 with a safe, reversible setup</source>
         <translation type="vanished">选择录像，并以安全可恢复的方式启动 CS2</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+54"/>
         <source>Checking</source>
         <translation>正在检查</translation>
     </message>
     <message>
         <location line="+15"/>
-        <location line="+850"/>
+        <location line="+856"/>
         <source>✓</source>
         <translation>✓</translation>
     </message>
     <message>
-        <location line="-820"/>
+        <location line="-826"/>
         <source>Choose Demo</source>
         <translation>选择录像</translation>
     </message>
@@ -456,12 +455,11 @@
         <translation>轻量、原生的 Counter-Strike 2 DemoUI 增强与回放工具</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>Version 0.1.0  ·  Qt 6 Widgets</source>
-        <translation>版本 0.1.0  ·  Qt 6 Widgets</translation>
+        <translation type="vanished">版本 0.1.0  ·  Qt 6 Widgets</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+18"/>
         <source>Find me</source>
         <translation>找到我</translation>
     </message>
@@ -502,12 +500,12 @@
     </message>
     <message>
         <location line="+21"/>
-        <location line="+93"/>
+        <location line="+96"/>
         <source>Demo selected. Start playback to install DemoUI automatically and launch CS2.</source>
         <translation>Demo 已选择。点击“开始观看”会自动安装 DemoUI 并启动 CS2。</translation>
     </message>
     <message>
-        <location line="-79"/>
+        <location line="-82"/>
         <source>CS2 was detected automatically. You can now choose a Demo.</source>
         <translation>已自动检测到 CS2，可以选择 Demo。</translation>
     </message>
@@ -532,7 +530,12 @@
         <translation type="vanished">请选择有效的 CS2 .dem 文件。</translation>
     </message>
     <message>
-        <location line="-710"/>
+        <location line="-735"/>
+        <source>Swift DemoUI Pro · %1</source>
+        <translation>Swift DemoUI Pro · %1</translation>
+    </message>
+    <message>
+        <location line="+22"/>
         <source>Choose a Demo or ZIP archive and start CS2 with a safe, reversible setup</source>
         <translation>选择 Demo 或 ZIP 压缩包，并通过安全、可恢复的方式启动 CS2</translation>
     </message>
@@ -547,7 +550,12 @@
         <translation>支持 CS2 .dem 文件和 ZIP 压缩包</translation>
     </message>
     <message>
-        <location line="+637"/>
+        <location line="+167"/>
+        <source>Version %1 (%2) · Qt 6 Widgets</source>
+        <translation>版本 %1（%2）· Qt 6 Widgets</translation>
+    </message>
+    <message>
+        <location line="+473"/>
         <source>CS2 Demo files (*.dem *.zip);;Demo files (*.dem);;ZIP archives (*.zip)</source>
         <translation>CS2 Demo 文件 (*.dem *.zip);;Demo 文件 (*.dem);;ZIP 压缩包 (*.zip)</translation>
     </message>
@@ -558,12 +566,12 @@
     </message>
     <message>
         <location line="+23"/>
-        <location line="+42"/>
+        <location line="+45"/>
         <source>%1  ·  %2</source>
         <translation>%1  ·  %2</translation>
     </message>
     <message>
-        <location line="-37"/>
+        <location line="-40"/>
         <source>Choose a Demo from the ZIP</source>
         <translation>从 ZIP 中选择 Demo</translation>
     </message>
@@ -573,7 +581,7 @@
         <translation>该 ZIP 中包含多个 Demo 文件，请选择一个播放：</translation>
     </message>
     <message>
-        <location line="+40"/>
+        <location line="+43"/>
         <source>%1  ·  ZIP ·  %2</source>
         <translation>%1  ·  ZIP ·  %2</translation>
     </message>

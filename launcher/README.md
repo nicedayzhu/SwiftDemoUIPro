@@ -33,7 +33,7 @@ Use Qt 6.5 or newer with a 64-bit MSVC Desktop kit, Visual Studio C++ tools, and
 Package output:
 
 ```text
-launcher\package\SwiftDemoUIPro-win64.zip
+launcher\package\SwiftDemoUIPro-v<version>-win64.zip
 ```
 
 The build script runs the Qt unit tests and uses `windeployqt` to collect required runtime libraries. `SwiftDemoUIPro.exe` and `swift_demo_menu_override.vpk` must remain together in the release directory.

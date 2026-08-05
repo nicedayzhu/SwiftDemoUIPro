@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(SwiftDemoUIPro VERSION 0.1.0 LANGUAGES C CXX)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../VERSION")
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../VERSION" SWIFT_DEMOUI_VERSION LIMIT_COUNT 1)
+string(STRIP "${SWIFT_DEMOUI_VERSION}" SWIFT_DEMOUI_VERSION)
+if(NOT SWIFT_DEMOUI_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+    message(FATAL_ERROR "../VERSION must contain a semantic version such as 1.2.3")
+endif()
+
+project(SwiftDemoUIPro VERSION "${SWIFT_DEMOUI_VERSION}" LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -9,6 +16,30 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets LinguistTools)
+find_package(Git QUIET)
+
+set(SWIFT_DEMOUI_GIT_COMMIT "unknown")
+if(Git_FOUND)
+    execute_process(
+        COMMAND "${GIT_EXECUTABLE}" rev-parse --short=12 HEAD
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.."
+        RESULT_VARIABLE SWIFT_DEMOUI_GIT_RESULT
+        OUTPUT_VARIABLE SWIFT_DEMOUI_GIT_OUTPUT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    if(SWIFT_DEMOUI_GIT_RESULT EQUAL 0 AND SWIFT_DEMOUI_GIT_OUTPUT)
+        set(SWIFT_DEMOUI_GIT_COMMIT "${SWIFT_DEMOUI_GIT_OUTPUT}")
+    endif()
+endif()
+
+set(SWIFT_DEMOUI_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+file(MAKE_DIRECTORY "${SWIFT_DEMOUI_GENERATED_DIR}")
+configure_file(
+    src/AppVersion.h.in
+    "${SWIFT_DEMOUI_GENERATED_DIR}/AppVersion.h"
+    @ONLY
+)
 
 add_library(miniz STATIC
     third_party/miniz/miniz.c
@@ -33,8 +64,14 @@ qt_add_executable(SwiftDemoLauncher WIN32
     src/LauncherWindow.h
 )
 if(WIN32)
-    target_sources(SwiftDemoLauncher PRIVATE assets/windows_app.rc)
+    configure_file(
+        assets/windows_app.rc.in
+        "${SWIFT_DEMOUI_GENERATED_DIR}/windows_app.rc"
+        @ONLY
+    )
+    target_sources(SwiftDemoLauncher PRIVATE "${SWIFT_DEMOUI_GENERATED_DIR}/windows_app.rc")
 endif()
+target_include_directories(SwiftDemoLauncher PRIVATE "${SWIFT_DEMOUI_GENERATED_DIR}")
 target_link_libraries(SwiftDemoLauncher PRIVATE
     swift_demo_launcher_core
     Qt6::Gui

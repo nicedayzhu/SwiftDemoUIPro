@@ -34,7 +34,7 @@ The project does not require SwiftlyS2, a server plugin, or a Workshop resource.
 
 ## Quick Start
 
-For end users, extract a packaged `SwiftDemoUIPro-win64.zip`, then:
+For end users, extract a packaged `SwiftDemoUIPro-v<version>-win64.zip`, then:
 
 1. Run `SwiftDemoUIPro.exe` with `swift_demo_menu_override.vpk` beside it.
 2. Select or drag in a `.dem` file or a `.zip` archive. If the ZIP contains multiple Demos, choose one from the list.
@@ -111,10 +111,59 @@ Build the VPK first, then run:
 The script configures CMake, builds the launcher, runs its Qt tests, collects the required dynamic Qt libraries with `windeployqt`, and creates:
 
 ```text
-launcher\package\SwiftDemoUIPro-win64.zip
+launcher\package\SwiftDemoUIPro-v<version>-win64.zip
 ```
 
 See [launcher/README.md](launcher/README.md) for launcher architecture, localization, and packaging details.
+
+## Versioning and Releases
+
+The root [VERSION](VERSION) file is the single version source. CMake uses it for the application version, the About page, Windows file metadata, and versioned package names. The launcher also embeds the current Git commit.
+
+Create a complete local release candidate with one command:
+
+```powershell
+.\release.ps1 `
+  -Cs2Root "C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive" `
+  -VpkEditCli "C:\Tools\VPKEdit\vpkeditcli.exe" `
+  -QtRoot "C:\Qt\6.8.3\msvc2022_64"
+```
+
+This runs all JavaScript and Qt tests, rebuilds the VPK and launcher, then creates these files under `release\v<version>`:
+
+```text
+SwiftDemoUIPro-v<version>-win64.zip
+SwiftDemoUIPro-v<version>-source.zip
+SHA256SUMS.txt
+```
+
+To connect the local repository to GitHub for the first time, install [GitHub CLI](https://cli.github.com/), then run:
+
+```powershell
+gh auth login
+gh repo create nicedayzhu/SwiftDemoUIPro --public --source . --remote origin --push
+```
+
+For each release, choose a [Semantic Version](https://semver.org/) and run the same command with `-Version` and `-Publish`:
+
+```powershell
+.\release.ps1 -Version 0.2.0 `
+  -Cs2Root "<CS2 root>" `
+  -VpkEditCli "<vpkeditcli.exe>" `
+  -QtRoot "<Qt desktop kit>" `
+  -Publish
+```
+
+Publishing updates `VERSION` when needed, creates the Conventional Commit `chore(release): v<version>`, rebuilds and tests everything, creates an annotated Git tag, pushes the branch and tag, uploads all three files to a draft GitHub Release, and publishes it only after every upload succeeds. Re-running a failed draft release is safe; an already published release is never overwritten.
+
+After downloading a release, compare its checksum with `SHA256SUMS.txt`:
+
+```powershell
+Get-FileHash .\SwiftDemoUIPro-v0.2.0-win64.zip -Algorithm SHA256
+Get-Content .\SHA256SUMS.txt
+```
+
+GitHub Actions runs the portable JavaScript and Qt tests on every push and pull request. The VPK and final release package stay in the local release command because they require an installed copy of CS2 and Valve's `resourcecompiler.exe`.
 
 ## Tests
 

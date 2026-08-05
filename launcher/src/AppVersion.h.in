@@ -1,0 +1,8 @@
+#pragma once
+
+namespace SwiftDemoUIBuild {
+
+inline constexpr char kVersion[] = "@PROJECT_VERSION@";
+inline constexpr char kGitCommit[] = "@SWIFT_DEMOUI_GIT_COMMIT@";
+
+} // namespace SwiftDemoUIBuild

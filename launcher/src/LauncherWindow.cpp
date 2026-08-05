@@ -271,7 +271,7 @@ void LauncherWindow::buildInterface()
     });
     sideLayout->addWidget(languageCombo_);
 
-    auto *version = new QLabel(tr("Swift DemoUI Pro  ·  0.1.0"), sidebar);
+    auto *version = new QLabel(tr("Swift DemoUI Pro · %1").arg(qApp->applicationVersion()), sidebar);
     version->setObjectName(QStringLiteral("SidebarFooter"));
     version->setAlignment(Qt::AlignCenter);
     sideLayout->addSpacing(8);
@@ -513,7 +513,10 @@ void LauncherWindow::buildInterface()
     heroTitle->setObjectName(QStringLiteral("AboutTitle"));
     auto *heroDescription = new QLabel(tr("A lightweight, native DemoUI enhancement and playback tool for Counter-Strike 2"), aboutHero);
     heroDescription->setObjectName(QStringLiteral("AboutDescription"));
-    auto *heroVersion = new QLabel(tr("Version 0.1.0  ·  Qt 6 Widgets"), aboutHero);
+    auto *heroVersion = new QLabel(
+        tr("Version %1 (%2) · Qt 6 Widgets")
+            .arg(qApp->applicationVersion(), qApp->property("gitCommit").toString()),
+        aboutHero);
     heroVersion->setObjectName(QStringLiteral("AboutVersion"));
     heroCopy->addWidget(heroTitle);
     heroCopy->addWidget(heroDescription);

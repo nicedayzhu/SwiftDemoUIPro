@@ -33,7 +33,7 @@
 打包产物：
 
 ```text
-launcher\package\SwiftDemoUIPro-win64.zip
+launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
 ```
 
 构建脚本会运行 Qt 单元测试，并通过 `windeployqt` 收集所需的运行库。发布目录中的 `SwiftDemoUIPro.exe` 与 `swift_demo_menu_override.vpk` 必须放在一起。
