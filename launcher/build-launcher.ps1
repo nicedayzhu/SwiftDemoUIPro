@@ -86,6 +86,8 @@ if ($Package) {
     Copy-Item -LiteralPath $launcherExe.FullName -Destination (Join-Path $packageDir "SwiftDemoUIPro.exe")
     Copy-Item -LiteralPath $vpk -Destination (Join-Path $packageDir "swift_demo_menu_override.vpk")
     Copy-Item -LiteralPath (Join-Path $launcherRoot "README.md") -Destination (Join-Path $packageDir "README.txt")
+    Copy-Item -LiteralPath (Join-Path $launcherRoot "README_CN.md") -Destination (Join-Path $packageDir "README_CN.txt")
+    Copy-Item -LiteralPath (Join-Path $projectRoot "LICENSE") -Destination (Join-Path $packageDir "LICENSE.txt")
     Copy-Item -LiteralPath (Join-Path $launcherRoot "THIRD_PARTY_NOTICES.txt") -Destination (Join-Path $packageDir "THIRD_PARTY_NOTICES.txt")
     $appTranslations = Join-Path $launcherExe.DirectoryName "translations"
     if (Test-Path -LiteralPath $appTranslations) {

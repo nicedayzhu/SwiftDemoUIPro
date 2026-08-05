@@ -1,6 +1,22 @@
 Swift DemoUI Pro - Third-Party Notices
 =========================================
 
+Project license
+---------------
+Original Swift DemoUI Pro source code is licensed under the MIT License.
+A copy of that license is included as LICENSE.txt in packaged releases.
+Third-party components and materials remain under their own terms.
+
+Valve and Counter-Strike 2
+--------------------------
+This project interoperates with Counter-Strike 2 and overrides its native
+DemoUI layout. Referenced game resources, names, icons, trademarks, and other
+Valve material are not licensed under the project's MIT License.
+
+Counter-Strike, Counter-Strike 2, CS2, and Steam are trademarks or registered
+trademarks of Valve Corporation. This is an independent, unofficial project
+and is not affiliated with or endorsed by Valve.
+
 Qt 6
 ----
 This application dynamically links to the Qt 6 Core, Gui, and Widgets
