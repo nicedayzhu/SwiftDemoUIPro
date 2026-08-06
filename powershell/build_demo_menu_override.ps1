@@ -41,10 +41,16 @@ Write-SwiftMenuTextNoBom -Path (Join-Path $contentAddon "addoninfo.txt") -Value 
 $sourceLayout = Join-Path $root "addon\panorama\layout\hud\huddemocontroller.xml"
 $sourceStyle = Join-Path $root "addon\panorama\styles\hud\swift_demo_voice.css"
 $sourceScript = Join-Path $root "addon\panorama\scripts\hud\swift_demo_voice.js"
+$sourceLocalizationDir = Join-Path $root "addon\resource"
+$localizationFiles = @("platform_english.txt", "platform_schinese.txt")
 
 Assert-SwiftMenuFileExists -Path $sourceLayout -Message "Missing demo HUD layout: $sourceLayout"
 Assert-SwiftMenuFileExists -Path $sourceStyle -Message "Missing demo voice style: $sourceStyle"
 Assert-SwiftMenuFileExists -Path $sourceScript -Message "Missing demo voice script: $sourceScript"
+foreach ($localizationFile in $localizationFiles) {
+	$sourceLocalization = Join-Path $sourceLocalizationDir $localizationFile
+	Assert-SwiftMenuFileExists -Path $sourceLocalization -Message "Missing Panorama localization file: $sourceLocalization"
+}
 
 $layoutInput = Join-Path $layoutDir "huddemocontroller.vxml"
 $styleInput = Join-Path $styleDir "swift_demo_voice.vcss"
@@ -64,6 +70,25 @@ $expectedOutputs = @(
 Invoke-SwiftMenuResourceCompiler -ResourceCompiler $resourceCompiler -GameDir $gameDir -Inputs $compileInputs
 Assert-SwiftMenuCompiledOutputs -Paths $expectedOutputs
 
+# CS2 loads platform_<language>.txt from the resource directory. These are
+# runtime text assets, so copy them directly instead of compiling them.
+$gameLocalizationDir = Join-Path $gameAddon "resource"
+New-Item -ItemType Directory -Force -Path $gameLocalizationDir | Out-Null
+$utf8Bom = New-Object System.Text.UTF8Encoding($true)
+foreach ($localizationFile in $localizationFiles) {
+	$sourceLocalization = Join-Path $sourceLocalizationDir $localizationFile
+	$targetLocalization = Join-Path $gameLocalizationDir $localizationFile
+	[System.IO.File]::WriteAllText(
+		$targetLocalization,
+		(Get-Content -Raw -Encoding UTF8 -LiteralPath $sourceLocalization),
+		$utf8Bom
+	)
+}
+Assert-SwiftMenuCompiledOutputs -Paths @(
+	(Join-Path $gameLocalizationDir "platform_english.txt"),
+	(Join-Path $gameLocalizationDir "platform_schinese.txt")
+)
+
 $compiledScriptText = [System.Text.Encoding]::UTF8.GetString(
 	[System.IO.File]::ReadAllBytes($expectedOutputs[2])
 )
@@ -80,3 +105,4 @@ Write-Host "Built demo menu Panorama override."
 Write-Host "Compiled addon: $gameAddon"
 Write-Host "Override layout: panorama/layout/hud/huddemocontroller.vxml_c"
 Write-Host "Voice controller: panorama/scripts/hud/swift_demo_voice.vjs_c"
+Write-Host "Localization: resource/platform_english.txt, platform_schinese.txt"

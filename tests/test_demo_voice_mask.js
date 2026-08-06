@@ -11,6 +11,59 @@ var layoutPath = path.join(__dirname, "..", "addon", "panorama", "layout", "hud"
 var layout = fs.readFileSync(layoutPath, "utf8");
 var stylePath = path.join(__dirname, "..", "addon", "panorama", "styles", "hud", "swift_demo_voice.css");
 var style = fs.readFileSync(stylePath, "utf8");
+var localizationDir = path.join(__dirname, "..", "addon", "resource");
+var englishLocalization = fs.readFileSync(path.join(localizationDir, "platform_english.txt"), "utf8");
+var schineseLocalization = fs.readFileSync(path.join(localizationDir, "platform_schinese.txt"), "utf8");
+var buildScript = fs.readFileSync(path.join(__dirname, "..", "powershell", "build_demo_menu_override.ps1"), "utf8");
+
+function localizationTokens(text) {
+	var result = {};
+	var pattern = /^\s*"(SwiftDemoVoice_[A-Za-z0-9_]+)"\s+"((?:[^"\\]|\\.)*)"\s*$/gm;
+	var match = null;
+	while ((match = pattern.exec(text))) result[match[1]] = match[2];
+	return result;
+}
+
+var englishTokens = localizationTokens(englishLocalization);
+var schineseTokens = localizationTokens(schineseLocalization);
+var englishKeys = Object.keys(englishTokens).sort();
+var schineseKeys = Object.keys(schineseTokens).sort();
+if (englishKeys.length === 0 || JSON.stringify(englishKeys) !== JSON.stringify(schineseKeys)) {
+	throw new Error("English and Simplified Chinese localization catalogs must contain the same token set");
+}
+englishKeys.forEach(function (token) {
+	var placeholderPattern = /\{[sd]:[A-Za-z0-9_-]+\}/g;
+	var englishPlaceholders = (englishTokens[token].match(placeholderPattern) || []).sort();
+	var schinesePlaceholders = (schineseTokens[token].match(placeholderPattern) || []).sort();
+	if (JSON.stringify(englishPlaceholders) !== JSON.stringify(schinesePlaceholders)) {
+		throw new Error("localization placeholders must match for token: " + token);
+	}
+});
+
+if (!/^\s*"Tokens"\s*\{/m.test(englishLocalization)
+	|| !/^\s*"Tokens"\s*\{/m.test(schineseLocalization)
+	|| /"lang"\s*\{/.test(englishLocalization + schineseLocalization)) {
+	throw new Error("CS2 platform localization catalogs must use a top-level Tokens block");
+}
+
+var referencedTokens = {};
+var referencePattern = /#(SwiftDemoVoice_[A-Za-z0-9_]+)/g;
+var referenceMatch = null;
+while ((referenceMatch = referencePattern.exec(layout + "\n" + source))) referencedTokens[referenceMatch[1]] = true;
+englishKeys.forEach(function (token) {
+	if (!referencedTokens[token]) throw new Error("unused Demo Voice localization token: " + token);
+});
+Object.keys(referencedTokens).forEach(function (token) {
+	if (!englishTokens[token] || !schineseTokens[token]) throw new Error("missing Demo Voice localization token: " + token);
+});
+
+if (!/Join-Path \$gameAddon "resource"/.test(buildScript)
+	|| !/platform_english\.txt/.test(buildScript)
+	|| !/platform_schinese\.txt/.test(buildScript)
+	|| !/Get-Content -Raw -Encoding UTF8/.test(buildScript)
+	|| !/UTF8Encoding\(\$true\)/.test(buildScript)) {
+	throw new Error("build must copy UTF-8 BOM CS2 platform localization catalogs into the game resource directory");
+}
 
 function extractNativeRoot(xml) {
 	var start = xml.indexOf('<Panel id="Root">');
@@ -108,7 +161,7 @@ if (!/icons\/ui\/unmuted\.vsvg/.test(layout) || !/SwiftDemoVoiceEnabledLabel/.te
 	throw new Error("voice controls must use explicit unmuted/muted UI with a text state");
 }
 
-if (!/id="SwiftDemoRoundPicker"/.test(layout) || !/SwiftDemoVoice\.ToggleRoundPicker\(\)/.test(layout) || !/PLAYER AUDIO, POV &amp; ROUNDS/.test(layout)) {
+if (!/id="SwiftDemoRoundPicker"/.test(layout) || !/SwiftDemoVoice\.ToggleRoundPicker\(\)/.test(layout) || !/#SwiftDemoVoice_Subtitle/.test(layout)) {
 	throw new Error("custom menu must expose the compact round navigation component");
 }
 
@@ -116,8 +169,8 @@ if (!/RoundIntervals/.test(source) || !/controller\.GotoTick\(Math\.floor\(round
 	throw new Error("round navigation must use the native demo state and controller tick API");
 }
 
-if (!/BLUE SPEAKER = VOICE ON/.test(layout) || /Eye = current POV/.test(layout) || !/SwiftVoiceAudio/.test(style)) {
-	throw new Error("footer legend must remain ASCII-only and match the blue enabled speaker state");
+if (!/#SwiftDemoVoice_FooterHint/.test(layout) || !/SwiftVoiceAudio/.test(style) || !/\$\.Localize\(token, panel\)/.test(source)) {
+	throw new Error("visible Demo Voice text must use Panorama localization tokens");
 }
 
 var commands = [];

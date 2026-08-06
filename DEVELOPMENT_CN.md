@@ -44,7 +44,7 @@ ZIP 读取功能由仓库内置的 miniz 源码直接编译进启动器。程序
 node .\tests\test_demo_voice_mask.js
 ```
 
-该测试覆盖语音掩码生成、玩家发现与状态处理、POV 指令、回合区间以及原生 DemoUI 必需布局的集成检查。
+该测试覆盖语音掩码生成、玩家发现与状态处理、POV 指令、回合区间、原生 DemoUI 必需布局，以及中英文 Panorama 本地化目录与 Token 一致性。
 
 ### 构建 Panorama VPK
 
@@ -107,7 +107,7 @@ launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
 
 | 修改范围 | 最低验证要求 |
 | --- | --- |
-| Panorama JavaScript/布局/样式 | 运行 `node .\tests\test_demo_voice_mask.js`；具备 CS2 工具时构建 VPK。 |
+| Panorama JavaScript/布局/样式/本地化 | 运行 `node .\tests\test_demo_voice_mask.js`；具备 CS2 工具时构建 VPK，并确认原始语言文件进入 VPK。 |
 | 启动器核心、ZIP、SearchPath、暂存、启动或清理 | 编译启动器并运行 CTest；新增或更新 `tst_launcher_core.cpp`。 |
 | 启动器 UI/QSS/对话框 | 编译和测试后，在每种受影响语言下检查真实渲染或交互状态。 |
 | 翻译文本 | 更新 `.ts`，完成新增翻译，构建 `.qm` 并检查布局与占位符。 |
@@ -122,6 +122,8 @@ GitHub Actions 会在 Windows Server 2022 上运行可移植的 Panorama 与 Qt 
 
 ## 国际化
 
+### Qt 启动器
+
 - C++ 源码和后备文本保持英文；用户可见文本使用 Qt 翻译 API。
 - 英文和简体中文文档保持语义一致。
 - 保留 `%1`、`%2` 等 Qt 占位符，以及换行、命令和路径。
@@ -134,6 +136,14 @@ GitHub Actions 会在 Windows Server 2022 上运行可移植的 Panorama 与 Qt 
 - 翻译 `launcher/translations/swift_demoui_pro_zh_CN.ts` 中每个新增的 unfinished 条目。
 - 编译启动器以生成 `.qm`；生成的 `.qm` 文件不提交到 Git。
 - 可使用 `--ui-language en` 和 `--ui-language zh_CN` 检查不同语言界面。
+
+### 游戏内 Panorama DemoUI
+
+- CS2 与 Dota 2 插件的加载约定不同。本项目使用 CS2 会主动加载的 `addon/resource/platform_english.txt` 和 `platform_schinese.txt`，构建后对应 VPK 内的 `resource/platform_<language>.txt`；缺少对应语言时由本地化系统回退为英文。
+- XML 中的静态用户文案使用 `#SwiftDemoVoice_*` Token；JavaScript 动态文案必须通过 `_Localize()`（内部调用 `$.Localize`）处理，不能直接把 Token 赋给 `.text`。
+- 动态数字和文本使用 Panorama dialog variable，例如 `{d:count}` 和 `{s:player}`。新增或删除 Token 时必须同时更新两份语言目录，测试会检查引用、缺失项和未使用项。
+- 语言文件属于运行时 `game` 资源，不由 ResourceCompiler 编译。构建脚本会以带 BOM 的 UTF-8 原始文本复制到 `game/csgo_addons/swift_demo_menu_override/resource/`，随后打进 VPK。
+- DemoUI 不提供独立语言开关，而是自动跟随 CS2 界面语言；测试语言变更时需要完整重启 CS2。
 
 ## 版本与本地 Release
 
@@ -208,7 +218,7 @@ Get-Content .\SHA256SUMS.txt
 
 | 路径 | 用途 |
 | --- | --- |
-| `addon/` | 编译进 override VPK 的 Panorama 布局、JavaScript 和样式。 |
+| `addon/` | 打进 override VPK 的 Panorama 布局、JavaScript、样式和原始本地化文本。 |
 | `launcher/` | Qt 启动器源码、测试、翻译、内置 miniz 与打包脚本。 |
 | `powershell/` | 共用的 Panorama 编译、打包、安装与卸载实现。 |
 | `tests/` | Panorama 逻辑和原生布局集成测试。 |

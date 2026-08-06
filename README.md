@@ -34,7 +34,7 @@ The added panel keeps the native timeline and playback controls available while 
 - Controls recorded voice for everyone, T only, CT only, or individual players across all 64 display slots.
 - Switches to a live player's first-person POV after validating the target.
 - Jumps directly to the beginning of any recorded round.
-- Supports English and Simplified Chinese, with automatic system-language detection.
+- Supports English and Simplified Chinese: the launcher follows the system language, while the in-game DemoUI automatically follows the CS2 interface language.
 - Checks the latest official GitHub Release in the background and shows only a small, dismissible notice. Launcher and DemoUI updates remain separate choices; nothing is downloaded automatically.
 - Keeps installation reversible with backups, an isolated staging directory, and explicit cleanup.
 
@@ -56,7 +56,7 @@ If the launcher was interrupted, reopen it to resume the pending cleanup.
 - Use CS2's native Demo mouse-mode hotkey to show the cursor.
 - Click a live player's name to switch to first-person POV; the current POV is highlighted in gold.
 - Click the audio button on a player row to toggle only that player's recorded voice.
-- Use **HEAR ALL**, **MUTE ALL**, **T ONLY**, or **CT ONLY** for quick voice filtering.
+- Use **HEAR ALL**, **MUTE ALL**, **T ONLY**, or **CT ONLY** for quick voice filtering; these labels are shown in English or Chinese according to the CS2 language.
 - Expand **ROUND NAVIGATION** and select a round to jump to its starting tick.
 - The panel uses a fixed position that leaves a clear lane for the right-side weapon slots. Click anywhere on the title bar to expand or collapse it.
 

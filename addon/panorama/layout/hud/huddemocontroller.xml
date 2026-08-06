@@ -15,17 +15,17 @@
 				<Button id="SwiftDemoVoiceFocus" class="swift-demo-voice-player__focus" hittest="true">
 					<Label id="SwiftDemoVoiceSlot" class="swift-demo-voice-player__slot" text="00" />
 					<Panel class="swift-demo-voice-player__copy" hittest="false">
-						<Label id="SwiftDemoVoicePlayerName" class="swift-demo-voice-player__name" text="Player" />
-						<Label id="SwiftDemoVoicePlayerMeta" class="swift-demo-voice-player__meta" text="TEAM" />
+						<Label id="SwiftDemoVoicePlayerName" class="swift-demo-voice-player__name" text="#SwiftDemoVoice_PlayerPlaceholder" />
+						<Label id="SwiftDemoVoicePlayerMeta" class="swift-demo-voice-player__meta" text="#SwiftDemoVoice_TeamPlaceholder" />
 					</Panel>
 					<Panel class="swift-demo-voice-player__pov" hittest="false">
 						<Image id="SwiftDemoVoicePovIcon" src="s2r://panorama/images/icons/ui/watch.vsvg" />
-						<Label id="SwiftDemoVoicePovLabel" text="VIEW" />
+						<Label id="SwiftDemoVoicePovLabel" text="#SwiftDemoVoice_View" />
 					</Panel>
 				</Button>
 				<Button id="SwiftDemoVoiceToggle" class="swift-demo-voice-player__toggle" hittest="true">
 					<Image id="SwiftDemoVoiceEnabled" src="s2r://panorama/images/icons/ui/unmuted.vsvg" hittest="false" />
-					<Label id="SwiftDemoVoiceEnabledLabel" text="ON" hittest="false" />
+					<Label id="SwiftDemoVoiceEnabledLabel" text="#SwiftDemoVoice_On" hittest="false" />
 				</Button>
 			</Panel>
 		</snippet>
@@ -113,49 +113,49 @@
 					<Image class="swift-demo-voice__brand-icon" src="s2r://panorama/images/icons/ui/unmuted.vsvg" />
 				</Panel>
 				<Panel class="swift-demo-voice__title-block" hittest="false">
-					<Label class="swift-demo-voice__title" text="DEMO VOICE" />
-					<Label class="swift-demo-voice__subtitle" text="PLAYER AUDIO, POV &amp; ROUNDS" />
+					<Label class="swift-demo-voice__title" text="#SwiftDemoVoice_Title" />
+					<Label class="swift-demo-voice__subtitle" text="#SwiftDemoVoice_Subtitle" />
 				</Panel>
-				<Label id="SwiftDemoVoiceCount" class="swift-demo-voice__count" text="0 PLAYERS" />
+				<Label id="SwiftDemoVoiceCount" class="swift-demo-voice__count" text="#SwiftDemoVoice_PlayersZero" />
 				<Image id="SwiftDemoVoiceChevron" class="swift-demo-voice__chevron" src="s2r://panorama/images/icons/ui/expand.vsvg" />
 			</Panel>
 			<Panel id="SwiftDemoVoiceBody" class="swift-demo-voice__body" hittest="true" hittestchildren="true">
 				<Panel class="swift-demo-voice__notice">
 					<Panel class="swift-demo-voice__live-dot" />
-					<Label id="SwiftDemoVoiceStatus" class="swift-demo-voice__status" text="Loading demo players..." />
+					<Label id="SwiftDemoVoiceStatus" class="swift-demo-voice__status" text="#SwiftDemoVoice_LoadingPlayers" />
 				</Panel>
 				<Panel class="swift-demo-voice__toolbar" hittest="true" hittestchildren="true">
-					<Button class="swift-demo-voice__tool swift-demo-voice__tool--primary" onactivate="SwiftDemoVoice.SelectAll()"><Label text="HEAR ALL" /></Button>
-					<Button class="swift-demo-voice__tool" onactivate="SwiftDemoVoice.SelectNone()"><Label text="MUTE ALL" /></Button>
-					<Button class="swift-demo-voice__tool swift-demo-voice__tool--team-t" onactivate="SwiftDemoVoice.SelectTeam('TERRORIST')"><Label text="T ONLY" /></Button>
-					<Button class="swift-demo-voice__tool swift-demo-voice__tool--team-ct" onactivate="SwiftDemoVoice.SelectTeam('CT')"><Label text="CT ONLY" /></Button>
+					<Button class="swift-demo-voice__tool swift-demo-voice__tool--primary" onactivate="SwiftDemoVoice.SelectAll()"><Label text="#SwiftDemoVoice_HearAll" /></Button>
+					<Button class="swift-demo-voice__tool" onactivate="SwiftDemoVoice.SelectNone()"><Label text="#SwiftDemoVoice_MuteAll" /></Button>
+					<Button class="swift-demo-voice__tool swift-demo-voice__tool--team-t" onactivate="SwiftDemoVoice.SelectTeam('TERRORIST')"><Label text="#SwiftDemoVoice_TerroristsOnly" /></Button>
+					<Button class="swift-demo-voice__tool swift-demo-voice__tool--team-ct" onactivate="SwiftDemoVoice.SelectTeam('CT')"><Label text="#SwiftDemoVoice_CounterTerroristsOnly" /></Button>
 				</Panel>
 				<Panel id="SwiftDemoRoundPicker" class="swift-demo-round-picker" hittest="true" hittestchildren="true">
 					<Button id="SwiftDemoRoundToggle" class="swift-demo-round-picker__toggle" onactivate="SwiftDemoVoice.ToggleRoundPicker()">
 						<Panel class="swift-demo-round-picker__icon"><Image src="s2r://panorama/images/icons/ui/skip.vsvg" /></Panel>
 						<Panel class="swift-demo-round-picker__copy" hittest="false">
-							<Label class="swift-demo-round-picker__title" text="ROUND NAVIGATION" />
-							<Label id="SwiftDemoRoundSummary" class="swift-demo-round-picker__summary" text="WAITING FOR ROUND DATA" />
+							<Label class="swift-demo-round-picker__title" text="#SwiftDemoVoice_RoundNavigation" />
+							<Label id="SwiftDemoRoundSummary" class="swift-demo-round-picker__summary" text="#SwiftDemoVoice_WaitingRoundData" />
 						</Panel>
-						<Label id="SwiftDemoRoundCount" class="swift-demo-round-picker__count" text="0 ROUNDS" />
+						<Label id="SwiftDemoRoundCount" class="swift-demo-round-picker__count" text="#SwiftDemoVoice_RoundsZero" />
 						<Image class="swift-demo-round-picker__chevron" src="s2r://panorama/images/icons/ui/expand.vsvg" />
 					</Button>
 					<Panel class="swift-demo-round-picker__dropdown" hittest="true" hittestchildren="true">
 						<Panel class="swift-demo-round-picker__dropdown-header">
-							<Label text="SELECT ROUND" />
-							<Label text="START - END" />
+							<Label text="#SwiftDemoVoice_SelectRound" />
+							<Label text="#SwiftDemoVoice_StartEnd" />
 						</Panel>
 						<Panel id="SwiftDemoRoundList" class="swift-demo-round-picker__list" hittest="true" hittestchildren="true" />
 					</Panel>
 				</Panel>
 				<Panel class="swift-demo-voice__section-header">
-					<Label text="PLAYERS - CLICK NAME FOR POV" />
-					<Button class="swift-demo-voice__refresh" onactivate="SwiftDemoVoice.Refresh(true)"><Image src="s2r://panorama/images/icons/ui/refresh.vsvg" /><Label text="REFRESH" /></Button>
+					<Label text="#SwiftDemoVoice_PlayersHeader" />
+					<Button class="swift-demo-voice__refresh" onactivate="SwiftDemoVoice.Refresh(true)"><Image src="s2r://panorama/images/icons/ui/refresh.vsvg" /><Label text="#SwiftDemoVoice_Refresh" /></Button>
 				</Panel>
 				<Panel id="SwiftDemoVoicePlayerList" class="swift-demo-voice__players" hittest="true" hittestchildren="true" />
 				<Panel class="swift-demo-voice__footer">
-					<Label id="SwiftDemoVoiceMask" class="swift-demo-voice__mask" text="LOW  -1     HIGH  -1" />
-					<Label class="swift-demo-voice__hint" text="EYE = CURRENT POV     BLUE SPEAKER = VOICE ON" />
+					<Label id="SwiftDemoVoiceMask" class="swift-demo-voice__mask" text="#SwiftDemoVoice_VoiceMaskInitial" />
+					<Label class="swift-demo-voice__hint" text="#SwiftDemoVoice_FooterHint" />
 				</Panel>
 			</Panel>
 		</Panel>

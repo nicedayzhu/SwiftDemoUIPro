@@ -49,6 +49,22 @@ var SwiftDemoVoice = (function () {
 		if (panel) panel.text = text;
 	}
 
+	function _Localize(token, variables) {
+		var panel = _Panel("SwiftDemoVoiceMenu") || _Context();
+		if (variables && panel) {
+			for (var name in variables) {
+				if (!variables.hasOwnProperty(name)) continue;
+				var value = variables[name];
+				if (typeof value === "number" && panel.SetDialogVariableInt) {
+					panel.SetDialogVariableInt(name, Math.floor(value));
+				} else if (panel.SetDialogVariable) {
+					panel.SetDialogVariable(name, String(value));
+				}
+			}
+		}
+		return $.Localize ? $.Localize(token, panel) : token;
+	}
+
 	function _IsDemoPlayback() {
 		var context = _DemoController();
 		try {
@@ -111,7 +127,7 @@ var SwiftDemoVoice = (function () {
 
 	function ToggleRoundPicker() {
 		if (_rounds.length === 0) {
-			_SetText("SwiftDemoVoiceStatus", "Round data is not available yet");
+			_SetText("SwiftDemoVoiceStatus", _Localize("#SwiftDemoVoice_RoundDataUnavailable"));
 			return;
 		}
 		_SetRoundPickerOpen(!_roundMenuOpen);
@@ -139,14 +155,16 @@ var SwiftDemoVoice = (function () {
 			copy.AddClass("swift-demo-round-picker__round-copy");
 			var title = $.CreatePanel("Label", copy, "");
 			title.AddClass("swift-demo-round-picker__round-title");
-			title.text = "ROUND " + roundNumber;
+			title.text = _Localize("#SwiftDemoVoice_RoundTitle", { round: roundNumber });
 			var time = $.CreatePanel("Label", copy, "");
 			time.AddClass("swift-demo-round-picker__round-time");
 			time.text = _FormatTickTime(interval.nTickStart, secondsPerTick) + " - " + _FormatTickTime(interval.nTickEnd, secondsPerTick);
 
 			var marker = $.CreatePanel("Label", row, "");
 			marker.AddClass("swift-demo-round-picker__round-marker");
-			marker.text = roundNumber === currentRound ? "NOW" : "GO";
+			marker.text = _Localize(roundNumber === currentRound
+				? "#SwiftDemoVoice_RoundNow"
+				: "#SwiftDemoVoice_RoundGo");
 
 			(function (roundIndex) {
 				row.SetPanelEvent("onactivate", function () {
@@ -172,17 +190,21 @@ var SwiftDemoVoice = (function () {
 		_SetClass(_Panel("SwiftDemoRoundPicker"), "unavailable", rounds.length === 0);
 
 		if (rounds.length === 0) {
-			_SetText("SwiftDemoRoundSummary", "WAITING FOR ROUND DATA");
-			_SetText("SwiftDemoRoundCount", "0 ROUNDS");
+			_SetText("SwiftDemoRoundSummary", _Localize("#SwiftDemoVoice_WaitingRoundData"));
+			_SetText("SwiftDemoRoundCount", _Localize("#SwiftDemoVoice_RoundsZero"));
 			_SetRoundPickerOpen(false);
 			if (forceRender || changed) _RenderRoundRows(null, 0);
 			return;
 		}
 
-		_SetText("SwiftDemoRoundSummary", currentRound > 0
-			? "ROUND " + currentRound + " OF " + rounds.length
-			: "BEFORE ROUND 1 OF " + rounds.length);
-		_SetText("SwiftDemoRoundCount", rounds.length + (rounds.length === 1 ? " ROUND" : " ROUNDS"));
+		_SetText("SwiftDemoRoundSummary", _Localize(
+			currentRound > 0 ? "#SwiftDemoVoice_RoundSummary" : "#SwiftDemoVoice_BeforeFirstRound",
+			{ current: currentRound, total: rounds.length }
+		));
+		_SetText("SwiftDemoRoundCount", _Localize(
+			rounds.length === 1 ? "#SwiftDemoVoice_RoundCountOne" : "#SwiftDemoVoice_RoundCountMany",
+			{ count: rounds.length }
+		));
 		if (forceRender || changed) _RenderRoundRows(state, currentRound);
 	}
 
@@ -192,14 +214,17 @@ var SwiftDemoVoice = (function () {
 		var rounds = state && state.RoundIntervals ? state.RoundIntervals : [];
 		var controller = _DemoController();
 		if (!isFinite(index) || index < 0 || index >= rounds.length || !controller || !controller.GotoTick) {
-			_SetText("SwiftDemoVoiceStatus", "Unable to jump to that round");
+			_SetText("SwiftDemoVoiceStatus", _Localize("#SwiftDemoVoice_JumpRoundUnavailable"));
 			return false;
 		}
 
 		var targetRound = index + 1;
 		controller.GotoTick(Math.floor(rounds[index].nTickStart));
-		_SetText("SwiftDemoVoiceStatus", "Jumping to round " + targetRound + "...");
-		_SetText("SwiftDemoRoundSummary", "ROUND " + targetRound + " OF " + rounds.length);
+		_SetText("SwiftDemoVoiceStatus", _Localize("#SwiftDemoVoice_JumpingRound", { round: targetRound }));
+		_SetText("SwiftDemoRoundSummary", _Localize("#SwiftDemoVoice_RoundSummary", {
+			current: targetRound,
+			total: rounds.length
+		}));
 		_SetRoundPickerOpen(false);
 		$.Schedule(0.12, function () { _UpdateRoundPicker(true); });
 		$.Msg("[SwiftDemoVoice] jump to round=" + targetRound + " tick=" + rounds[index].nTickStart);
@@ -233,7 +258,10 @@ var SwiftDemoVoice = (function () {
 	function _RunMaskCommands(low, high, status) {
 		GameInterfaceAPI.ConsoleCommand("tv_listen_voice_indices " + (low | 0));
 		GameInterfaceAPI.ConsoleCommand("tv_listen_voice_indices_h " + (high | 0));
-		_SetText("SwiftDemoVoiceMask", "LOW  " + (low | 0) + "     HIGH  " + (high | 0));
+		_SetText("SwiftDemoVoiceMask", _Localize("#SwiftDemoVoice_VoiceMask", {
+			low: low | 0,
+			high: high | 0
+		}));
 		if (status) _SetText("SwiftDemoVoiceStatus", status);
 		$.Msg("[SwiftDemoVoice] masks low=" + (low | 0) + " high=" + (high | 0));
 	}
@@ -253,9 +281,9 @@ var SwiftDemoVoice = (function () {
 	}
 
 	function _TeamLabel(team) {
-		if (team === "TERRORIST") return "TERRORIST";
-		if (team === "CT") return "COUNTER-TERRORIST";
-		return team || "SPECTATOR";
+		if (team === "TERRORIST") return _Localize("#SwiftDemoVoice_TeamTerrorist");
+		if (team === "CT") return _Localize("#SwiftDemoVoice_TeamCounterTerrorist");
+		return team || _Localize("#SwiftDemoVoice_TeamSpectator");
 	}
 
 	function _ResolvePlayerSlot(xuid, source) {
@@ -358,7 +386,7 @@ var SwiftDemoVoice = (function () {
 			result.push({
 				xuid: xuid,
 				slot: slot,
-				name: name || ("Player " + (slot + 1)),
+				name: name || _Localize("#SwiftDemoVoice_PlayerFallback", { slot: slot + 1 }),
 				team: team,
 				status: status,
 				isDead: status === 1,
@@ -381,7 +409,9 @@ var SwiftDemoVoice = (function () {
 		if (audioIcon) audioIcon.SetImage(selected
 			? "s2r://panorama/images/icons/ui/unmuted.vsvg"
 			: "s2r://panorama/images/icons/ui/muted.vsvg");
-		if (audioLabel) audioLabel.text = selected ? "ON" : "OFF";
+		if (audioLabel) audioLabel.text = _Localize(selected
+			? "#SwiftDemoVoice_On"
+			: "#SwiftDemoVoice_Off");
 	}
 
 	function _GetHudPlayerXuid() {
@@ -418,9 +448,9 @@ var SwiftDemoVoice = (function () {
 		if (_players.length === 0) {
 			var empty = $.CreatePanel("Label", list, "SwiftDemoVoiceEmpty");
 			empty.AddClass("swift-demo-voice__empty");
-			empty.text = "Waiting for player data...";
-			_SetText("SwiftDemoVoiceCount", "0 PLAYERS");
-			_SetText("SwiftDemoVoiceStatus", "Waiting for demo player data...");
+			empty.text = _Localize("#SwiftDemoVoice_WaitingPlayerData");
+			_SetText("SwiftDemoVoiceCount", _Localize("#SwiftDemoVoice_PlayersZero"));
+			_SetText("SwiftDemoVoiceStatus", _Localize("#SwiftDemoVoice_WaitingDemoPlayerData"));
 			return;
 		}
 
@@ -439,9 +469,13 @@ var SwiftDemoVoice = (function () {
 			_SetClass(row, "pov-unavailable", !player.canFocus);
 			row.FindChildTraverse("SwiftDemoVoiceSlot").text = String(player.slot + 1);
 			row.FindChildTraverse("SwiftDemoVoicePlayerName").text = player.name;
-			var meta = _TeamLabel(player.team) + "  /  SLOT " + (player.slot + 1);
-			if (player.isDead) meta += "  /  DEAD";
-			else if (player.isDisconnected) meta += "  /  OFFLINE";
+			var playerStatus = player.isDead
+				? _Localize("#SwiftDemoVoice_Dead")
+				: (player.isDisconnected ? _Localize("#SwiftDemoVoice_Offline") : "");
+			var meta = _Localize(
+				playerStatus ? "#SwiftDemoVoice_PlayerMetaStatus" : "#SwiftDemoVoice_PlayerMeta",
+				{ team: _TeamLabel(player.team), slot: player.slot + 1, status: playerStatus }
+			);
 			row.FindChildTraverse("SwiftDemoVoicePlayerMeta").text = meta;
 
 			var povIcon = row.FindChildTraverse("SwiftDemoVoicePovIcon");
@@ -449,7 +483,9 @@ var SwiftDemoVoice = (function () {
 			if (povIcon) povIcon.SetImage(player.canFocus
 				? "s2r://panorama/images/icons/ui/watch.vsvg"
 				: "s2r://panorama/images/icons/ui/elimination.vsvg");
-			if (povLabel) povLabel.text = player.canFocus ? "VIEW" : (player.isDead ? "DEAD" : "N/A");
+			if (povLabel) povLabel.text = _Localize(player.canFocus
+				? "#SwiftDemoVoice_View"
+				: (player.isDead ? "#SwiftDemoVoice_Dead" : "#SwiftDemoVoice_NotAvailable"));
 
 			var focusButton = row.FindChildTraverse("SwiftDemoVoiceFocus");
 			if (focusButton) focusButton.enabled = player.canFocus;
@@ -476,8 +512,14 @@ var SwiftDemoVoice = (function () {
 			_SetRowSelected(row, !!_selectedSlots[player.slot]);
 		}
 
-		_SetText("SwiftDemoVoiceCount", _players.length + (_players.length === 1 ? " PLAYER" : " PLAYERS"));
-		_SetText("SwiftDemoVoiceStatus", _players.length + " demo players ready - click a name for POV");
+		_SetText("SwiftDemoVoiceCount", _Localize(
+			_players.length === 1 ? "#SwiftDemoVoice_PlayerCountOne" : "#SwiftDemoVoice_PlayerCountMany",
+			{ count: _players.length }
+		));
+		_SetText("SwiftDemoVoiceStatus", _Localize(
+			_players.length === 1 ? "#SwiftDemoVoice_PlayersReadyOne" : "#SwiftDemoVoice_PlayersReadyMany",
+			{ count: _players.length }
+		));
 		_RenderObservedState();
 	}
 
@@ -505,14 +547,14 @@ var SwiftDemoVoice = (function () {
 	function SelectAll() {
 		_selectionMode = "all";
 		_PopulateAllVisibleSelections();
-		_RunMaskCommands(-1, -1, "All recorded voice slots are enabled");
+		_RunMaskCommands(-1, -1, _Localize("#SwiftDemoVoice_AllVoicesEnabled"));
 		_RenderSelection();
 	}
 
 	function SelectNone() {
 		_selectionMode = "none";
 		_selectedSlots = {};
-		_RunMaskCommands(0, 0, "All recorded voice slots are muted");
+		_RunMaskCommands(0, 0, _Localize("#SwiftDemoVoice_AllVoicesMuted"));
 		_RenderSelection();
 	}
 
@@ -522,7 +564,9 @@ var SwiftDemoVoice = (function () {
 		for (var i = 0; i < _players.length; i++) {
 			if (_players[i].team === team) _selectedSlots[_players[i].slot] = true;
 		}
-		_ApplyCustomSelection(team === "CT" ? "Listening to Counter-Terrorists" : "Listening to Terrorists");
+		_ApplyCustomSelection(_Localize(team === "CT"
+			? "#SwiftDemoVoice_ListeningCounterTerrorists"
+			: "#SwiftDemoVoice_ListeningTerrorists"));
 	}
 
 	function TogglePlayer(slot, playerName) {
@@ -530,7 +574,10 @@ var SwiftDemoVoice = (function () {
 		else if (_selectionMode === "none") _selectedSlots = {};
 		_selectionMode = "custom";
 		_selectedSlots[slot] = !_selectedSlots[slot];
-		_ApplyCustomSelection((_selectedSlots[slot] ? "Enabled " : "Muted ") + playerName);
+		_ApplyCustomSelection(_Localize(
+			_selectedSlots[slot] ? "#SwiftDemoVoice_EnabledPlayer" : "#SwiftDemoVoice_MutedPlayer",
+			{ player: playerName }
+		));
 	}
 
 	function _AccountIdFromXuid(xuid) {
@@ -571,7 +618,10 @@ var SwiftDemoVoice = (function () {
 		_SetFirstPersonMode();
 		_lastHudPlayerXuid = String(playerXuid);
 		_RenderObservedState();
-		_SetText("SwiftDemoVoiceStatus", "POV: " + playerName + "  /  SLOT " + displaySlot);
+		_SetText("SwiftDemoVoiceStatus", _Localize("#SwiftDemoVoice_PovActive", {
+			player: playerName,
+			slot: displaySlot
+		}));
 		$.Msg("[SwiftDemoVoice] focus verified slot=" + displaySlot + " player=" + playerName);
 		return true;
 	}
@@ -600,11 +650,13 @@ var SwiftDemoVoice = (function () {
 		var currentXuid = _GetHudPlayerXuid();
 		var targetStatus = _ReadPlayerStatus(playerXuid, null);
 		if (targetStatus === 1 || targetStatus === 15) {
-			_SetText("SwiftDemoVoiceStatus", targetStatus === 1 ? "POV unavailable: player is dead" : "POV unavailable: player is offline");
+			_SetText("SwiftDemoVoiceStatus", _Localize(targetStatus === 1
+				? "#SwiftDemoVoice_PovUnavailableDead"
+				: "#SwiftDemoVoice_PovUnavailableOffline"));
 			$.Msg("[SwiftDemoVoice] focus unavailable slot=" + displaySlot + " player=" + playerName + " status=" + targetStatus);
 			Refresh(false);
 		} else {
-			_SetText("SwiftDemoVoiceStatus", "POV switch failed: " + playerName);
+			_SetText("SwiftDemoVoiceStatus", _Localize("#SwiftDemoVoice_PovSwitchFailed", { player: playerName }));
 			$.Msg("[SwiftDemoVoice] focus failed slot=" + displaySlot + " player=" + playerName + " current=" + currentXuid);
 		}
 	}
@@ -614,7 +666,9 @@ var SwiftDemoVoice = (function () {
 		if (normalizedSlot < 0) return;
 		var knownPlayer = _FindPlayerForFocus(normalizedSlot, playerXuid);
 		if (knownPlayer && !knownPlayer.canFocus) {
-			_SetText("SwiftDemoVoiceStatus", knownPlayer.isDead ? "POV unavailable: player is dead" : "POV unavailable: player is offline");
+			_SetText("SwiftDemoVoiceStatus", _Localize(knownPlayer.isDead
+				? "#SwiftDemoVoice_PovUnavailableDead"
+				: "#SwiftDemoVoice_PovUnavailableOffline"));
 			return;
 		}
 		var displaySlot = normalizedSlot + 1;
@@ -622,7 +676,7 @@ var SwiftDemoVoice = (function () {
 		var accountId = _AccountIdFromXuid(targetXuid);
 		var generation = ++_focusGeneration;
 
-		_SetText("SwiftDemoVoiceStatus", "Switching POV: " + playerName + "...");
+		_SetText("SwiftDemoVoiceStatus", _Localize("#SwiftDemoVoice_SwitchingPov", { player: playerName }));
 		_SetFirstPersonMode();
 		if (accountId > 0) GameInterfaceAPI.ConsoleCommand("spec_lock_to_accountid " + accountId);
 		GameInterfaceAPI.ConsoleCommand("spec_player " + displaySlot);
@@ -651,7 +705,7 @@ var SwiftDemoVoice = (function () {
 
 		if (changed || forceRender) _RenderPlayers();
 		else _RenderSelection();
-		if (forceRender) _SetText("SwiftDemoVoiceStatus", "Player list refreshed");
+		if (forceRender) _SetText("SwiftDemoVoiceStatus", _Localize("#SwiftDemoVoice_PlayerListRefreshed"));
 	}
 
 	function _SetOpen(open) {
@@ -696,7 +750,7 @@ var SwiftDemoVoice = (function () {
 		_SetOpen(true);
 		Refresh(true);
 		_UpdateRoundPicker(true);
-		_RunMaskCommands(-1, -1, "Loading demo players...");
+		_RunMaskCommands(-1, -1, _Localize("#SwiftDemoVoice_LoadingPlayers"));
 		$.Schedule(0.25, _Poll);
 		$.Msg("[SwiftDemoVoice] runtime loaded");
 	}

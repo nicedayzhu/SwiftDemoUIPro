@@ -44,7 +44,7 @@ Run commands from the repository root. Pass machine-specific paths explicitly in
 node .\tests\test_demo_voice_mask.js
 ```
 
-This covers voice-mask generation, player discovery and status behavior, POV commands, round intervals, and required native DemoUI layout integration.
+This covers voice-mask generation, player discovery and status behavior, POV commands, round intervals, required native DemoUI layout integration, and matching English/Chinese Panorama localization catalogs.
 
 ### Build the Panorama VPK
 
@@ -107,7 +107,7 @@ See the [Launcher Guide](launcher/README.md) for its workflow, localization, ZIP
 
 | Change | Minimum verification |
 | --- | --- |
-| Panorama JavaScript/layout/style | Run `node .\tests\test_demo_voice_mask.js`; build the VPK when CS2 tools are available. |
+| Panorama JavaScript/layout/style/localization | Run `node .\tests\test_demo_voice_mask.js`; build the VPK when CS2 tools are available and confirm that the raw localization files are present in it. |
 | Launcher core, ZIP, SearchPath, staging, launch, or cleanup | Build the launcher and run CTest; add or update `tst_launcher_core.cpp`. |
 | Launcher UI/QSS/dialogs | Build and test, then inspect an actual rendered or interactive state in each affected language. |
 | Translation strings | Update `.ts`, complete new translations, build `.qm`, and inspect layout/placeholders. |
@@ -122,6 +122,8 @@ GitHub Actions runs portable Panorama and Qt tests on Windows Server 2022. The P
 
 ## Localization
 
+### Qt launcher
+
 - Keep C++ source and fallback strings in English; use Qt translation APIs for user-visible text.
 - Keep English and Simplified Chinese documentation semantically aligned.
 - Preserve Qt placeholders such as `%1` and `%2`, as well as newlines, commands, and paths.
@@ -134,6 +136,14 @@ GitHub Actions runs portable Panorama and Qt tests on Windows Server 2022. The P
 - Translate every new unfinished entry in `launcher/translations/swift_demoui_pro_zh_CN.ts`.
 - Build the launcher to generate `.qm` output; generated `.qm` files are not committed.
 - Use `--ui-language en` and `--ui-language zh_CN` for visual language checks.
+
+### In-game Panorama DemoUI
+
+- CS2 and Dota 2 addons use different loading conventions. This project uses the CS2-loaded `addon/resource/platform_english.txt` and `platform_schinese.txt`, which become `resource/platform_<language>.txt` inside the VPK. The localization system falls back to English when a matching language catalog is unavailable.
+- Static XML text uses `#SwiftDemoVoice_*` tokens. Dynamic JavaScript text must go through `_Localize()` (which calls `$.Localize`) instead of assigning a token directly to `.text`.
+- Dynamic numbers and strings use Panorama dialog variables such as `{d:count}` and `{s:player}`. Add or remove tokens in both catalogs together; the test rejects missing, mismatched, or unused entries.
+- Localization files are runtime `game` resources and are not ResourceCompiler inputs. The build script copies them as raw UTF-8-with-BOM files to `game/csgo_addons/swift_demo_menu_override/resource/` before packing the VPK.
+- The DemoUI has no separate language selector. It follows the CS2 interface language automatically; fully restart CS2 when testing a language change.
 
 ## Versioning and Local Releases
 
@@ -208,7 +218,7 @@ Do not manually edit generated archives or checksums.
 
 | Path | Purpose |
 | --- | --- |
-| `addon/` | Panorama layout, JavaScript, and styles compiled into the override VPK. |
+| `addon/` | Panorama layout, JavaScript, styles, and raw localization text packed into the override VPK. |
 | `launcher/` | Qt launcher source, tests, translations, vendored miniz, and packaging script. |
 | `powershell/` | Shared Panorama compile, pack, install, and uninstall implementation. |
 | `tests/` | Panorama logic and native-layout integration tests. |
