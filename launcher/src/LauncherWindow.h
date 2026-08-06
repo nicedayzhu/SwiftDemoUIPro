@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Cs2Manager.h"
+#include "UpdateService.h"
 
 #include <QMainWindow>
 
@@ -13,6 +14,7 @@ class QDropEvent;
 class QFrame;
 class QLabel;
 class QPushButton;
+class QResizeEvent;
 class QStackedWidget;
 class QTimer;
 class QTranslator;
@@ -29,6 +31,7 @@ protected:
     void dragLeaveEvent(QDragLeaveEvent *event) override;
     void dropEvent(QDropEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
 private slots:
     void chooseDemo();
@@ -37,6 +40,10 @@ private slots:
     void startWatchingDemo();
     void stopWatchingDemo();
     void refreshState();
+    void checkForUpdates();
+    void downloadMenuUpdate();
+    void handleUpdateCheck(const UpdateInfo &info);
+    void handleMenuDownload(bool ok, const QString &message);
 
 private:
     void buildInterface();
@@ -50,6 +57,8 @@ private:
     void changeLanguage(const QString &language);
     void selectPage(int index);
     void repolish(QWidget *widget);
+    void refreshUpdateUi();
+    void positionUpdateBubble();
 
     Cs2Paths paths_;
     QString demoPath_;
@@ -58,6 +67,9 @@ private:
     QString lastStatus_;
     QString currentLanguage_;
     bool trueViewEnabled_ = false;
+    bool updateCheckInProgress_ = false;
+    bool updateBubbleDismissed_ = false;
+    UpdateInfo updateInfo_;
 
     QLabel *securityBadge_ = nullptr;
     QFrame *warningCard_ = nullptr;
@@ -65,16 +77,22 @@ private:
     QLabel *warningTitle_ = nullptr;
     QLabel *warningDetail_ = nullptr;
     QFrame *dropCard_ = nullptr;
+    QFrame *updateBubble_ = nullptr;
     QLabel *demoName_ = nullptr;
     QLabel *demoMeta_ = nullptr;
     QLabel *cs2Path_ = nullptr;
     QLabel *vpkStatus_ = nullptr;
     QLabel *statusLabel_ = nullptr;
+    QLabel *updateStatus_ = nullptr;
+    QLabel *updateBubbleText_ = nullptr;
     QPushButton *chooseDemoButton_ = nullptr;
     QPushButton *chooseCs2Button_ = nullptr;
     QPushButton *installButton_ = nullptr;
     QPushButton *startButton_ = nullptr;
     QPushButton *stopButton_ = nullptr;
+    QPushButton *checkUpdateButton_ = nullptr;
+    QPushButton *launcherUpdateButton_ = nullptr;
+    QPushButton *menuUpdateButton_ = nullptr;
     QCheckBox *trueViewCheckBox_ = nullptr;
     QPushButton *navReplayButton_ = nullptr;
     QPushButton *navMenuButton_ = nullptr;
@@ -83,4 +101,5 @@ private:
     QStackedWidget *pages_ = nullptr;
     QTimer *stateTimer_ = nullptr;
     QTranslator *translator_ = nullptr;
+    UpdateService *updateService_ = nullptr;
 };

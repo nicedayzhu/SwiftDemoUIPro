@@ -108,8 +108,8 @@
 			</Panel>
 		</Panel>
 		<Panel id="SwiftDemoVoiceMenu" class="swift-demo-voice demo-active" hittest="true" hittestchildren="true" onload="SwiftDemoVoice.OnLoad()">
-			<Panel id="SwiftDemoVoiceHeader" class="swift-demo-voice__header" hittest="true" onactivate="SwiftDemoVoice.ToggleOpen()">
-				<Panel class="swift-demo-voice__brand">
+			<Panel id="SwiftDemoVoiceHeader" class="swift-demo-voice__header" hittest="true" hittestchildren="false" onactivate="SwiftDemoVoice.ToggleOpen()">
+				<Panel id="SwiftDemoVoiceBrand" class="swift-demo-voice__brand" hittest="false">
 					<Image class="swift-demo-voice__brand-icon" src="s2r://panorama/images/icons/ui/unmuted.vsvg" />
 				</Panel>
 				<Panel class="swift-demo-voice__title-block" hittest="false">

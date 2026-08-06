@@ -1,10 +1,16 @@
 cmake_minimum_required(VERSION 3.21)
 
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../VERSION")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../MENU_VERSION")
 file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../VERSION" SWIFT_DEMOUI_VERSION LIMIT_COUNT 1)
 string(STRIP "${SWIFT_DEMOUI_VERSION}" SWIFT_DEMOUI_VERSION)
 if(NOT SWIFT_DEMOUI_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
     message(FATAL_ERROR "../VERSION must contain a semantic version such as 1.2.3")
+endif()
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../MENU_VERSION" SWIFT_DEMOUI_MENU_VERSION LIMIT_COUNT 1)
+string(STRIP "${SWIFT_DEMOUI_MENU_VERSION}" SWIFT_DEMOUI_MENU_VERSION)
+if(NOT SWIFT_DEMOUI_MENU_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+    message(FATAL_ERROR "../MENU_VERSION must contain a semantic version such as 1.2.3")
 endif()
 
 project(SwiftDemoUIPro VERSION "${SWIFT_DEMOUI_VERSION}" LANGUAGES C CXX)
@@ -15,7 +21,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets LinguistTools)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Network Widgets LinguistTools)
 find_package(Git QUIET)
 
 set(SWIFT_DEMOUI_GIT_COMMIT "unknown")
@@ -54,8 +60,10 @@ set_target_properties(miniz PROPERTIES
 add_library(swift_demo_launcher_core STATIC
     src/Cs2Manager.cpp
     src/Cs2Manager.h
+    src/UpdateService.cpp
+    src/UpdateService.h
 )
-target_link_libraries(swift_demo_launcher_core PUBLIC Qt6::Core PRIVATE miniz)
+target_link_libraries(swift_demo_launcher_core PUBLIC Qt6::Core Qt6::Network PRIVATE miniz)
 target_include_directories(swift_demo_launcher_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 qt_add_executable(SwiftDemoLauncher WIN32
@@ -97,6 +105,8 @@ qt_add_translations(SwiftDemoLauncher
         src/LauncherWindow.h
         src/Cs2Manager.cpp
         src/Cs2Manager.h
+        src/UpdateService.cpp
+        src/UpdateService.h
     QM_FILES_OUTPUT_VARIABLE APP_QM_FILES
     LUPDATE_OPTIONS -source-language en
 )

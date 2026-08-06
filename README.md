@@ -35,6 +35,7 @@ The added panel keeps the native timeline and playback controls available while 
 - Switches to a live player's first-person POV after validating the target.
 - Jumps directly to the beginning of any recorded round.
 - Supports English and Simplified Chinese, with automatic system-language detection.
+- Checks the latest official GitHub Release in the background and shows only a small, dismissible notice. Launcher and DemoUI updates remain separate choices; nothing is downloaded automatically.
 - Keeps installation reversible with backups, an isolated staging directory, and explicit cleanup.
 
 ## Quick Start
@@ -57,6 +58,7 @@ If the launcher was interrupted, reopen it to resume the pending cleanup.
 - Click the audio button on a player row to toggle only that player's recorded voice.
 - Use **HEAR ALL**, **MUTE ALL**, **T ONLY**, or **CT ONLY** for quick voice filtering.
 - Expand **ROUND NAVIGATION** and select a round to jump to its starting tick.
+- The panel uses a fixed position that leaves a clear lane for the right-side weapon slots. Click anywhere on the title bar to expand or collapse it.
 
 ## Common Problems
 

@@ -113,10 +113,12 @@ See the [Launcher Guide](launcher/README.md) for its workflow, localization, ZIP
 | Translation strings | Update `.ts`, complete new translations, build `.qm`, and inspect layout/placeholders. |
 | PowerShell/CMake logic | Run the affected command end to end and inspect its artifact. |
 | Packaging/licenses | Open the ZIP and verify required runtime files, notices, and license texts. |
-| Release logic | Create a local release candidate without `-Publish`; verify both ZIPs and every SHA-256 entry. |
+| Release logic | Create the matching full or `-MenuOnly` local candidate without `-Publish`; verify every listed SHA-256 entry and `update-manifest.json`. |
 | Documentation only | Validate relative links and assets, then run `git diff --check`. |
 
-GitHub Actions runs portable Panorama and Qt tests on Windows Server 2022. The hosted workflow does not build the VPK because Valve's `resourcecompiler.exe` requires an installed copy of CS2.
+GitHub Actions runs portable Panorama and Qt tests on Windows Server 2022. The Panorama test is fully repository-contained and protects the imported native DemoUI root with a canonical SHA-256; it does not read a sibling `res_panorama` checkout. The hosted workflow intentionally does not build the VPK because Valve's `resourcecompiler.exe` and its matching runtime files come from a current CS2 installation.
+
+[DepotDownloader](https://github.com/SteamRE/DepotDownloader) can technically fetch App 730 content, supports anonymous access where Valve permits it, and can restrict downloads with `-filelist`. A GitHub-hosted VPK build is therefore possible in principle, but it would depend on Valve's changing depot layout, the complete current ResourceCompiler dependency set, Steam availability, and third-party downloader bootstrap. Prefer the existing local build or a controlled self-hosted Windows runner with CS2 installed; do not make ordinary CI depend on downloading game depots.
 
 ## Localization
 
@@ -135,7 +137,12 @@ GitHub Actions runs portable Panorama and Qt tests on Windows Server 2022. The h
 
 ## Versioning and Local Releases
 
-The root [VERSION](VERSION) file is the only version source and must contain `MAJOR.MINOR.PATCH`. CMake uses it for the application version, About page, Windows metadata, and package names. The launcher also embeds the current short Git commit.
+The two root version files use `MAJOR.MINOR.PATCH` independently:
+
+- [VERSION](VERSION) is the launcher/package version used by CMake, Windows metadata, and launcher asset names.
+- [MENU_VERSION](MENU_VERSION) is the DemoUI VPK version embedded in the launcher and used by standalone VPK assets.
+
+The launcher also embeds the current short Git commit. Its updater reads GitHub's latest published Release and then `update-manifest.json`, which always describes both components even when only one changed.
 
 The working tree must be clean before building a release candidate because the source archive is created from `HEAD`:
 
@@ -151,6 +158,8 @@ This runs both test suites, rebuilds the VPK, builds/tests/packages the launcher
 ```text
 release\v<version>\SwiftDemoUIPro-v<version>-win64.zip
 release\v<version>\SwiftDemoUIPro-v<version>-source.zip
+release\v<version>\swift_demo_menu_override-v<menu-version>.vpk
+release\v<version>\update-manifest.json
 release\v<version>\SHA256SUMS.txt
 ```
 
@@ -165,17 +174,26 @@ gh auth login
 gh repo create nicedayzhu/SwiftDemoUIPro --public --source . --remote origin --push
 ```
 
-To publish a new semantic version:
+To publish a full launcher release (optionally advancing the DemoUI version in the same release):
 
 ```powershell
-.\release.ps1 -Version 0.2.0 `
+.\release.ps1 -Version 0.2.0 -MenuVersion 0.1.1 `
   -Cs2Root "<CS2 root>" `
   -VpkEditCli "<vpkeditcli.exe>" `
   -QtRoot "<Qt Desktop kit>" `
   -Publish
 ```
 
-Publication may update `VERSION`, create `chore(release): v<version>`, rebuild and test all artifacts, create and push an annotated tag, upload the two ZIPs and `SHA256SUMS.txt` to a draft GitHub Release, and publish only after all uploads succeed. It refuses to overwrite an already published release.
+To publish only a new DemoUI VPK without rebuilding or republishing the launcher:
+
+```powershell
+.\release.ps1 -MenuOnly -MenuVersion 0.1.2 `
+  -Cs2Root "<CS2 root>" `
+  -VpkEditCli "<vpkeditcli.exe>" `
+  -Publish
+```
+
+Full publication may update both version files and creates `v<launcher-version>`. `-MenuOnly` updates only `MENU_VERSION`, skips the Qt build, and creates `menu-v<menu-version>`. Both modes build/test the VPK, create a standalone versioned VPK, generate `update-manifest.json` plus `SHA256SUMS.txt`, stage a draft GitHub Release, and publish only after all uploads succeed. The manifest carries forward the standard `v<VERSION>` launcher URL for a menu-only release, allowing the latest-release API to describe both independent components.
 
 Verify downloaded files with:
 
@@ -197,7 +215,8 @@ Do not manually edit generated archives or checksums.
 | `demo-menu.ps1` | Repository-level Panorama lifecycle entry point. |
 | `release.ps1` | Versioned local release and optional GitHub publication entry point. |
 | `.github/workflows/ci.yml` | Portable Windows CI. |
-| `VERSION` | Single semantic-version source. |
+| `VERSION` | Launcher/package semantic version. |
+| `MENU_VERSION` | Independent DemoUI VPK semantic version. |
 
 Generated paths such as `dist/`, `release/`, `launcher/build/`, `launcher/package/`, `launcher/.qt/`, and `launcher/.tools/` must not be committed.
 

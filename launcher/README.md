@@ -27,6 +27,17 @@ If the console repeatedly reports `Not enough TrueView command lookahead` or the
 
 `-insecure` is used only by that launch command and is not written to Steam's permanent launch options. The DemoUI VPK SearchPath remains active until cleanup completes, so do not skip the final step. If the launcher was interrupted, reopen it to resume cleanup.
 
+## Updates
+
+After startup, the launcher checks the repository's latest published GitHub Release. An available update produces a small, dismissible notification only; it never downloads or installs anything without the player's action. The **About** page then offers separate choices:
+
+- A launcher update opens the versioned Windows package in the browser. The running EXE is never replaced in place.
+- A DemoUI-only update downloads the versioned VPK after the player selects it, verifies its SHA-256 digest, and stores it in the user's local application-data directory. It becomes the preferred VPK the next time Demo playback starts.
+
+Release metadata comes from `update-manifest.json`, which tracks launcher and DemoUI versions independently. Older releases without a manifest remain compatible for launcher update detection through their `SwiftDemoUIPro-v<version>-win64.zip` asset name.
+
+Update checks read the public GitHub REST API anonymously and neither require nor store a player's GitHub token. Requests include GitHub's required `User-Agent`, recommended JSON `Accept`, and API-version headers, validate the HTTP status, content type, JSON, timeout, and anonymous rate limit, and retry invalid JSON once.
+
 ## Build
 
 For the complete project build, test, versioning, and release workflow, see the [Developer Guide](../DEVELOPMENT.md).
@@ -65,7 +76,7 @@ launcher\package\SwiftDemoUIPro-v<version>\SwiftDemoUIPro.exe
 launcher\package\SwiftDemoUIPro-v<version>-win64.zip
 ```
 
-Run the EXE from the unpacked version directory for local end-to-end testing. The packaging step uses `windeployqt` to collect `Qt6Core.dll`, `Qt6Gui.dll`, `Qt6Widgets.dll`, and `platforms\qwindows.dll`. `SwiftDemoUIPro.exe`, its DLLs/plugins, translations, and `swift_demo_menu_override.vpk` must remain together.
+Run the EXE from the unpacked version directory for local end-to-end testing. The packaging step uses `windeployqt` to collect `Qt6Core.dll`, `Qt6Gui.dll`, `Qt6Network.dll`, `Qt6Widgets.dll`, the Windows TLS backend, and `platforms\qwindows.dll`. `SwiftDemoUIPro.exe`, its DLLs/plugins, translations, and `swift_demo_menu_override.vpk` must remain together.
 
 The repository-level `release.ps1` command is for committed release candidates, not ordinary development testing. It refuses a dirty Git working tree because the source archive is generated from `HEAD`.
 

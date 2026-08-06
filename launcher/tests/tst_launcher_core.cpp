@@ -1,4 +1,5 @@
 #include "Cs2Manager.h"
+#include "UpdateService.h"
 
 #include "miniz.h"
 
@@ -52,6 +53,7 @@ private slots:
     void installsAndPreparesIsolatedSession();
     void listsAndPreparesDemoFromZip();
     void rejectsInvalidDemoArchives();
+    void parsesIndependentReleaseUpdates();
 };
 
 void LauncherCoreTest::parsesSteamLibraries()
@@ -248,6 +250,54 @@ void LauncherCoreTest::rejectsInvalidDemoArchives()
     }));
     const LauncherResult duplicateResult = Cs2Manager::inspectDemoArchive(duplicatePath, &entries);
     QVERIFY(!duplicateResult.ok);
+}
+
+void LauncherCoreTest::parsesIndependentReleaseUpdates()
+{
+    const QByteArray releaseJson = R"JSON({
+        "html_url": "https://github.com/nicedayzhu/SwiftDemoUIPro/releases/tag/menu-v0.1.1",
+        "assets": [
+            {
+                "name": "update-manifest.json",
+                "browser_download_url": "https://github.com/nicedayzhu/SwiftDemoUIPro/releases/download/menu-v0.1.1/update-manifest.json"
+            }
+        ]
+    })JSON";
+    const QByteArray manifestJson = R"JSON({
+        "schemaVersion": 1,
+        "launcher": {
+            "version": "0.1.0",
+            "url": "https://github.com/nicedayzhu/SwiftDemoUIPro/releases/download/v0.1.0/SwiftDemoUIPro-v0.1.0-win64.zip",
+            "sha256": "c2e0c4604e9b2f1787963eba32bcfdd104e40ba30182729ad1e8055de3dd696f"
+        },
+        "menu": {
+            "version": "0.1.1",
+            "url": "https://github.com/nicedayzhu/SwiftDemoUIPro/releases/download/menu-v0.1.1/swift_demo_menu_override-v0.1.1.vpk",
+            "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        }
+    })JSON";
+
+    const UpdateInfo independent = UpdateService::parseLatestRelease(releaseJson, manifestJson);
+    QVERIFY2(independent.valid, qPrintable(independent.error));
+    QCOMPARE(independent.launcher.version, QStringLiteral("0.1.0"));
+    QCOMPARE(independent.menu.version, QStringLiteral("0.1.1"));
+    QVERIFY(!independent.launcher.isNewerThan(QStringLiteral("0.1.0")));
+    QVERIFY(independent.menu.isNewerThan(QStringLiteral("0.1.0")));
+
+    const QByteArray legacyRelease = R"JSON({
+        "html_url": "https://github.com/nicedayzhu/SwiftDemoUIPro/releases/tag/v0.2.0",
+        "assets": [
+            {
+                "name": "SwiftDemoUIPro-v0.2.0-win64.zip",
+                "browser_download_url": "https://github.com/nicedayzhu/SwiftDemoUIPro/releases/download/v0.2.0/SwiftDemoUIPro-v0.2.0-win64.zip",
+                "digest": "sha256:abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd"
+            }
+        ]
+    })JSON";
+    const UpdateInfo legacy = UpdateService::parseLatestRelease(legacyRelease);
+    QVERIFY2(legacy.valid, qPrintable(legacy.error));
+    QCOMPARE(legacy.launcher.version, QStringLiteral("0.2.0"));
+    QVERIFY(!legacy.menu.isValid());
 }
 
 QTEST_APPLESS_MAIN(LauncherCoreTest)

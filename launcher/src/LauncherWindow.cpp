@@ -23,6 +23,7 @@
 #include <QPainter>
 #include <QPolygonF>
 #include <QPushButton>
+#include <QResizeEvent>
 #include <QSettings>
 #include <QStackedWidget>
 #include <QStyle>
@@ -163,6 +164,16 @@ LauncherWindow::LauncherWindow(QWidget *parent)
         loadLanguage(currentLanguage_);
     }
 
+    updateService_ = new UpdateService(this);
+    connect(updateService_, &UpdateService::checkFinished, this, &LauncherWindow::handleUpdateCheck);
+    connect(updateService_, &UpdateService::menuDownloadFinished, this, &LauncherWindow::handleMenuDownload);
+    connect(updateService_, &UpdateService::menuDownloadProgress, this, [this](qint64 received, qint64 total) {
+        if (!updateStatus_ || total <= 0)
+            return;
+        const int percent = static_cast<int>((received * 100) / total);
+        updateStatus_->setText(tr("Downloading DemoUI update... %1%").arg(percent));
+    });
+
     buildInterface();
     applyStyle();
     detectEnvironment();
@@ -176,6 +187,19 @@ LauncherWindow::LauncherWindow(QWidget *parent)
     connect(stateTimer_, &QTimer::timeout, this, &LauncherWindow::refreshState);
     stateTimer_->start();
     refreshState();
+    if (qApp->property("previewUpdateBubble").toBool()) {
+        QTimer::singleShot(0, this, [this]() {
+            UpdateInfo preview;
+            preview.valid = true;
+            preview.launcher.version = QStringLiteral("0.2.0");
+            preview.launcher.url = QStringLiteral("https://github.com/nicedayzhu/SwiftDemoUIPro/releases/latest");
+            preview.menu.version = QStringLiteral("0.1.1");
+            preview.menu.url = QStringLiteral("https://github.com/nicedayzhu/SwiftDemoUIPro/releases/latest");
+            handleUpdateCheck(preview);
+        });
+    } else if (!qApp->property("disableAutoUpdateCheck").toBool()) {
+        QTimer::singleShot(1500, this, &LauncherWindow::checkForUpdates);
+    }
 }
 
 void LauncherWindow::buildInterface()
@@ -545,8 +569,11 @@ void LauncherWindow::buildInterface()
     auto *heroDescription = new QLabel(tr("A lightweight, native DemoUI enhancement and playback tool for Counter-Strike 2"), aboutHero);
     heroDescription->setObjectName(QStringLiteral("AboutDescription"));
     auto *heroVersion = new QLabel(
-        tr("Version %1 (%2) · Qt 6 Widgets")
-            .arg(qApp->applicationVersion(), qApp->property("gitCommit").toString()),
+        tr("Launcher %1 (%2) · DemoUI %3 · Qt 6 Widgets")
+            .arg(
+                qApp->applicationVersion(),
+                qApp->property("gitCommit").toString(),
+                UpdateService::currentMenuVersion()),
         aboutHero);
     heroVersion->setObjectName(QStringLiteral("AboutVersion"));
     heroCopy->addWidget(heroTitle);
@@ -554,6 +581,40 @@ void LauncherWindow::buildInterface()
     heroCopy->addWidget(heroVersion);
     heroLayout->addLayout(heroCopy, 1);
     about->addWidget(aboutHero);
+
+    auto *updateCard = new QFrame(aboutPage);
+    updateCard->setObjectName(QStringLiteral("Card"));
+    auto *updates = new QVBoxLayout(updateCard);
+    updates->setContentsMargins(18, 14, 18, 15);
+    updates->setSpacing(9);
+    updates->addWidget(sectionEyebrow(tr("Updates"), updateCard));
+    auto *updateRow = new QHBoxLayout;
+    updateRow->setSpacing(9);
+    updateStatus_ = new QLabel(updateCard);
+    updateStatus_->setObjectName(QStringLiteral("UpdateStatus"));
+    updateStatus_->setWordWrap(true);
+    updateRow->addWidget(updateStatus_, 1);
+    checkUpdateButton_ = new QPushButton(tr("Check for updates"), updateCard);
+    checkUpdateButton_->setObjectName(QStringLiteral("SecondaryButton"));
+    connect(checkUpdateButton_, &QPushButton::clicked, this, &LauncherWindow::checkForUpdates);
+    updateRow->addWidget(checkUpdateButton_);
+    launcherUpdateButton_ = new QPushButton(updateCard);
+    launcherUpdateButton_->setObjectName(QStringLiteral("SecondaryButton"));
+    connect(launcherUpdateButton_, &QPushButton::clicked, this, [this]() {
+        const QString url = updateInfo_.launcher.url.isEmpty()
+            ? updateInfo_.releasePageUrl
+            : updateInfo_.launcher.url;
+        if (!url.isEmpty())
+            QDesktopServices::openUrl(QUrl(url));
+    });
+    updateRow->addWidget(launcherUpdateButton_);
+    menuUpdateButton_ = new QPushButton(updateCard);
+    menuUpdateButton_->setObjectName(QStringLiteral("SecondaryButton"));
+    connect(menuUpdateButton_, &QPushButton::clicked, this, &LauncherWindow::downloadMenuUpdate);
+    updateRow->addWidget(menuUpdateButton_);
+    updates->addLayout(updateRow);
+    about->addWidget(updateCard);
+    refreshUpdateUi();
 
     auto *socialCard = new QFrame(aboutPage);
     socialCard->setObjectName(QStringLiteral("Card"));
@@ -604,6 +665,34 @@ void LauncherWindow::buildInterface()
     connect(navMenuButton_, &QPushButton::clicked, this, [this]() { selectPage(1); });
     connect(navAboutButton_, &QPushButton::clicked, this, [this]() { selectPage(2); });
     selectPage(0);
+
+    updateBubble_ = new QFrame(central);
+    updateBubble_->setObjectName(QStringLiteral("UpdateBubble"));
+    updateBubble_->setFixedWidth(330);
+    auto *bubbleLayout = new QHBoxLayout(updateBubble_);
+    bubbleLayout->setContentsMargins(14, 11, 9, 11);
+    bubbleLayout->setSpacing(9);
+    updateBubbleText_ = new QLabel(updateBubble_);
+    updateBubbleText_->setObjectName(QStringLiteral("UpdateBubbleText"));
+    updateBubbleText_->setWordWrap(true);
+    bubbleLayout->addWidget(updateBubbleText_, 1);
+    auto *viewUpdateButton = new QPushButton(tr("View"), updateBubble_);
+    viewUpdateButton->setObjectName(QStringLiteral("BubbleAction"));
+    connect(viewUpdateButton, &QPushButton::clicked, this, [this]() {
+        updateBubbleDismissed_ = true;
+        updateBubble_->hide();
+        selectPage(2);
+    });
+    bubbleLayout->addWidget(viewUpdateButton);
+    auto *dismissUpdateButton = new QPushButton(QStringLiteral("×"), updateBubble_);
+    dismissUpdateButton->setObjectName(QStringLiteral("BubbleClose"));
+    dismissUpdateButton->setToolTip(tr("Dismiss"));
+    connect(dismissUpdateButton, &QPushButton::clicked, this, [this]() {
+        updateBubbleDismissed_ = true;
+        updateBubble_->hide();
+    });
+    bubbleLayout->addWidget(dismissUpdateButton);
+    updateBubble_->hide();
 
     setCentralWidget(central);
 }
@@ -877,6 +966,44 @@ void LauncherWindow::applyStyle()
             color: #929aa5;
             font-size: 11px;
         }
+        QLabel#UpdateStatus {
+            color: #66707c;
+            font-size: 12px;
+        }
+        QFrame#UpdateBubble {
+            border: 1px solid #cfd9e7;
+            border-radius: 11px;
+            background: #f7fbff;
+        }
+        QLabel#UpdateBubbleText {
+            color: #35404e;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        QPushButton#BubbleAction {
+            min-width: 48px;
+            min-height: 30px;
+            border: none;
+            border-radius: 7px;
+            background: #347fd8;
+            color: #ffffff;
+            padding: 0 10px;
+            font-size: 12px;
+        }
+        QPushButton#BubbleAction:hover { background: #438ee6; }
+        QPushButton#BubbleClose {
+            min-width: 26px;
+            max-width: 26px;
+            min-height: 26px;
+            max-height: 26px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: #7c8795;
+            padding: 0;
+            font-size: 17px;
+        }
+        QPushButton#BubbleClose:hover { background: #e7edf5; color: #35404e; }
         QFrame#SocialRow {
             border: none;
             border-radius: 9px;
@@ -1066,6 +1193,133 @@ void LauncherWindow::changeLanguage(const QString &language)
     refreshState();
 }
 
+void LauncherWindow::checkForUpdates()
+{
+    if (!updateService_ || updateCheckInProgress_)
+        return;
+    updateCheckInProgress_ = true;
+    updateBubbleDismissed_ = false;
+    updateInfo_ = {};
+    refreshUpdateUi();
+    updateService_->checkForUpdates();
+}
+
+void LauncherWindow::downloadMenuUpdate()
+{
+    if (!updateService_ || !updateInfo_.menu.isNewerThan(UpdateService::currentMenuVersion()))
+        return;
+    if (menuUpdateButton_)
+        menuUpdateButton_->setEnabled(false);
+    if (checkUpdateButton_)
+        checkUpdateButton_->setEnabled(false);
+    if (updateStatus_)
+        updateStatus_->setText(tr("Downloading DemoUI update..."));
+    updateService_->downloadMenuUpdate(updateInfo_.menu);
+}
+
+void LauncherWindow::handleUpdateCheck(const UpdateInfo &info)
+{
+    updateCheckInProgress_ = false;
+    updateInfo_ = info;
+    refreshUpdateUi();
+
+    const bool launcherAvailable = info.valid
+        && info.launcher.isNewerThan(qApp->applicationVersion());
+    const bool menuAvailable = info.valid
+        && info.menu.isNewerThan(UpdateService::currentMenuVersion());
+    if (!updateBubble_ || !updateBubbleText_)
+        return;
+    if ((!launcherAvailable && !menuAvailable) || updateBubbleDismissed_) {
+        updateBubble_->hide();
+        return;
+    }
+    if (launcherAvailable && menuAvailable) {
+        updateBubbleText_->setText(
+            tr("Updates available: launcher %1 and DemoUI %2")
+                .arg(info.launcher.version, info.menu.version));
+    } else if (launcherAvailable) {
+        updateBubbleText_->setText(tr("Launcher %1 is available").arg(info.launcher.version));
+    } else {
+        updateBubbleText_->setText(tr("DemoUI %1 is available").arg(info.menu.version));
+    }
+    updateBubble_->adjustSize();
+    positionUpdateBubble();
+    updateBubble_->show();
+    updateBubble_->raise();
+    QFrame *bubble = updateBubble_;
+    QTimer::singleShot(9000, bubble, [bubble]() { bubble->hide(); });
+}
+
+void LauncherWindow::handleMenuDownload(bool ok, const QString &message)
+{
+    if (ok) {
+        refreshUpdateUi();
+        QMessageBox::information(this, tr("DemoUI update ready"), message);
+    } else {
+        refreshUpdateUi();
+        QMessageBox::warning(this, tr("Unable to update DemoUI"), message);
+    }
+}
+
+void LauncherWindow::refreshUpdateUi()
+{
+    if (!updateStatus_ || !checkUpdateButton_ || !launcherUpdateButton_ || !menuUpdateButton_)
+        return;
+
+    checkUpdateButton_->setEnabled(!updateCheckInProgress_);
+    checkUpdateButton_->setText(updateCheckInProgress_ ? tr("Checking...") : tr("Check again"));
+    launcherUpdateButton_->setVisible(false);
+    menuUpdateButton_->setVisible(false);
+
+    if (updateCheckInProgress_) {
+        updateStatus_->setText(tr("Checking the latest GitHub Release..."));
+        return;
+    }
+
+    if (!updateInfo_.valid) {
+        if (!updateInfo_.error.isEmpty()) {
+            updateStatus_->setText(tr("Unable to check for updates: %1").arg(updateInfo_.error));
+        } else {
+            updateStatus_->setText(
+                tr("Launcher %1 · DemoUI %2")
+                    .arg(qApp->applicationVersion(), UpdateService::currentMenuVersion()));
+            checkUpdateButton_->setText(tr("Check for updates"));
+        }
+        return;
+    }
+
+    const bool launcherAvailable = updateInfo_.launcher.isNewerThan(qApp->applicationVersion());
+    const bool menuAvailable = updateInfo_.menu.isNewerThan(UpdateService::currentMenuVersion());
+    launcherUpdateButton_->setVisible(launcherAvailable);
+    launcherUpdateButton_->setText(tr("Download launcher %1").arg(updateInfo_.launcher.version));
+    menuUpdateButton_->setVisible(menuAvailable);
+    menuUpdateButton_->setEnabled(true);
+    menuUpdateButton_->setText(tr("Update DemoUI to %1").arg(updateInfo_.menu.version));
+
+    if (launcherAvailable && menuAvailable) {
+        updateStatus_->setText(
+            tr("Launcher %1 and DemoUI %2 are available.")
+                .arg(updateInfo_.launcher.version, updateInfo_.menu.version));
+    } else if (launcherAvailable) {
+        updateStatus_->setText(tr("Launcher %1 is available.").arg(updateInfo_.launcher.version));
+    } else if (menuAvailable) {
+        updateStatus_->setText(tr("DemoUI %1 is available independently.").arg(updateInfo_.menu.version));
+    } else {
+        updateStatus_->setText(
+            tr("Up to date · Launcher %1 · DemoUI %2")
+                .arg(qApp->applicationVersion(), UpdateService::currentMenuVersion()));
+    }
+}
+
+void LauncherWindow::positionUpdateBubble()
+{
+    if (!updateBubble_ || !centralWidget())
+        return;
+    const int x = qMax(16, centralWidget()->width() - updateBubble_->width() - 18);
+    const int y = qMax(16, centralWidget()->height() - updateBubble_->height() - 18);
+    updateBubble_->move(x, y);
+}
+
 void LauncherWindow::detectEnvironment()
 {
     QSettings settings(QStringLiteral("SwiftTools"), QStringLiteral("SwiftDemoLauncher"));
@@ -1206,7 +1460,7 @@ void LauncherWindow::installOrRepairMenu()
         QMessageBox::warning(this, tr("Exit CS2 first"), tr("The VPK cannot be replaced while CS2 is running. Fully exit the game before installing or repairing it."));
         return;
     }
-    const QString vpk = Cs2Manager::findBundledVpk();
+    const QString vpk = UpdateService::preferredMenuVpk();
     showResult(Cs2Manager::installOverride(paths_, vpk));
     refreshState();
 }
@@ -1235,7 +1489,7 @@ void LauncherWindow::startWatchingDemo()
     if (confirmation.clickedButton() != continueButton)
         return;
 
-    const QString vpk = Cs2Manager::findBundledVpk();
+    const QString vpk = UpdateService::preferredMenuVpk();
     LauncherResult result = Cs2Manager::installOverride(paths_, vpk);
     if (!result.ok) {
         showResult(result);
@@ -1400,4 +1654,10 @@ void LauncherWindow::closeEvent(QCloseEvent *event)
         }
     }
     event->accept();
+}
+
+void LauncherWindow::resizeEvent(QResizeEvent *event)
+{
+    QMainWindow::resizeEvent(event);
+    positionUpdateBubble();
 }

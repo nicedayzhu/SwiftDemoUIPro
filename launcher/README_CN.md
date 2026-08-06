@@ -27,6 +27,17 @@
 
 `-insecure` 只存在于本次启动命令中，不会写入 Steam 的永久启动项。DemoUI VPK 的 SearchPath 会持续存在到清理完成，因此请勿跳过最后一步。如果启动器意外中断，重新打开即可继续清理。
 
+## 更新
+
+启动器打开后会检查仓库最新发布的 GitHub Release。发现更新时只显示一个可关闭的小气泡；没有玩家操作就不会下载或安装任何内容。随后可在**关于**页面分别决定：
+
+- 启动器更新会在浏览器中打开带版本号的 Windows 压缩包，不会尝试替换正在运行的 EXE。
+- 只有 DemoUI 更新时，玩家可单独选择下载带版本号的 VPK。启动器会校验 SHA-256，并保存到用户的本地应用数据目录；下次开始 Demo 回放时优先使用该版本。
+
+Release 通过 `update-manifest.json` 分别记录启动器和 DemoUI 版本。对于尚无清单的旧 Release，启动器仍可根据 `SwiftDemoUIPro-v<版本号>-win64.zip` 资产名称检测启动器更新。
+
+更新检查匿名读取公开仓库的 GitHub REST API，不需要也不会保存玩家的 GitHub Token。请求包含 GitHub 要求的 `User-Agent`、推荐的 JSON `Accept` 与 API 版本头，并检查响应状态、内容类型、JSON、超时和匿名访问频率限制；无效 JSON 会自动重试一次。
+
 ## 构建
 
 完整的项目构建、测试、版本和发布流程见[开发者指南](../DEVELOPMENT_CN.md)。
@@ -65,7 +76,7 @@ launcher\package\SwiftDemoUIPro-v<版本号>\SwiftDemoUIPro.exe
 launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
 ```
 
-本地端到端测试请运行展开版本目录中的 EXE。打包步骤会通过 `windeployqt` 收集 `Qt6Core.dll`、`Qt6Gui.dll`、`Qt6Widgets.dll` 和 `platforms\qwindows.dll`。`SwiftDemoUIPro.exe`、DLL/插件、翻译和 `swift_demo_menu_override.vpk` 必须保持在同一完整目录结构中。
+本地端到端测试请运行展开版本目录中的 EXE。打包步骤会通过 `windeployqt` 收集 `Qt6Core.dll`、`Qt6Gui.dll`、`Qt6Network.dll`、`Qt6Widgets.dll`、Windows TLS 后端和 `platforms\qwindows.dll`。`SwiftDemoUIPro.exe`、DLL/插件、翻译和 `swift_demo_menu_override.vpk` 必须保持在同一完整目录结构中。
 
 仓库根目录的 `release.ps1` 用于已经提交的 Release 候选版本，而不是日常开发测试。由于源码包从 `HEAD` 生成，只要 Git 工作区不干净，它就会拒绝继续。
 

@@ -35,6 +35,7 @@ Swift DemoUI Pro 是一款非官方的 Counter-Strike 2 Demo 与 HLTV 回放客�
 - 核验目标后，一键切换到存活玩家的第一人称 POV。
 - 直接跳转到任意已录制回合的开头。
 - 支持英文和简体中文，并可跟随系统语言。
+- 后台检查 GitHub 最新正式 Release，只显示可关闭的小气泡提示。启动器与 DemoUI 可分别决定是否更新，不会自动下载。
 - 通过备份、独立临时目录和明确清理流程保证操作可恢复。
 
 ## 快速开始
@@ -57,6 +58,7 @@ Swift DemoUI Pro 是一款非官方的 Counter-Strike 2 Demo 与 HLTV 回放客�
 - 点击玩家行右侧的音频按钮，只切换该玩家的已录制语音。
 - 使用 **HEAR ALL / MUTE ALL / T ONLY / CT ONLY** 快速筛选语音。
 - 展开 **ROUND NAVIGATION**，选择回合即可跳转到其起始 tick。
+- 面板使用固定位置并向左避让右侧武器槽位；点击整个标题栏区域可展开或收起。
 
 ## 常见问题
 

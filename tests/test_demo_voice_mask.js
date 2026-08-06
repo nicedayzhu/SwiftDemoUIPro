@@ -3,6 +3,7 @@
 var fs = require("fs");
 var path = require("path");
 var vm = require("vm");
+var crypto = require("crypto");
 
 var sourcePath = path.join(__dirname, "..", "addon", "panorama", "scripts", "hud", "swift_demo_voice.js");
 var source = fs.readFileSync(sourcePath, "utf8");
@@ -10,8 +11,6 @@ var layoutPath = path.join(__dirname, "..", "addon", "panorama", "layout", "hud"
 var layout = fs.readFileSync(layoutPath, "utf8");
 var stylePath = path.join(__dirname, "..", "addon", "panorama", "styles", "hud", "swift_demo_voice.css");
 var style = fs.readFileSync(stylePath, "utf8");
-var nativeLayoutPath = path.join(__dirname, "..", "..", "res_panorama", "panorama", "layout", "hud", "huddemocontroller.xml");
-var nativeLayout = fs.readFileSync(nativeLayoutPath, "utf8");
 
 function extractNativeRoot(xml) {
 	var start = xml.indexOf('<Panel id="Root">');
@@ -32,7 +31,7 @@ if (/[^\x00-\x7f]/.test(source)) {
 	throw new Error("Panorama voice runtime must remain ASCII-only to avoid ResourceCompiler encoding corruption");
 }
 
-if (/DemoController(?:Hidden|Full|Minimal)/.test(source)) {
+if (/(?:SetHasClass|AddClass|RemoveClass|SwitchClass)\([^)]*DemoController(?:Hidden|Full|Minimal)/.test(source)) {
 	throw new Error("custom runtime must not mutate native DemoController mode classes");
 }
 
@@ -56,8 +55,29 @@ if (/swift-demo-playback/.test(layout)) {
 	throw new Error("custom menu must not duplicate native playback controls");
 }
 
-if (extractNativeRoot(layout) !== extractNativeRoot(nativeLayout)) {
-	throw new Error("Valve's native DemoUI Root must remain byte-for-byte unchanged");
+var nativeRootHash = crypto.createHash("sha256").update(extractNativeRoot(layout)).digest("hex");
+if (nativeRootHash !== "cc5a10b29e1abdbd65b2a9260a6b0d55784aac87534629890bdc76072d4efd94") {
+    throw new Error("Valve's native DemoUI Root must remain byte-for-byte unchanged: " + nativeRootHash);
+}
+
+var menuWidth = /\.swift-demo-voice\s*\{[^}]*\bwidth:\s*(\d+)px;/m.exec(style);
+if (!menuWidth || Number(menuWidth[1]) > 430) {
+    throw new Error("Demo Voice panel must stay narrow enough to preserve the right-side spectator HUD");
+}
+
+var menuRightMargin = /\.swift-demo-voice\s*\{[^}]*\bmargin:\s*0px\s+(\d+)px\s+112px\s+0px;/m.exec(style);
+if (!menuRightMargin || Number(menuRightMargin[1]) < 120) {
+	throw new Error("Demo Voice panel must leave a clear lane for the right-side weapon slots");
+}
+
+if (!/id="SwiftDemoVoiceHeader"[^>]*hittestchildren="false"[^>]*onactivate="SwiftDemoVoice\.ToggleOpen\(\)"/.test(layout)
+	|| /class="swift-demo-voice__toggle"/.test(layout)) {
+	throw new Error("the full Demo Voice title bar must be the single expand/collapse target");
+}
+
+if (/draggable="true"|SwiftDemoVoiceDrag|SwiftDemoVoiceResetPosition/.test(layout)
+	|| /RegisterEventHandler\("Drag(?:Start|End)"|SetPositionInPixels|ResetPosition/.test(source)) {
+	throw new Error("Demo Voice panel must remain fixed and must not include drag or reset-position behavior");
 }
 
 if (/swift-demo-playback|#(?:Contents|PlayButton|SliderRow|Slider|RoundMarkers|HighlightMarkers|HighlightIcons|ControlRow|TimeControls|RoundControls|RoundPrev|RoundRestart|RoundNumber|HotKeyLabels|Settings)\b/.test(style)) {

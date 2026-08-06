@@ -1,8 +1,10 @@
 param(
     [string]$Version = "",
+    [string]$MenuVersion = "",
     [string]$Cs2Root = "",
     [string]$VpkEditCli = "",
     [string]$QtRoot = "",
+    [switch]$MenuOnly,
     [switch]$Publish
 )
 
@@ -10,7 +12,9 @@ $ErrorActionPreference = "Stop"
 
 $projectRoot = $PSScriptRoot
 $versionPath = Join-Path $projectRoot "VERSION"
+$menuVersionPath = Join-Path $projectRoot "MENU_VERSION"
 $releaseRoot = Join-Path $projectRoot "release"
+$githubRepository = "nicedayzhu/SwiftDemoUIPro"
 
 function Invoke-Native {
     param(
@@ -44,13 +48,24 @@ $currentVersion = (Get-Content -Raw -LiteralPath $versionPath).Trim()
 if ($currentVersion -notmatch '^\d+\.\d+\.\d+$') {
     throw "VERSION must contain a semantic version such as 1.2.3."
 }
+$currentMenuVersion = (Get-Content -Raw -LiteralPath $menuVersionPath).Trim()
+if ($currentMenuVersion -notmatch '^\d+\.\d+\.\d+$') {
+    throw "MENU_VERSION must contain a semantic version such as 1.2.3."
+}
+if ($MenuOnly -and $Version) {
+    throw "-Version cannot be used with -MenuOnly. Use -MenuVersion for a DemoUI-only release."
+}
 
 $targetVersion = if ($Version) { $Version.Trim() } else { $currentVersion }
+$targetMenuVersion = if ($MenuVersion) { $MenuVersion.Trim() } else { $currentMenuVersion }
 if ($targetVersion -notmatch '^\d+\.\d+\.\d+$') {
     throw "-Version must use MAJOR.MINOR.PATCH, for example 1.2.3."
 }
-if (-not $Publish -and $targetVersion -ne $currentVersion) {
-    throw "Changing VERSION creates a release commit and therefore requires -Publish."
+if ($targetMenuVersion -notmatch '^\d+\.\d+\.\d+$') {
+    throw "-MenuVersion must use MAJOR.MINOR.PATCH, for example 1.2.3."
+}
+if (-not $Publish -and ($targetVersion -ne $currentVersion -or $targetMenuVersion -ne $currentMenuVersion)) {
+    throw "Changing VERSION or MENU_VERSION creates a release commit and therefore requires -Publish."
 }
 
 if ($Publish) {
@@ -63,15 +78,32 @@ if ($Publish) {
     Invoke-Native -Command "gh" -Arguments @("auth", "status") `
         -FailureMessage "GitHub CLI is not authenticated. Run: gh auth login"
 
+    $versionFilesChanged = @()
     if ($targetVersion -ne $currentVersion) {
         [System.IO.File]::WriteAllText(
             $versionPath,
             "$targetVersion`n",
             [System.Text.UTF8Encoding]::new($false)
         )
-        Invoke-Native -Command "git" -Arguments @("add", "--", "VERSION") `
-            -FailureMessage "Unable to stage VERSION."
-        Invoke-Native -Command "git" -Arguments @("commit", "-m", "chore(release): v$targetVersion") `
+        $versionFilesChanged += "VERSION"
+    }
+    if ($targetMenuVersion -ne $currentMenuVersion) {
+        [System.IO.File]::WriteAllText(
+            $menuVersionPath,
+            "$targetMenuVersion`n",
+            [System.Text.UTF8Encoding]::new($false)
+        )
+        $versionFilesChanged += "MENU_VERSION"
+    }
+    if ($versionFilesChanged.Count -gt 0) {
+        Invoke-Native -Command "git" -Arguments (@("add", "--") + $versionFilesChanged) `
+            -FailureMessage "Unable to stage release version files."
+        $releaseCommitMessage = if ($MenuOnly) {
+            "chore(release): menu v$targetMenuVersion"
+        } else {
+            "chore(release): v$targetVersion"
+        }
+        Invoke-Native -Command "git" -Arguments @("commit", "-m", $releaseCommitMessage) `
             -FailureMessage "Unable to create the version commit."
     }
 }
@@ -86,38 +118,78 @@ if ($Cs2Root) { $menuArguments.Cs2Root = $Cs2Root }
 if ($VpkEditCli) { $menuArguments.VpkEditCli = $VpkEditCli }
 & (Join-Path $projectRoot "demo-menu.ps1") @menuArguments
 
-Write-Host "Building, testing, and packaging the Qt launcher..."
-$launcherArguments = @{ Package = $true }
-if ($QtRoot) { $launcherArguments.QtRoot = $QtRoot }
-& (Join-Path $projectRoot "launcher\build-launcher.ps1") @launcherArguments
+if (-not $MenuOnly) {
+    Write-Host "Building, testing, and packaging the Qt launcher..."
+    $launcherArguments = @{ Package = $true }
+    if ($QtRoot) { $launcherArguments.QtRoot = $QtRoot }
+    & (Join-Path $projectRoot "launcher\build-launcher.ps1") @launcherArguments
+}
 
-$tag = "v$targetVersion"
+$tag = if ($MenuOnly) { "menu-v$targetMenuVersion" } else { "v$targetVersion" }
 $versionReleaseDir = Join-Path $releaseRoot $tag
 if (Test-Path -LiteralPath $versionReleaseDir) {
     Remove-Item -LiteralPath $versionReleaseDir -Recurse -Force
 }
 New-Item -ItemType Directory -Path $versionReleaseDir -Force | Out-Null
 
+$releaseAssets = @()
 $packageName = "SwiftDemoUIPro-v$targetVersion-win64.zip"
-$packageSource = Join-Path $projectRoot "launcher\package\$packageName"
-if (-not (Test-Path -LiteralPath $packageSource)) {
-    throw "Expected launcher package was not produced: $packageSource"
-}
 $packageAsset = Join-Path $versionReleaseDir $packageName
-Copy-Item -LiteralPath $packageSource -Destination $packageAsset
+if (-not $MenuOnly) {
+    $packageSource = Join-Path $projectRoot "launcher\package\$packageName"
+    if (-not (Test-Path -LiteralPath $packageSource)) {
+        throw "Expected launcher package was not produced: $packageSource"
+    }
+    Copy-Item -LiteralPath $packageSource -Destination $packageAsset
+    $releaseAssets += $packageAsset
 
-$sourceName = "SwiftDemoUIPro-v$targetVersion-source.zip"
-$sourceAsset = Join-Path $versionReleaseDir $sourceName
-Invoke-Native -Command "git" -Arguments @(
-    "archive",
-    "--format=zip",
-    "--prefix=SwiftDemoUIPro-v$targetVersion/",
-    "--output=$sourceAsset",
-    "HEAD"
-) -FailureMessage "Unable to create the source archive."
+    $sourceName = "SwiftDemoUIPro-v$targetVersion-source.zip"
+    $sourceAsset = Join-Path $versionReleaseDir $sourceName
+    Invoke-Native -Command "git" -Arguments @(
+        "archive",
+        "--format=zip",
+        "--prefix=SwiftDemoUIPro-v$targetVersion/",
+        "--output=$sourceAsset",
+        "HEAD"
+    ) -FailureMessage "Unable to create the source archive."
+    $releaseAssets += $sourceAsset
+}
+
+$menuName = "swift_demo_menu_override-v$targetMenuVersion.vpk"
+$menuAsset = Join-Path $versionReleaseDir $menuName
+Copy-Item -LiteralPath (Join-Path $projectRoot "dist\swift_demo_menu_override.vpk") -Destination $menuAsset
+$releaseAssets += $menuAsset
+
+$launcherHash = if (Test-Path -LiteralPath $packageAsset) {
+    (Get-FileHash -LiteralPath $packageAsset -Algorithm SHA256).Hash.ToLowerInvariant()
+} else {
+    ""
+}
+$menuHash = (Get-FileHash -LiteralPath $menuAsset -Algorithm SHA256).Hash.ToLowerInvariant()
+$launcherUrl = "https://github.com/$githubRepository/releases/download/v$targetVersion/$packageName"
+$menuUrl = "https://github.com/$githubRepository/releases/download/$tag/$menuName"
+$manifest = [ordered]@{
+    schemaVersion = 1
+    launcher = [ordered]@{
+        version = $targetVersion
+        url = $launcherUrl
+        sha256 = $launcherHash
+    }
+    menu = [ordered]@{
+        version = $targetMenuVersion
+        url = $menuUrl
+        sha256 = $menuHash
+    }
+}
+$manifestPath = Join-Path $versionReleaseDir "update-manifest.json"
+[System.IO.File]::WriteAllText(
+    $manifestPath,
+    (($manifest | ConvertTo-Json -Depth 4) + "`n"),
+    [System.Text.UTF8Encoding]::new($false)
+)
+$releaseAssets += $manifestPath
 
 $checksumPath = Join-Path $versionReleaseDir "SHA256SUMS.txt"
-$releaseAssets = @($packageAsset, $sourceAsset)
 $checksumLines = foreach ($asset in $releaseAssets) {
     $hash = (Get-FileHash -LiteralPath $asset -Algorithm SHA256).Hash.ToLowerInvariant()
     "$hash  $([System.IO.Path]::GetFileName($asset))"
@@ -133,7 +205,8 @@ $commit = (& git rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw "Unable to read the release commit." }
 
 Write-Host "Release candidate ready: $versionReleaseDir"
-Write-Host "Version: $targetVersion"
+Write-Host "Launcher version: $targetVersion"
+Write-Host "DemoUI version: $targetMenuVersion"
 Write-Host "Commit: $commit"
 Get-Content -LiteralPath $checksumPath | ForEach-Object { Write-Host $_ }
 
@@ -179,7 +252,7 @@ if ($releaseExists) {
         "--draft",
         "--verify-tag",
         "--generate-notes",
-        "--title", "Swift DemoUI Pro $tag"
+        "--title", $(if ($MenuOnly) { "Swift DemoUI Pro DemoUI $tag" } else { "Swift DemoUI Pro $tag" })
     )) -FailureMessage "Unable to create draft release $tag."
 }
 

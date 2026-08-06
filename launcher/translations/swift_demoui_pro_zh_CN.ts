@@ -275,7 +275,7 @@
 <context>
     <name>LauncherWindow</name>
     <message>
-        <location filename="../src/LauncherWindow.cpp" line="+206"/>
+        <location filename="../src/LauncherWindow.cpp" line="+230"/>
         <source>CS2 Demo Tool</source>
         <translation>CS2 回放工具</translation>
     </message>
@@ -332,12 +332,12 @@
     </message>
     <message>
         <location line="+15"/>
-        <location line="+961"/>
+        <location line="+1191"/>
         <source>✓</source>
         <translation>✓</translation>
     </message>
     <message>
-        <location line="-931"/>
+        <location line="-1161"/>
         <source>Choose Demo</source>
         <translation>选择录像</translation>
     </message>
@@ -423,11 +423,12 @@
     </message>
     <message>
         <location line="+3"/>
+        <location line="+761"/>
         <source>Checking...</source>
         <translation>正在检查...</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="-757"/>
         <source>Install / Repair</source>
         <translation>安装 / 修复</translation>
     </message>
@@ -471,7 +472,7 @@
         <translation type="vanished">版本 0.1.0  ·  Qt 6 Widgets</translation>
     </message>
     <message>
-        <location line="+18"/>
+        <location line="+55"/>
         <source>Find me</source>
         <translation>找到我</translation>
     </message>
@@ -501,7 +502,7 @@
         <translation>为 CS2 Demo 社区而制作</translation>
     </message>
     <message>
-        <location line="+446"/>
+        <location line="+512"/>
         <source>Unable to switch language</source>
         <translation>无法切换语言</translation>
     </message>
@@ -512,7 +513,7 @@
     </message>
     <message>
         <location line="+21"/>
-        <location line="+96"/>
+        <location line="+223"/>
         <source>Demo selected. Start playback to install DemoUI automatically and launch CS2.</source>
         <translation>Demo 已选择。点击“开始观看”会自动安装 DemoUI 并启动 CS2。</translation>
     </message>
@@ -542,7 +543,7 @@
         <translation type="vanished">请选择有效的 CS2 .dem 文件。</translation>
     </message>
     <message>
-        <location line="-838"/>
+        <location line="-1068"/>
         <source>Swift DemoUI Pro · %1</source>
         <translation>Swift DemoUI Pro · %1</translation>
     </message>
@@ -572,12 +573,122 @@
         <translation>默认关闭，避免缺少 TrueView 指令数据的 Demo 画面闪烁</translation>
     </message>
     <message>
-        <location line="+161"/>
         <source>Version %1 (%2) · Qt 6 Widgets</source>
-        <translation>版本 %1（%2）· Qt 6 Widgets</translation>
+        <translation type="vanished">版本 %1（%2）· Qt 6 Widgets</translation>
     </message>
     <message>
-        <location line="+547"/>
+        <location line="-237"/>
+        <source>Downloading DemoUI update... %1%</source>
+        <translation>正在下载 DemoUI 更新……%1%</translation>
+    </message>
+    <message>
+        <location line="+398"/>
+        <source>Launcher %1 (%2) · DemoUI %3 · Qt 6 Widgets</source>
+        <translation>启动器 %1（%2）· DemoUI %3 · Qt 6 Widgets</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Updates</source>
+        <translation>更新</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <location line="+689"/>
+        <source>Check for updates</source>
+        <translation>检查更新</translation>
+    </message>
+    <message>
+        <location line="-607"/>
+        <source>View</source>
+        <translation>查看</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Dismiss</source>
+        <translation>关闭提示</translation>
+    </message>
+    <message>
+        <location line="+527"/>
+        <source>Downloading DemoUI update...</source>
+        <translation>正在下载 DemoUI 更新……</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Updates available: launcher %1 and DemoUI %2</source>
+        <translation>发现更新：启动器 %1 和 DemoUI %2</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Launcher %1 is available</source>
+        <translation>启动器 %1 已发布</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>DemoUI %1 is available</source>
+        <translation>DemoUI %1 已发布</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>DemoUI update ready</source>
+        <translation>DemoUI 更新已就绪</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Unable to update DemoUI</source>
+        <translation>无法更新 DemoUI</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Check again</source>
+        <translation>重新检查</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Checking the latest GitHub Release...</source>
+        <translation>正在检查最新的 GitHub Release……</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Unable to check for updates: %1</source>
+        <translation>无法检查更新：%1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Launcher %1 · DemoUI %2</source>
+        <translation>启动器 %1 · DemoUI %2</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Download launcher %1</source>
+        <translation>下载启动器 %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Update DemoUI to %1</source>
+        <translation>将 DemoUI 更新到 %1</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Launcher %1 and DemoUI %2 are available.</source>
+        <translation>启动器 %1 和 DemoUI %2 已发布。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Launcher %1 is available.</source>
+        <translation>启动器 %1 已发布。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>DemoUI %1 is available independently.</source>
+        <translation>DemoUI %1 已作为独立更新发布。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Up to date · Launcher %1 · DemoUI %2</source>
+        <translation>已是最新版本 · 启动器 %1 · DemoUI %2</translation>
+    </message>
+    <message>
+        <location line="+40"/>
         <source>CS2 Demo files (*.dem *.zip);;Demo files (*.dem);;ZIP archives (*.zip)</source>
         <translation>CS2 Demo 文件 (*.dem *.zip);;Demo 文件 (*.dem);;ZIP 压缩包 (*.zip)</translation>
     </message>
@@ -822,6 +933,79 @@ After watching, exit CS2, reopen the launcher, and stop Demo playback.</source>
         <location line="+1"/>
         <source>Close launcher</source>
         <translation>关闭启动器</translation>
+    </message>
+</context>
+<context>
+    <name>UpdateService</name>
+    <message>
+        <location filename="../src/UpdateService.cpp" line="+120"/>
+        <source>GitHub API rate limit reached. Please try again later.</source>
+        <translation>已达到 GitHub API 访问频率限制，请稍后再试。</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>GitHub returned an invalid JSON response (HTTP %1, %2, %3 bytes).</source>
+        <translation>GitHub 返回了无效的 JSON 响应（HTTP %1，%2，%3 字节）。</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>unknown content type</source>
+        <translation>未知内容类型</translation>
+    </message>
+    <message>
+        <location line="+43"/>
+        <source>The DemoUI update information is invalid.</source>
+        <translation>DemoUI 更新信息无效。</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The DemoUI update has no valid SHA-256 digest and cannot be installed safely.</source>
+        <translation>DemoUI 更新没有有效的 SHA-256 摘要，无法安全安装。</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>The DemoUI update is unexpectedly large.</source>
+        <translation>DemoUI 更新文件大小异常。</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>The downloaded DemoUI update failed SHA-256 verification.</source>
+        <translation>下载的 DemoUI 更新未通过 SHA-256 校验。</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Unable to create the local update directory.</source>
+        <translation>无法创建本地更新目录。</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Unable to save the verified DemoUI update.</source>
+        <translation>无法保存已验证的 DemoUI 更新。</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>DemoUI %1 is ready and will be used the next time playback starts.</source>
+        <translation>DemoUI %1 已就绪，将在下次开始回放时使用。</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>GitHub returned invalid release data.</source>
+        <translation>GitHub 返回了无效的 Release 数据。</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>The release update manifest is invalid.</source>
+        <translation>Release 更新清单无效。</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The release update manifest uses an unsupported format.</source>
+        <translation>Release 更新清单使用了不受支持的格式。</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>The latest release does not contain a supported update asset.</source>
+        <translation>最新 Release 中没有受支持的更新资产。</translation>
     </message>
 </context>
 </TS>
