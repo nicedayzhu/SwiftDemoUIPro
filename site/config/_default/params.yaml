@@ -18,21 +18,21 @@ hugoblox:
     mode: dark
     pack: default
     colors:
-      primary: "#e7aa35"
-      secondary: "#c97b24"
+      primary: "#bd9146"
+      secondary: "#bd9146"
       neutral: zinc
     surfaces:
-      background: "#0b0f14"
-      foreground: "#e7eaf0"
+      background: "#101210"
+      foreground: "#e7e4db"
       header:
-        background: "#0b0f14"
-        foreground: "#f4f4f5"
+        background: "#101210"
+        foreground: "#e7e4db"
       footer:
-        background: "#080b0f"
-        foreground: "#a1a1aa"
+        background: "#0c0e0d"
+        foreground: "#9f9e98"
 
   typography:
-    pack: geometric
+    pack: system
 
   layout:
     radius: md
@@ -49,7 +49,7 @@ hugoblox:
     search: false
     theme_toggle: false
     theme_picker: false
-    language_switcher: false
+    language_switcher: true
     cta:
       enable: true
       text: 下载 v0.1.2
@@ -60,7 +60,7 @@ hugoblox:
     show_logo: true
     show_title: true
     show_tagline: true
-    language_switcher: false
+    language_switcher: true
     show_social: true
     text: "非官方开源项目，与 Valve 或 FACEIT 无隶属或背书关系。"
 

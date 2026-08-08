@@ -1,11 +1,11 @@
 main:
-  - name: 功能
+  - name: Features
     url: "#features"
     weight: 10
-  - name: 使用方法
+  - name: Workflow
     url: "#how-it-works"
     weight: 20
-  - name: 安全设计
+  - name: Boundaries
     url: "#safety"
     weight: 30
   - name: FAQ

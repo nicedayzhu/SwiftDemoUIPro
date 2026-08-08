@@ -2,3 +2,8 @@ zh:
   locale: zh-Hans
   label: 简体中文
   weight: 1
+
+en:
+  locale: en-US
+  label: English
+  weight: 2

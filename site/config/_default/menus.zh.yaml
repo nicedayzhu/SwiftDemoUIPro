@@ -1,0 +1,16 @@
+main:
+  - name: 功能
+    url: "#features"
+    weight: 10
+  - name: 使用方法
+    url: "#how-it-works"
+    weight: 20
+  - name: 运行边界
+    url: "#safety"
+    weight: 30
+  - name: 常见问题
+    url: "#faq"
+    weight: 40
+  - name: GitHub
+    url: https://github.com/nicedayzhu/SwiftDemoUIPro
+    weight: 50

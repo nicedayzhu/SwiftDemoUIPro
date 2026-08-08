@@ -1,45 +1,335 @@
+:root {
+  color-scheme: dark;
+  --swift-bg: #101210;
+  --swift-bg-deep: #0c0e0d;
+  --swift-surface: #151815;
+  --swift-rule: rgb(231 228 219 / 13%);
+  --swift-text: #e7e4db;
+  --swift-muted: #a8a69f;
+  --swift-accent: #bd9146;
+}
+
 html {
   scroll-behavior: smooth;
+  background: var(--swift-bg);
+}
+
+body {
+  background: var(--swift-bg);
+  color: var(--swift-text);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  color: #11120f;
+  background: #d4ae69;
+}
+
+.page-header {
+  border-bottom: 1px solid var(--swift-rule);
+  background: rgb(16 18 16 / 96%);
+  backdrop-filter: blur(10px);
+}
+
+#site-header .navbar {
+  min-height: 4.5rem;
+  max-width: 90rem;
+  margin-inline: auto;
+}
+
+#site-header .navbar-brand {
+  gap: 0.65rem;
+  color: var(--swift-text);
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+#site-header .navbar-brand svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+#site-header .nav-link {
+  color: #c6c4bd;
+  font-size: 0.84rem;
+  font-weight: 520;
+  letter-spacing: 0.01em;
+}
+
+#site-header .nav-link:hover {
+  color: #fff;
+}
+
+#site-header a[class*="border-black"],
+#site-header a[class*="dark:border-white"] {
+  border-color: rgb(231 228 219 / 35%);
+  border-radius: 0.2rem;
+  color: var(--swift-text);
+  box-shadow: none;
+}
+
+#site-header [data-hb-language-chooser] {
+  color: #c6c4bd;
+  letter-spacing: 0.02em;
+}
+
+.hbb-section {
+  border-bottom: 1px solid var(--swift-rule);
+}
+
+.swift-hero {
+  background: var(--swift-bg);
+}
+
+.swift-hero h1 {
+  max-width: 12ch;
+  color: var(--swift-text);
+  font-weight: 650;
+  letter-spacing: -0.045em;
+  line-height: 1.08;
+}
+
+.swift-hero p {
+  color: var(--swift-muted);
+}
+
+.swift-hero p:first-of-type {
+  color: var(--swift-accent);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+}
+
+.swift-hero a[class*="bg-primary-600"],
+.swift-showcase a[class*="bg-primary-600"] {
+  border: 1px solid var(--swift-accent);
+  border-radius: 0.2rem;
+  background: var(--swift-accent);
+  color: #15130f;
+  box-shadow: none;
+}
+
+.swift-hero a[class*="bg-primary-600"]:hover,
+.swift-showcase a[class*="bg-primary-600"]:hover {
+  background: #c9a25f;
+  box-shadow: none;
 }
 
 .swift-hero img,
 .swift-showcase img {
-  border: 1px solid rgb(255 255 255 / 10%);
-  background: #10151d;
-  box-shadow: 0 24px 80px rgb(0 0 0 / 42%);
+  border: 1px solid rgb(231 228 219 / 17%);
+  border-radius: 0.2rem;
+  background: #111410;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 30%);
 }
 
-.swift-hero img {
-  border-radius: 0.9rem;
+.swift-showcase {
+  background: var(--swift-bg-deep);
 }
 
-.swift-stats {
-  border-block: 1px solid rgb(255 255 255 / 8%);
-  background: #0e131a;
+.swift-showcase .max-w-screen-xl + .max-w-screen-xl {
+  border-top: 1px solid var(--swift-rule);
 }
 
-.swift-showcase,
-.swift-steps {
-  background: #0e131a;
+.swift-showcase h2 {
+  max-width: 18ch;
+  color: var(--swift-text);
+  font-weight: 620;
+  letter-spacing: -0.035em;
+}
+
+.swift-showcase p,
+.swift-showcase li {
+  color: var(--swift-muted);
+}
+
+.swift-showcase li > span:first-child {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 0;
+  background: transparent;
+}
+
+.swift-showcase .relative.overflow-hidden {
+  border-radius: 0.2rem;
+  box-shadow: none;
 }
 
 .swift-capabilities,
 .swift-safety {
-  background: #0b0f14;
+  background: var(--swift-bg);
 }
 
-.swift-final-cta {
-  background: #080b0f;
+.swift-capabilities .max-w-7xl > div:first-child,
+.swift-safety .max-w-7xl > div:first-child {
+  max-width: 50rem;
+  margin-left: 0;
+  text-align: left;
+}
+
+.swift-capabilities h2,
+.swift-safety h2,
+.swift-steps h2,
+.swift-faq h2 {
+  color: var(--swift-text);
+  font-weight: 620;
+  letter-spacing: -0.04em;
+}
+
+.swift-capabilities .max-w-7xl > .grid,
+.swift-safety .max-w-7xl > .grid {
+  gap: 0;
+}
+
+.swift-capabilities .max-w-7xl > .grid > div,
+.swift-safety .max-w-7xl > .grid > div {
+  border-top: 1px solid var(--swift-rule);
+  padding: 2rem 0;
+}
+
+.swift-capabilities .grid > div > div:first-child,
+.swift-safety .grid > div > div:first-child {
+  width: 1.8rem;
+  height: 1.8rem;
+  margin-bottom: 1.1rem;
+  border-radius: 0;
+  background: transparent;
+  color: var(--swift-accent);
+}
+
+.swift-capabilities h3,
+.swift-safety h3 {
+  color: var(--swift-text);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.swift-capabilities .grid p,
+.swift-safety .grid p,
+.swift-capabilities .max-w-7xl > div:first-child p,
+.swift-safety .max-w-7xl > div:first-child p {
+  color: var(--swift-muted);
+}
+
+.swift-steps {
+  background: var(--swift-bg-deep);
+}
+
+.swift-steps .max-w-5xl > div:first-child {
+  text-align: left;
+}
+
+.swift-steps .max-w-5xl > div:first-child p {
+  margin-left: 0;
+  color: var(--swift-muted);
+}
+
+.swift-steps .step-item h3 {
+  color: var(--swift-text);
+  font-weight: 600;
+}
+
+.swift-steps .step-item p {
+  color: var(--swift-muted);
+}
+
+.swift-faq {
+  background: var(--swift-bg);
+}
+
+.swift-faq .max-w-3xl {
+  max-width: 64rem;
+}
+
+.swift-faq .max-w-3xl > div:first-child {
+  margin-left: 0;
+  text-align: left;
+}
+
+.swift-faq .rounded-2xl {
+  border-top: 1px solid var(--swift-rule);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  --tw-ring-color: transparent;
+}
+
+.swift-faq .border-b {
+  border-color: var(--swift-rule);
+}
+
+.swift-faq button {
+  padding-inline: 0;
+}
+
+.swift-faq button:hover {
+  background: transparent;
+}
+
+.swift-faq button > span:first-child {
+  color: var(--swift-text);
+  font-weight: 560;
+}
+
+.swift-faq button > span:last-child {
+  border-radius: 0;
+  background: transparent;
+}
+
+.swift-faq button + div > div > div {
+  padding-left: 0;
+  color: var(--swift-muted);
+}
+
+footer {
+  border-top: 1px solid var(--swift-rule);
 }
 
 code {
-  color: #f2bd5a;
+  color: #d1aa67;
+  background: rgb(231 228 219 / 7%);
 }
 
-@media (max-width: 768px) {
+@media (min-width: 768px) {
+  .swift-showcase .max-w-screen-xl {
+    min-height: 38rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .swift-capabilities .max-w-7xl > .grid > div,
+  .swift-safety .max-w-7xl > .grid > div {
+    min-height: 13rem;
+  }
+
+  .swift-capabilities .max-w-7xl > .grid > div:nth-child(3n + 2),
+  .swift-capabilities .max-w-7xl > .grid > div:nth-child(3n + 3),
+  .swift-safety .max-w-7xl > .grid > div:nth-child(3n + 2),
+  .swift-safety .max-w-7xl > .grid > div:nth-child(3n + 3) {
+    padding-left: 2rem;
+  }
+
+  .swift-capabilities .max-w-7xl > .grid > div:not(:nth-child(3n)),
+  .swift-safety .max-w-7xl > .grid > div:not(:nth-child(3n)) {
+    border-right: 1px solid var(--swift-rule);
+    padding-right: 2rem;
+  }
+}
+
+@media (max-width: 767px) {
   .swift-hero img,
   .swift-showcase img {
-    box-shadow: 0 16px 44px rgb(0 0 0 / 36%);
+    box-shadow: 0 12px 32px rgb(0 0 0 / 28%);
+  }
+
+  .swift-showcase .max-w-screen-xl {
+    padding-block: 4.5rem;
+  }
+
+  .swift-capabilities .max-w-7xl > .grid > div,
+  .swift-safety .max-w-7xl > .grid > div {
+    min-height: 0;
   }
 }
 

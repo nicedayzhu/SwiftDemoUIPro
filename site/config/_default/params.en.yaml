@@ -1,0 +1,26 @@
+hugoblox:
+  identity:
+    tagline: Voice and navigation controls for CS2 demo playback.
+    description: >-
+      Swift DemoUI Pro extends the native Counter-Strike 2 DemoUI with recorded voice playback,
+      speaker identification, POV switching, round navigation, and direct support for downloaded demo archives.
+
+  header:
+    cta:
+      enable: true
+      text: Download v0.1.2
+      url: https://github.com/nicedayzhu/SwiftDemoUIPro/releases/latest
+
+  footer:
+    text: "Independent open-source project. Not affiliated with or endorsed by Valve or FACEIT."
+
+  copyright:
+    notice: "© {year} {name}. Original project code is MIT licensed."
+
+  seo:
+    title: Swift DemoUI Pro — Voice controls for CS2 demos
+
+  locale:
+    date_format: "January 2, 2006"
+    time_format: "3:04 PM"
+    address_format: en-us
