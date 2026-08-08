@@ -792,7 +792,7 @@
 .swift-demo-voice__footer
 {
 	width: 100%;
-	height: 48px;
+	height: 66px;
 	flow-children: down;
 	border-top: 1px solid #ffffff0c;
 	padding-top: 7px;
@@ -811,6 +811,24 @@
 	font-size: 12px;
 	color: #626d74;
 	margin-top: 2px;
+}
+
+.swift-demo-voice__index-status
+{
+	font-family: Stratum2 Mono, 'Arial Unicode MS';
+	font-size: 11px;
+	color: #b58d4a;
+	margin-top: 2px;
+}
+
+.swift-demo-voice__index-status.ready
+{
+	color: #6f9db7;
+}
+
+.swift-demo-voice__index-status.active
+{
+	color: #e4ae39;
 }
 
 .swift-demo-voice-player__focus
@@ -926,4 +944,171 @@
 .swift-demo-voice-player.disconnected
 {
 	opacity: 0.48;
+}
+
+.swift-demo-speaking
+{
+	horizontal-align: left;
+	vertical-align: bottom;
+	margin: 0px 0px 184px 28px;
+	width: 430px;
+	height: fit-children;
+	flow-children: down;
+}
+
+.swift-demo-speaking__list
+{
+	width: 430px;
+	height: fit-children;
+	flow-children: down;
+}
+
+.swift-demo-speaking-player
+{
+	width: 430px;
+	height: 28px;
+	flow-children: right;
+	margin-top: 2px;
+	background-color: gradient(linear, 0% 0%, 100% 0%, from(#050607dc), color-stop(0.62, #101316c9), to(#05060700));
+	border-left: 3px solid #8a8f93;
+	opacity: 1;
+	transition-property: opacity, transform;
+	transition-duration: 0.08s;
+}
+
+.swift-demo-speaking-player.team-t
+{
+	border-left-color: #e4ae39;
+}
+
+.swift-demo-speaking-player.team-ct
+{
+	border-left-color: #82a8c7;
+}
+
+.swift-demo-speaking-player__sound
+{
+	width: 35px;
+	height: 28px;
+	flow-children: right;
+	vertical-align: center;
+}
+
+.swift-demo-speaking-player__speaker
+{
+	width: 22px;
+	height: 22px;
+	vertical-align: center;
+	margin-left: 4px;
+	background-image: url("s2r://panorama/images/icons/ui/sound_off.vsvg");
+	background-repeat: no-repeat;
+	background-position: 50% 50%;
+	background-size: 100% 100%;
+	img-shadow: 1px 1px 1px #00000070;
+}
+
+.swift-demo-speaking-player__wave
+{
+	width: 5px;
+	height: 20px;
+	vertical-align: center;
+	margin-left: -8px;
+	background-repeat: no-repeat;
+	background-position: 50% 50%;
+	background-size: 100% 100%;
+	img-shadow: 1px 1px 1px #00000070;
+	animation-duration: 0.4s;
+	animation-timing-function: linear;
+	animation-iteration-count: infinite;
+}
+
+.swift-demo-speaking-player__wave--1
+{
+	background-image: url("s2r://panorama/images/icons/ui/sound_1.vsvg");
+	animation-name: SwiftDemoSpeakingWave1;
+}
+
+.swift-demo-speaking-player__wave--2
+{
+	background-image: url("s2r://panorama/images/icons/ui/sound_2.vsvg");
+	animation-name: SwiftDemoSpeakingWave2;
+}
+
+.swift-demo-speaking-player__wave--3
+{
+	background-image: url("s2r://panorama/images/icons/ui/sound_3.vsvg");
+	animation-name: SwiftDemoSpeakingWave3;
+}
+
+@keyframes 'SwiftDemoSpeakingWave1'
+{
+	0% { opacity: 0; }
+	40% { opacity: 1; }
+	100% { opacity: 1; }
+}
+
+@keyframes 'SwiftDemoSpeakingWave2'
+{
+	0% { opacity: 0; }
+	40% { opacity: 0; }
+	70% { opacity: 1; }
+	100% { opacity: 1; }
+}
+
+@keyframes 'SwiftDemoSpeakingWave3'
+{
+	0% { opacity: 0; }
+	70% { opacity: 0; }
+	100% { opacity: 1; }
+}
+
+.swift-demo-speaking-player__avatar-wrap
+{
+	width: 24px;
+	height: 24px;
+	vertical-align: center;
+	margin-left: 2px;
+}
+
+.swift-demo-speaking-player__avatar
+{
+	width: 24px;
+	height: 24px;
+}
+
+.swift-demo-speaking-player__dead
+{
+	width: 15px;
+	height: 15px;
+	horizontal-align: center;
+	vertical-align: center;
+	background-image: url("s2r://panorama/images/icons/ui/kill.vsvg");
+	background-repeat: no-repeat;
+	background-position: 50% 50%;
+	background-size: 100% 100%;
+	opacity: 0;
+}
+
+.swift-demo-speaking-player.dead .swift-demo-speaking-player__avatar
+{
+	wash-color: #666666a8;
+}
+
+.swift-demo-speaking-player.dead .swift-demo-speaking-player__dead
+{
+	opacity: 1;
+}
+
+.swift-demo-speaking-player__name
+{
+	width: 345px;
+	height: 28px;
+	vertical-align: center;
+	margin-left: 5px;
+	font-family: Stratum2, 'Arial Unicode MS';
+	font-size: 18px;
+	font-weight: medium;
+	color: white;
+	text-shadow: 1px 1px 1px #000000d0;
+	text-overflow: ellipsis;
 }

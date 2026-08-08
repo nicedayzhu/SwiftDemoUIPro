@@ -1501,6 +1501,12 @@ void LauncherWindow::startWatchingDemo()
         refreshState();
         return;
     }
+    result = Cs2Manager::prepareVoiceStatusData(paths_);
+    if (!result.ok) {
+        showResult(result);
+        refreshState();
+        return;
+    }
     result = Cs2Manager::launchDemo(paths_);
     showResult(result);
     refreshState();

@@ -14,6 +14,9 @@ var SwiftDemoVoice = (function () {
 	var _lastRoundSignature = "";
 	var _currentRound = 0;
 	var _started = false;
+	var _lastSpeakingSignature = "";
+	var _lastVoiceStatusSignature = "";
+	var _voiceDataLogged = false;
 
 	function _Context() {
 		return $.GetContextPanel();
@@ -94,6 +97,150 @@ var SwiftDemoVoice = (function () {
 		} catch (error) {
 			$.Msg("[SwiftDemoVoice] GetDemoControllerState failed: " + error);
 			return null;
+		}
+	}
+
+	function _GetVoiceData() {
+		if (typeof SwiftDemoVoiceData === "undefined" || !SwiftDemoVoiceData) return null;
+		if (Number(SwiftDemoVoiceData.schemaVersion) !== 1 || !SwiftDemoVoiceData.pulsesBySlot) return null;
+		return SwiftDemoVoiceData;
+	}
+
+	function _LatestPulseAtOrBefore(ticks, tick) {
+		if (!ticks || ticks.length === 0) return -1;
+		var low = 0;
+		var high = ticks.length - 1;
+		var result = -1;
+		while (low <= high) {
+			var middle = Math.floor((low + high) / 2);
+			if (Number(ticks[middle]) <= tick) {
+				result = middle;
+				low = middle + 1;
+			} else {
+				high = middle - 1;
+			}
+		}
+		return result;
+	}
+
+	function _SpeakingSlotsForTick(tick, data) {
+		var result = [];
+		if (!data || !data.pulsesBySlot || !isFinite(Number(tick))) return result;
+		var currentTick = Math.floor(Number(tick));
+		var holdTicks = Math.max(1, Math.floor(Number(data.holdTicks || 30)));
+		for (var slotText in data.pulsesBySlot) {
+			if (!data.pulsesBySlot.hasOwnProperty(slotText)) continue;
+			var slot = _NormalizeSlot(slotText);
+			if (slot < 0) continue;
+			var ticks = data.pulsesBySlot[slotText];
+			var pulseIndex = _LatestPulseAtOrBefore(ticks, currentTick);
+			if (pulseIndex < 0) continue;
+			var age = currentTick - Number(ticks[pulseIndex]);
+			if (age >= 0 && age <= holdTicks) result.push(slot);
+		}
+		result.sort(function (left, right) { return left - right; });
+		return result;
+	}
+
+	function _PlayerBySlot(slot) {
+		for (var index = 0; index < _players.length; index++) {
+			if (_players[index].slot === slot) return _players[index];
+		}
+		return null;
+	}
+
+	function _SpeakingPlayerForSlot(slot) {
+		var player = _PlayerBySlot(slot);
+		if (player) return player;
+		return {
+			slot: slot,
+			xuid: "",
+			name: _Localize("#SwiftDemoVoice_UnknownSpeaker", { slot: slot + 1 }),
+			team: "",
+			status: 0,
+			isDead: false
+		};
+	}
+
+	function _UpdateVoiceIndexStatus(data, state, slots, errorText) {
+		var status = _Panel("SwiftDemoVoiceIndexStatus");
+		if (!status) return;
+		var generated = !!(data && data.generated);
+		var tick = state && isFinite(Number(state.nTick)) ? Math.floor(Number(state.nTick)) : -1;
+		var active = [];
+		for (var index = 0; index < slots.length; index++) active.push(slots[index] + 1);
+		var signature = generated + ":" + Number(data && data.voicePacketCount || 0) + ":" + tick + ":" + active.join(",") + ":" + String(errorText || "");
+		if (signature === _lastVoiceStatusSignature) return;
+		_lastVoiceStatusSignature = signature;
+		_SetClass(status, "ready", generated && !errorText);
+		_SetClass(status, "active", generated && !errorText && active.length > 0);
+		if (errorText) {
+			status.text = _Localize("#SwiftDemoVoice_IndexError", { error: errorText });
+		} else if (!generated) {
+			status.text = _Localize("#SwiftDemoVoice_IndexFallback");
+		} else {
+			status.text = _Localize("#SwiftDemoVoice_IndexReady", {
+				packets: Number(data.voicePacketCount || 0),
+				tick: tick,
+				active: active.length > 0 ? active.join(",") : "-"
+			});
+		}
+	}
+
+	function _RenderSpeakingPlayers(slots) {
+		var list = _Panel("SwiftDemoVoiceNoticeList");
+		if (!list) return;
+		var signatureParts = [];
+		for (var index = 0; index < slots.length; index++) {
+			var known = _SpeakingPlayerForSlot(slots[index]);
+			signatureParts.push(known.slot + ":" + known.xuid + ":" + known.name + ":" + known.status);
+		}
+		var signature = signatureParts.join("|");
+		if (signature === _lastSpeakingSignature) return;
+		_lastSpeakingSignature = signature;
+		list.RemoveAndDeleteChildren();
+
+		for (var slotIndex = 0; slotIndex < slots.length; slotIndex++) {
+			var player = _SpeakingPlayerForSlot(slots[slotIndex]);
+			var notice = $.CreatePanel("Panel", list, "SwiftDemoSpeakingPlayer_" + player.slot);
+			if (!notice || !notice.BLoadLayoutSnippet("SwiftDemoSpeakingPlayer")) {
+				if (notice) notice.DeleteAsync(0);
+				continue;
+			}
+			_SetClass(notice, "team-t", player.team === "TERRORIST");
+			_SetClass(notice, "team-ct", player.team === "CT");
+			_SetClass(notice, "dead", player.isDead);
+			var name = notice.FindChildTraverse("SwiftDemoSpeakingName");
+			if (name) name.text = player.name;
+			var avatar = notice.FindChildTraverse("SwiftDemoSpeakingAvatar");
+			if (player.xuid && avatar && avatar.PopulateFromSteamID) {
+				try {
+					avatar.PopulateFromSteamID(player.xuid);
+				} catch (error) {
+					$.Msg("[SwiftDemoVoice] unable to populate speaker avatar: " + error);
+				}
+			}
+		}
+	}
+
+	function _PollVoiceActivity() {
+		$.Schedule(0.05, _PollVoiceActivity);
+		var data = null;
+		var state = null;
+		var slots = [];
+		try {
+			data = _GetVoiceData();
+			state = _GetDemoState();
+			slots = data && state ? _SpeakingSlotsForTick(state.nTick, data) : [];
+			_RenderSpeakingPlayers(slots);
+			_UpdateVoiceIndexStatus(data, state, slots, "");
+			if (data && !_voiceDataLogged) {
+				_voiceDataLogged = true;
+				$.Msg("[SwiftDemoVoice] parsed voice index loaded generated=" + !!data.generated + " packets=" + Number(data.voicePacketCount || 0));
+			}
+		} catch (error) {
+			_UpdateVoiceIndexStatus(data, state, slots, String(error));
+			$.Msg("[SwiftDemoVoice] voice activity poll failed: " + error);
 		}
 	}
 
@@ -752,6 +899,7 @@ var SwiftDemoVoice = (function () {
 		_UpdateRoundPicker(true);
 		_RunMaskCommands(-1, -1, _Localize("#SwiftDemoVoice_LoadingPlayers"));
 		$.Schedule(0.25, _Poll);
+		$.Schedule(0.05, _PollVoiceActivity);
 		$.Msg("[SwiftDemoVoice] runtime loaded");
 	}
 	return {
@@ -764,6 +912,7 @@ var SwiftDemoVoice = (function () {
 		TogglePlayer: TogglePlayer,
 		FocusPlayer: FocusPlayer,
 		RoundNumberForTick: _RoundNumberForTick,
+		SpeakingSlotsForTick: _SpeakingSlotsForTick,
 		JumpToRound: JumpToRound,
 		ToggleRoundPicker: ToggleRoundPicker,
 		Refresh: Refresh,

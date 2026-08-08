@@ -27,6 +27,12 @@ The launcher statically compiles the vendored miniz 3.1.2 source to enumerate ZI
 
 - <https://github.com/richgel999/miniz/tree/3.1.2>
 
+## source2-demo 0.5.8
+
+The packaged `swift-demo-voice-indexer.exe` statically links Artem Rupasov's `source2-demo` parser to extract CS2 `SvcVoiceData` speaker/tick information without rewriting the Demo. The project is dual-licensed under MIT or Apache-2.0; Swift DemoUI Pro uses it under the MIT option and packages that license as `licenses/source2-demo-MIT.txt`.
+
+- <https://github.com/Rupas1k/source2-demo>
+
 ## Noto Sans SC
 
 The launcher embeds Noto Sans SC from the Noto CJK project. The font is licensed under the SIL Open Font License 1.1 (`OFL-1.1`). A copy of the license is stored at `launcher/assets/fonts/OFL-1.1.txt` and included with packaged releases.

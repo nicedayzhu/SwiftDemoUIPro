@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README_CN.md) | [Project overview](../README.md)
 
-A lightweight Windows Qt 6 Widgets application that safely installs this project's Panorama DemoUI and opens Counter-Strike 2 `.dem` files directly or from downloaded `.zip` archives. It does not include a 2D replay viewer, demo parser, or network service.
+A lightweight Windows Qt 6 Widgets application that safely installs this project's Panorama DemoUI and opens Counter-Strike 2 `.dem` files directly or from downloaded `.zip` archives. Its bundled read-only Rust sidecar extracts recorded voice speaker/tick data; it does not include a 2D replay viewer or network service.
 
 ## Interface Preview
 
@@ -15,13 +15,13 @@ The launcher keeps the playback workflow on one page: choose a Demo, review the 
 1. Select or drag in a `.dem` file or `.zip` archive. A ZIP containing one Demo is selected automatically; if it contains several, choose one from the displayed list.
 2. Confirm the automatically detected CS2 path, or choose a different installation.
 3. Leave **TrueView prediction** off for maximum compatibility. This writes `cl_demo_predict 0` to the temporary CFG and prevents prediction flicker in Demos without TrueView command data. Enable it only for a supported recording; the preference is remembered.
-4. Select **Start Watching Demo**. The launcher installs/verifies the VPK, copies the Demo—or streams only the selected ZIP entry—into a dedicated staging directory, creates `swift_demo_launcher.cfg`, and runs:
+4. Select **Start Watching Demo**. The launcher installs/verifies the VPK, copies the Demo—or streams only the selected ZIP entry—into a dedicated staging directory, parses `SvcVoiceData`, compiles a session-only Panorama data resource with CS2's ResourceCompiler, creates `swift_demo_launcher.cfg`, and runs:
 
    ```text
    steam.exe -applaunch 730 -insecure -novid +exec swift_demo_launcher.cfg
    ```
 
-5. When finished, fully exit CS2 before selecting **Stop Watching Demo**. The launcher removes the exact SearchPath it owns, the VPK, temporary CFG, session marker, and staged demo.
+5. When finished, fully exit CS2 before selecting **Stop Watching Demo**. The launcher removes the exact SearchPaths it owns, the VPK, parsed voice resource, temporary CFG, session marker, and staged demo.
 
 If the console repeatedly reports `Not enough TrueView command lookahead` or the picture flickers, stop playback, turn **TrueView prediction** off, and start the Demo again.
 
@@ -42,7 +42,7 @@ Update checks read the public GitHub REST API anonymously and neither require no
 
 For the complete project build, test, versioning, and release workflow, see the [Developer Guide](../DEVELOPMENT.md).
 
-Use Qt 6.5 or newer with a 64-bit MSVC Desktop kit, Visual Studio C++ tools, and CMake. Run all commands from the repository root.
+Use Qt 6.5 or newer with a 64-bit MSVC Desktop kit, Visual Studio C++ tools, CMake, and a stable Rust/Cargo toolchain. Run all commands from the repository root.
 
 ### Compile and test
 
@@ -55,7 +55,7 @@ For a fast CI-like build that does not require the Panorama VPK:
   -SkipVpkCheck
 ```
 
-The script configures CMake, builds the launcher and translations, and runs CTest. `-SkipVpkCheck` is only for a non-packaging build. It does not call `windeployqt`, so `launcher\build\Release\SwiftDemoUIPro.exe` depends on the Qt development environment and is not intended to be launched by double-clicking. A missing `Qt6Gui.dll` message means the raw build output was used instead of a deployed package.
+The script tests/builds `swift-demo-voice-indexer.exe`, configures CMake, builds the launcher and translations, and runs CTest. `-SkipVpkCheck` is only for a non-packaging build. It does not call `windeployqt`, so `launcher\build\Release\SwiftDemoUIPro.exe` depends on the Qt development environment and is not intended to be launched by double-clicking. A missing `Qt6Gui.dll` message means the raw build output was used instead of a deployed package.
 
 ### Create a runnable package
 
@@ -76,7 +76,7 @@ launcher\package\SwiftDemoUIPro-v<version>\SwiftDemoUIPro.exe
 launcher\package\SwiftDemoUIPro-v<version>-win64.zip
 ```
 
-Run the EXE from the unpacked version directory for local end-to-end testing. The packaging step uses `windeployqt` to collect `Qt6Core.dll`, `Qt6Gui.dll`, `Qt6Network.dll`, `Qt6Widgets.dll`, the Windows TLS backend, and `platforms\qwindows.dll`. `SwiftDemoUIPro.exe`, its DLLs/plugins, translations, and `swift_demo_menu_override.vpk` must remain together.
+Run the EXE from the unpacked version directory for local end-to-end testing. The packaging step uses `windeployqt` to collect `Qt6Core.dll`, `Qt6Gui.dll`, `Qt6Network.dll`, `Qt6Widgets.dll`, the Windows TLS backend, and `platforms\qwindows.dll`. `SwiftDemoUIPro.exe`, `swift-demo-voice-indexer.exe`, its DLLs/plugins, translations, and `swift_demo_menu_override.vpk` must remain together.
 
 The repository-level `release.ps1` command is for committed release candidates, not ordinary development testing. It refuses a dirty Git working tree because the source archive is generated from `HEAD`.
 
@@ -97,6 +97,7 @@ The interface embeds the variable Noto Sans SC font to provide consistent Chines
 - It refuses to install, replace, or remove the VPK while CS2 is running.
 - Before the first `gameinfo.gi` modification, it creates `gameinfo.gi.swift_demo_launcher.restore.bak`.
 - Cleanup removes only the project's exact SearchPath and owned temporary files; it does not overwrite unrelated user or tool changes.
+- Parsed voice data is compiled under project-owned addon directories, packed into a small session VPK, mounted through a separate VPK SearchPath, and removed during cleanup; the source Demo is never rewritten.
 - A persistent session marker allows the application to warn about and recover an interrupted cleanup.
 - ZIP handling enumerates entries without expanding the archive, streams only the selected `.dem` to the owned `current.dem`, verifies the uncompressed size and CRC, reserves free disk space, and enforces an 8 GB safety limit.
 - Encrypted ZIP entries and unsupported compression methods are rejected with an error; unrelated entries are never written to disk.

@@ -1,0 +1,11 @@
+[package]
+name = "swift-demo-voice-indexer"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.79"
+license = "MIT"
+publish = false
+
+[dependencies]
+anyhow = "1.0"
+source2-demo = { git = "https://github.com/Rupas1k/source2-demo", rev = "c9f91d90c7a49fd3a19d7c3bd5963b6d0f634b9f", default-features = false, features = ["cs2"] }

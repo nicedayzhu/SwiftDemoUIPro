@@ -6,10 +6,11 @@
 
 ## 项目架构
 
-Swift DemoUI Pro 由两个协作组件组成：
+Swift DemoUI Pro 由三个协作组件组成：
 
-1. Panorama override：扩展 Valve 原生 `huddemocontroller`，加入已录制语音控制、经过核验的 POV 切换和回合导航。
+1. Panorama override：扩展 Valve 原生 `huddemocontroller`，加入已录制语音控制、解析后的说话状态、经过核验的 POV 切换和回合导航。
 2. C++17/Qt 6 Widgets 启动器：检测 CS2，接收 `.dem` 和 `.zip` 文件，准备独立回放会话，使用 `-insecure` 启动 CS2，并在结束后恢复本项目产生的修改。
+3. Rust `swift-demo-voice-indexer` 辅助程序：只读 `SvcVoiceData`，输出紧凑的 tick/槽位 Panorama 数据脚本，不会重写源 Demo。
 
 ZIP 读取功能由仓库内置的 miniz 源码直接编译进启动器。程序会在进程内枚举压缩包，并且只流式写出玩家选择的 `.dem`；发布包无需携带或调用外部解压程序。
 
@@ -27,6 +28,7 @@ ZIP 读取功能由仓库内置的 miniz 源码直接编译进启动器。程序
 - Qt 6.5 或更高版本的 64 位 MSVC Desktop kit。
 - 安装了“使用 C++ 的桌面开发”工作负载的 Visual Studio。
 - 已加入 `PATH`，或由 Qt/Visual Studio 安装的 CMake。
+- Rust stable 工具链与 Cargo。启动器构建脚本会编译并测试语音索引器。
 
 ### GitHub 发布
 
@@ -44,7 +46,13 @@ ZIP 读取功能由仓库内置的 miniz 源码直接编译进启动器。程序
 node .\tests\test_demo_voice_mask.js
 ```
 
-该测试覆盖语音掩码生成、玩家发现与状态处理、POV 指令、回合区间、原生 DemoUI 必需布局，以及中英文 Panorama 本地化目录与 Token 一致性。
+该测试覆盖语音掩码生成、解析语音 pulse 查询、玩家发现与状态处理、POV 指令、回合区间、原生 DemoUI 必需布局，以及中英文 Panorama 本地化目录与 Token 一致性。
+
+也可以单独测试 Rust 解析器：
+
+```powershell
+cargo test --locked --manifest-path .\tools\voice-indexer\Cargo.toml
+```
 
 ### 构建 Panorama VPK
 
@@ -73,7 +81,7 @@ dist\swift_demo_menu_override.vpk
   -SkipVpkCheck
 ```
 
-脚本会配置 CMake、编译启动器和翻译，并运行 CTest。它不会执行 `windeployqt`，因此 `launcher\build\Release\SwiftDemoUIPro.exe` 只是裸编译产物，并非可独立运行的程序；在没有 Qt 开发环境时启动，可能提示缺少 `Qt6Gui.dll` 或平台插件。
+脚本会测试并编译 Rust 语音索引器、配置 CMake、编译启动器和翻译，并运行 CTest。它不会执行 `windeployqt`，因此 `launcher\build\Release\SwiftDemoUIPro.exe` 只是裸编译产物，并非可独立运行的程序；在没有 Qt 开发环境时启动，可能提示缺少 `Qt6Gui.dll` 或平台插件。
 
 已有构建目录也可以单独运行：
 
@@ -99,7 +107,7 @@ launcher\package\SwiftDemoUIPro-v<版本号>\SwiftDemoUIPro.exe
 launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
 ```
 
-打包过程使用 `windeployqt`。产物必须包含启动器、Qt 运行库、`platforms\qwindows.dll`、DemoUI VPK、翻译、README、项目许可证、第三方说明和依赖许可文本。本地端到端测试请运行展开版本目录中的 EXE，并保持整个目录结构完整。
+打包过程使用 `windeployqt`。产物必须包含启动器、`swift-demo-voice-indexer.exe`、Qt 运行库、`platforms\qwindows.dll`、DemoUI VPK、翻译、README、项目许可证、第三方说明和依赖许可文本。本地端到端测试请运行展开版本目录中的 EXE，并保持整个目录结构完整。
 
 启动器流程、国际化、ZIP 防护与清理边界详见[启动器指南](launcher/README_CN.md)。
 
@@ -108,6 +116,7 @@ launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
 | 修改范围 | 最低验证要求 |
 | --- | --- |
 | Panorama JavaScript/布局/样式/本地化 | 运行 `node .\tests\test_demo_voice_mask.js`；具备 CS2 工具时构建 VPK，并确认原始语言文件进入 VPK。 |
+| Rust 语音索引器或 Demo 语音 schema | 运行 Cargo 测试，并解析一份确认含语音的 Demo；核对消息、槽位与 tick 数量。 |
 | 启动器核心、ZIP、SearchPath、暂存、启动或清理 | 编译启动器并运行 CTest；新增或更新 `tst_launcher_core.cpp`。 |
 | 启动器 UI/QSS/对话框 | 编译和测试后，在每种受影响语言下检查真实渲染或交互状态。 |
 | 翻译文本 | 更新 `.ts`，完成新增翻译，构建 `.qm` 并检查布局与占位符。 |

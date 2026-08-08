@@ -1,0 +1,377 @@
+use anyhow::{bail, Context as _, Result};
+use source2_demo::prelude::{
+    Context, DemoRunner, Interests, Observer, ObserverResult, Parser, SvcMessages,
+};
+use source2_demo::proto::{CSvcMsgVoiceData, Message};
+use std::collections::BTreeMap;
+use std::env;
+use std::fs::{self, File, OpenOptions};
+use std::io::Write;
+use std::path::{Path, PathBuf};
+
+const MAX_PLAYER_ENTITY_INDEX: i32 = 64;
+const SPEAKING_HOLD_TICKS: u32 = 30;
+const VPK_SIGNATURE: u32 = 0x55aa_1234;
+const VPK_VERSION: u32 = 1;
+const VPK_EMBEDDED_ARCHIVE_INDEX: u16 = 0x7fff;
+const VPK_ENTRY_TERMINATOR: u16 = 0xffff;
+
+#[derive(Debug, Default)]
+struct VoiceIndex {
+    voice_packets: u64,
+    malformed_packets: u64,
+    unresolved_packets: u64,
+    first_tick: Option<u32>,
+    last_tick: Option<u32>,
+    pulses_by_slot: BTreeMap<i32, Vec<u32>>,
+}
+
+impl VoiceIndex {
+    fn record_voice(&mut self, slot: i32, tick: u32) {
+        let pulses = self.pulses_by_slot.entry(slot).or_default();
+        if pulses.last().copied() != Some(tick) {
+            pulses.push(tick);
+        }
+    }
+
+    fn pulse_count(&self) -> usize {
+        self.pulses_by_slot.values().map(Vec::len).sum()
+    }
+}
+
+#[derive(Default)]
+struct VoiceIndexCollector {
+    index: VoiceIndex,
+}
+
+impl Observer for VoiceIndexCollector {
+    fn interests(&self) -> Interests {
+        Interests::SVC_MESSAGE
+    }
+
+    fn on_svc_message(
+        &mut self,
+        ctx: &Context,
+        msg_type: SvcMessages,
+        message: &[u8],
+    ) -> ObserverResult {
+        if msg_type != SvcMessages::SvcVoiceData {
+            return Ok(());
+        }
+
+        let tick = ctx.tick();
+        self.index.voice_packets += 1;
+        self.index.first_tick = Some(self.index.first_tick.map_or(tick, |first| first.min(tick)));
+        self.index.last_tick = Some(self.index.last_tick.map_or(tick, |last| last.max(tick)));
+
+        let voice = match CSvcMsgVoiceData::decode(message) {
+            Ok(voice) => voice,
+            Err(_) => {
+                self.index.malformed_packets += 1;
+                return Ok(());
+            }
+        };
+        let Some(entity_index) = resolve_speaker_entity(&voice) else {
+            self.index.unresolved_packets += 1;
+            return Ok(());
+        };
+        self.index.record_voice(entity_index - 1, tick);
+        Ok(())
+    }
+}
+
+fn resolve_speaker_entity(voice: &CSvcMsgVoiceData) -> Option<i32> {
+    voice
+        .entity
+        .filter(|entity| (1..=MAX_PLAYER_ENTITY_INDEX).contains(entity))
+        .or_else(|| {
+            voice
+                .client_deprecated
+                .map(|client| client + 1)
+                .filter(|entity| (1..=MAX_PLAYER_ENTITY_INDEX).contains(entity))
+        })
+}
+
+fn parse_demo(path: &Path) -> Result<VoiceIndex> {
+    let input =
+        File::open(path).with_context(|| format!("failed to open demo: {}", path.display()))?;
+    let mut parser = Parser::from_reader(input)?;
+    let collector = parser.register_observer::<VoiceIndexCollector>();
+    parser.run_to_end()?;
+
+    let collector = collector.borrow();
+    Ok(VoiceIndex {
+        voice_packets: collector.index.voice_packets,
+        malformed_packets: collector.index.malformed_packets,
+        unresolved_packets: collector.index.unresolved_packets,
+        first_tick: collector.index.first_tick,
+        last_tick: collector.index.last_tick,
+        pulses_by_slot: collector.index.pulses_by_slot.clone(),
+    })
+}
+
+fn render_panorama_source(index: &VoiceIndex) -> String {
+    let mut source = String::from(
+        "\"use strict\";\nvar SwiftDemoVoiceData = {\"schemaVersion\":1,\"generated\":true,\"holdTicks\":",
+    );
+    source.push_str(&SPEAKING_HOLD_TICKS.to_string());
+    source.push_str(",\"voicePacketCount\":");
+    source.push_str(&index.voice_packets.to_string());
+    source.push_str(",\"malformedPacketCount\":");
+    source.push_str(&index.malformed_packets.to_string());
+    source.push_str(",\"unresolvedPacketCount\":");
+    source.push_str(&index.unresolved_packets.to_string());
+    source.push_str(",\"firstTick\":");
+    source.push_str(&index.first_tick.unwrap_or(0).to_string());
+    source.push_str(",\"lastTick\":");
+    source.push_str(&index.last_tick.unwrap_or(0).to_string());
+    source.push_str(",\"pulsesBySlot\":{");
+
+    for (slot_index, (slot, ticks)) in index.pulses_by_slot.iter().enumerate() {
+        if slot_index > 0 {
+            source.push(',');
+        }
+        source.push('"');
+        source.push_str(&slot.to_string());
+        source.push_str("\":[");
+        for (tick_index, tick) in ticks.iter().enumerate() {
+            if tick_index > 0 {
+                source.push(',');
+            }
+            source.push_str(&tick.to_string());
+        }
+        source.push(']');
+    }
+    source.push_str("}};\n");
+    source
+}
+
+fn temporary_output_path(output_path: &Path) -> PathBuf {
+    let file_name = output_path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("swift_demo_voice_data.vjs");
+    output_path.with_file_name(format!("{file_name}.part"))
+}
+
+fn write_output_bytes(output_path: &Path, bytes: &[u8]) -> Result<()> {
+    if let Some(parent) = output_path.parent() {
+        fs::create_dir_all(parent)
+            .with_context(|| format!("failed to create output directory: {}", parent.display()))?;
+    }
+    let temporary_path = temporary_output_path(output_path);
+    if temporary_path.exists() {
+        fs::remove_file(&temporary_path).with_context(|| {
+            format!(
+                "failed to remove stale temporary output: {}",
+                temporary_path.display()
+            )
+        })?;
+    }
+    let mut output = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&temporary_path)
+        .with_context(|| format!("failed to create output: {}", temporary_path.display()))?;
+    output.write_all(bytes)?;
+    output.sync_all()?;
+    drop(output);
+
+    if output_path.exists() {
+        fs::remove_file(output_path)
+            .with_context(|| format!("failed to replace output: {}", output_path.display()))?;
+    }
+    fs::rename(&temporary_path, output_path).with_context(|| {
+        format!(
+            "failed to publish {} as {}",
+            temporary_path.display(),
+            output_path.display()
+        )
+    })?;
+    Ok(())
+}
+
+fn write_output(output_path: &Path, source: &str) -> Result<()> {
+    write_output_bytes(output_path, source.as_bytes())
+}
+
+fn crc32(bytes: &[u8]) -> u32 {
+    let mut crc = 0xffff_ffffu32;
+    for byte in bytes {
+        crc ^= u32::from(*byte);
+        for _ in 0..8 {
+            let mask = 0u32.wrapping_sub(crc & 1);
+            crc = (crc >> 1) ^ (0xedb8_8320 & mask);
+        }
+    }
+    !crc
+}
+
+fn push_c_string(output: &mut Vec<u8>, value: &str) {
+    output.extend_from_slice(value.as_bytes());
+    output.push(0);
+}
+
+fn build_session_vpk(resource: &[u8]) -> Result<Vec<u8>> {
+    let resource_length = u32::try_from(resource.len())
+        .context("compiled voice resource is too large for a VPK entry")?;
+    let mut tree = Vec::new();
+    push_c_string(&mut tree, "vjs_c");
+    push_c_string(&mut tree, "panorama/scripts/hud");
+    push_c_string(&mut tree, "swift_demo_voice_data");
+    tree.extend_from_slice(&crc32(resource).to_le_bytes());
+    tree.extend_from_slice(&0u16.to_le_bytes());
+    tree.extend_from_slice(&VPK_EMBEDDED_ARCHIVE_INDEX.to_le_bytes());
+    tree.extend_from_slice(&0u32.to_le_bytes());
+    tree.extend_from_slice(&resource_length.to_le_bytes());
+    tree.extend_from_slice(&VPK_ENTRY_TERMINATOR.to_le_bytes());
+    tree.extend_from_slice(&[0, 0, 0]);
+
+    let tree_length = u32::try_from(tree.len()).context("VPK directory tree is too large")?;
+    let mut vpk = Vec::with_capacity(12 + tree.len() + resource.len());
+    vpk.extend_from_slice(&VPK_SIGNATURE.to_le_bytes());
+    vpk.extend_from_slice(&VPK_VERSION.to_le_bytes());
+    vpk.extend_from_slice(&tree_length.to_le_bytes());
+    vpk.extend_from_slice(&tree);
+    vpk.extend_from_slice(resource);
+    Ok(vpk)
+}
+
+fn pack_session_vpk(input_path: &Path, output_path: &Path) -> Result<()> {
+    if !input_path.is_file() {
+        bail!(
+            "compiled voice resource does not exist: {}",
+            input_path.display()
+        );
+    }
+    if input_path == output_path {
+        bail!("input and output paths must differ");
+    }
+    let resource = fs::read(input_path).with_context(|| {
+        format!(
+            "failed to read compiled voice resource: {}",
+            input_path.display()
+        )
+    })?;
+    let vpk = build_session_vpk(&resource)?;
+    write_output_bytes(output_path, &vpk)?;
+    println!("voice session VPK ready");
+    println!("  resource bytes: {}", resource.len());
+    println!("  VPK bytes: {}", vpk.len());
+    Ok(())
+}
+
+fn build_voice_index(input_path: &Path, output_path: &Path) -> Result<()> {
+    if !input_path.is_file() {
+        bail!("input demo does not exist: {}", input_path.display());
+    }
+    if input_path == output_path {
+        bail!("input and output paths must differ");
+    }
+
+    let index = parse_demo(input_path)?;
+    let source = render_panorama_source(&index);
+    write_output(output_path, &source)?;
+
+    println!("voice index ready");
+    println!("  voice packets: {}", index.voice_packets);
+    println!("  display pulses: {}", index.pulse_count());
+    println!("  speaker slots: {}", index.pulses_by_slot.len());
+    println!(
+        "  tick range: {:?}..={:?}",
+        index.first_tick, index.last_tick
+    );
+    println!("  malformed packets: {}", index.malformed_packets);
+    println!("  unresolved packets: {}", index.unresolved_packets);
+    Ok(())
+}
+
+fn run() -> Result<()> {
+    let arguments: Vec<String> = env::args().collect();
+    match arguments.as_slice() {
+        [_, input, output] => build_voice_index(Path::new(input), Path::new(output)),
+        [_, command, input, output] if command == "pack-vpk" => {
+            pack_session_vpk(Path::new(input), Path::new(output))
+        }
+        _ => bail!(
+            "usage: swift-demo-voice-indexer <input.dem> <output.vjs>\n       swift-demo-voice-indexer pack-vpk <input.vjs_c> <output.vpk>"
+        ),
+    }
+}
+
+fn main() -> Result<()> {
+    std::thread::Builder::new()
+        .name("swift-demo-voice-indexer".to_string())
+        .stack_size(32 * 1024 * 1024)
+        .spawn(run)?
+        .join()
+        .map_err(|_| anyhow::anyhow!("voice indexer worker thread panicked"))?
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resolves_current_and_legacy_speaker_fields() {
+        let current = CSvcMsgVoiceData {
+            entity: Some(7),
+            client_deprecated: Some(42),
+            ..CSvcMsgVoiceData::default()
+        };
+        assert_eq!(resolve_speaker_entity(&current), Some(7));
+
+        let legacy = CSvcMsgVoiceData {
+            entity: None,
+            client_deprecated: Some(6),
+            ..CSvcMsgVoiceData::default()
+        };
+        assert_eq!(resolve_speaker_entity(&legacy), Some(7));
+    }
+
+    #[test]
+    fn deduplicates_multiple_voice_packets_in_one_tick() {
+        let mut index = VoiceIndex::default();
+        index.record_voice(6, 100);
+        index.record_voice(6, 100);
+        index.record_voice(6, 101);
+        assert_eq!(index.pulses_by_slot.get(&6), Some(&vec![100, 101]));
+    }
+
+    #[test]
+    fn renders_compact_ascii_panorama_data() {
+        let mut index = VoiceIndex::default();
+        index.voice_packets = 2;
+        index.first_tick = Some(100);
+        index.last_tick = Some(101);
+        index.record_voice(6, 100);
+        index.record_voice(6, 101);
+        let source = render_panorama_source(&index);
+        assert!(source.is_ascii());
+        assert!(source.contains("var SwiftDemoVoiceData ="));
+        assert!(source.contains("\"generated\":true"));
+        assert!(source.contains("\"6\":[100,101]"));
+        assert!(source.ends_with("}};\n"));
+    }
+
+    #[test]
+    fn builds_single_file_voice_session_vpk() {
+        assert_eq!(crc32(b"123456789"), 0xcbf4_3926);
+        let resource = b"compiled panorama voice data";
+        let vpk = build_session_vpk(resource).expect("VPK should build");
+        assert_eq!(
+            u32::from_le_bytes(vpk[0..4].try_into().unwrap()),
+            VPK_SIGNATURE
+        );
+        assert_eq!(
+            u32::from_le_bytes(vpk[4..8].try_into().unwrap()),
+            VPK_VERSION
+        );
+        let tree_length = u32::from_le_bytes(vpk[8..12].try_into().unwrap()) as usize;
+        assert!(tree_length > 18);
+        assert!(vpk[12..12 + tree_length]
+            .windows(b"panorama/scripts/hud".len())
+            .any(|window| window == b"panorama/scripts/hud"));
+        assert_eq!(&vpk[12 + tree_length..], resource);
+    }
+}

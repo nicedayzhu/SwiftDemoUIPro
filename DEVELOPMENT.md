@@ -6,10 +6,11 @@ This guide contains the technical material for building, testing, packaging, and
 
 ## Architecture
 
-Swift DemoUI Pro has two cooperating components:
+Swift DemoUI Pro has three cooperating components:
 
-1. A Panorama override that extends Valve's native `huddemocontroller` with recorded-voice controls, validated POV switching, and round navigation.
+1. A Panorama override that extends Valve's native `huddemocontroller` with recorded-voice controls, parsed speaker status, validated POV switching, and round navigation.
 2. A C++17/Qt 6 Widgets launcher that discovers CS2, accepts `.dem` and `.zip` files, stages an isolated playback session, starts CS2 with `-insecure`, and restores project-owned changes afterward.
+3. A Rust `swift-demo-voice-indexer` sidecar that reads `SvcVoiceData`, emits a compact tick/slot Panorama data script, and never rewrites the source Demo.
 
 ZIP reading is compiled into the launcher from the vendored miniz source. It enumerates archive entries in process and streams only the selected `.dem`; no external extraction executable is bundled or required.
 
@@ -27,6 +28,7 @@ ZIP reading is compiled into the launcher from the vendored miniz source. It enu
 - Qt 6.5 or newer with a 64-bit MSVC Desktop kit.
 - Visual Studio with the **Desktop development with C++** workload.
 - CMake on `PATH` or installed by Qt/Visual Studio.
+- A stable Rust toolchain with Cargo. The launcher build compiles and tests the voice indexer.
 
 ### GitHub publication
 
@@ -44,7 +46,13 @@ Run commands from the repository root. Pass machine-specific paths explicitly in
 node .\tests\test_demo_voice_mask.js
 ```
 
-This covers voice-mask generation, player discovery and status behavior, POV commands, round intervals, required native DemoUI layout integration, and matching English/Chinese Panorama localization catalogs.
+This covers voice-mask generation, parsed voice-pulse lookup, player discovery and status behavior, POV commands, round intervals, required native DemoUI layout integration, and matching English/Chinese Panorama localization catalogs.
+
+The Rust parser can also be tested directly:
+
+```powershell
+cargo test --locked --manifest-path .\tools\voice-indexer\Cargo.toml
+```
 
 ### Build the Panorama VPK
 
@@ -73,7 +81,7 @@ For a CI-like build that does not require a VPK:
   -SkipVpkCheck
 ```
 
-The script configures CMake, builds the launcher and translations, and runs CTest. It does not run `windeployqt`. Therefore, `launcher\build\Release\SwiftDemoUIPro.exe` is a raw build artifact and is not a standalone application; launching it outside a configured Qt development environment may report a missing `Qt6Gui.dll` or platform plugin.
+The script tests and builds the Rust voice indexer, configures CMake, builds the launcher and translations, and runs CTest. It does not run `windeployqt`. Therefore, `launcher\build\Release\SwiftDemoUIPro.exe` is a raw build artifact and is not a standalone application; launching it outside a configured Qt development environment may report a missing `Qt6Gui.dll` or platform plugin.
 
 For an existing build tree, tests can also be run with:
 
@@ -99,7 +107,7 @@ launcher\package\SwiftDemoUIPro-v<version>\SwiftDemoUIPro.exe
 launcher\package\SwiftDemoUIPro-v<version>-win64.zip
 ```
 
-Packaging uses `windeployqt`. The output must contain the launcher, Qt runtime DLLs, `platforms\qwindows.dll`, the DemoUI VPK, translations, README files, the project license, third-party notices, and dependency license texts. For end-to-end testing, run the EXE from the unpacked version directory and keep the directory intact.
+Packaging uses `windeployqt`. The output must contain the launcher, `swift-demo-voice-indexer.exe`, Qt runtime DLLs, `platforms\qwindows.dll`, the DemoUI VPK, translations, README files, the project license, third-party notices, and dependency license texts. For end-to-end testing, run the EXE from the unpacked version directory and keep the directory intact.
 
 See the [Launcher Guide](launcher/README.md) for its workflow, localization, ZIP protections, and cleanup boundaries.
 
@@ -108,6 +116,7 @@ See the [Launcher Guide](launcher/README.md) for its workflow, localization, ZIP
 | Change | Minimum verification |
 | --- | --- |
 | Panorama JavaScript/layout/style/localization | Run `node .\tests\test_demo_voice_mask.js`; build the VPK when CS2 tools are available and confirm that the raw localization files are present in it. |
+| Rust voice indexer or Demo voice schema | Run Cargo tests and parse a known voice-bearing Demo; verify packet, slot, and tick counts. |
 | Launcher core, ZIP, SearchPath, staging, launch, or cleanup | Build the launcher and run CTest; add or update `tst_launcher_core.cpp`. |
 | Launcher UI/QSS/dialogs | Build and test, then inspect an actual rendered or interactive state in each affected language. |
 | Translation strings | Update `.ts`, complete new translations, build `.qm`, and inspect layout/placeholders. |

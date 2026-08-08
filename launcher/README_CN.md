@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README_CN.md) | [项目主页](../README_CN.md)
 
-这是一个轻量级 Windows Qt 6 Widgets 应用，用于安全地安装本项目的 Panorama DemoUI，并直接打开 Counter-Strike 2 `.dem` 文件或下载的 `.zip` 压缩包。它不包含 2D 回放、Demo 解析器或网络服务。
+这是一个轻量级 Windows Qt 6 Widgets 应用，用于安全地安装本项目的 Panorama DemoUI，并直接打开 Counter-Strike 2 `.dem` 文件或下载的 `.zip` 压缩包。内置的只读 Rust 辅助程序会提取已录制语音的玩家/tick 数据；程序不包含 2D 回放或网络服务。
 
 ## 界面预览
 
@@ -15,13 +15,13 @@
 1. 选择或拖入一个 `.dem` 文件或 `.zip` 压缩包。ZIP 中只有一个 Demo 时会自动选择；存在多个时，请从列表中选择一个。
 2. 确认自动检测到的 CS2 路径，必要时选择其他安装目录。
 3. 为获得最佳兼容性，建议保持 **TrueView 预测**关闭。启动器会在临时 CFG 中写入 `cl_demo_predict 0`，避免缺少 TrueView 指令数据的 Demo 出现预测闪烁。只有确认录像支持时再启用；启动器会记住该选项。
-4. 点击**开始观看 Demo**。启动器会安装/校验 VPK，把 Demo 复制到专用临时目录；如果选择的是 ZIP，则只流式写入所选条目。随后创建 `swift_demo_launcher.cfg` 并执行：
+4. 点击**开始观看 Demo**。启动器会安装/校验 VPK，把 Demo 复制到专用临时目录；如果选择的是 ZIP，则只流式写入所选条目。随后解析 `SvcVoiceData`，使用 CS2 ResourceCompiler 编译会话专用 Panorama 数据资源，创建 `swift_demo_launcher.cfg` 并执行：
 
    ```text
    steam.exe -applaunch 730 -insecure -novid +exec swift_demo_launcher.cfg
    ```
 
-5. 观看结束后先彻底退出 CS2，再点击**停止观看 Demo**。启动器会移除自己拥有的精确 SearchPath、VPK、临时 CFG、会话标记和 Demo 副本。
+5. 观看结束后先彻底退出 CS2，再点击**停止观看 Demo**。启动器会移除自己拥有的精确 SearchPath、VPK、解析后的语音资源、临时 CFG、会话标记和 Demo 副本。
 
 如果控制台持续出现 `Not enough TrueView command lookahead`，或者画面不断闪烁，请停止回放、关闭 **TrueView 预测**，再重新启动 Demo。
 
@@ -42,7 +42,7 @@ Release 通过 `update-manifest.json` 分别记录启动器和 DemoUI 版本。�
 
 完整的项目构建、测试、版本和发布流程见[开发者指南](../DEVELOPMENT_CN.md)。
 
-请使用 Qt 6.5 或更高版本的 64 位 MSVC Desktop kit、Visual Studio C++ 工具和 CMake，并从仓库根目录执行以下命令。
+请使用 Qt 6.5 或更高版本的 64 位 MSVC Desktop kit、Visual Studio C++ 工具、CMake 以及 Rust stable/Cargo，并从仓库根目录执行以下命令。
 
 ### 编译并测试
 
@@ -55,7 +55,7 @@ Release 通过 `update-manifest.json` 分别记录启动器和 DemoUI 版本。�
   -SkipVpkCheck
 ```
 
-脚本会配置 CMake、编译启动器和翻译，并运行 CTest。`-SkipVpkCheck` 只适用于非打包构建，它不会执行 `windeployqt`；因此 `launcher\build\Release\SwiftDemoUIPro.exe` 依赖 Qt 开发环境，不应直接双击运行。出现缺少 `Qt6Gui.dll` 的提示，通常就是误用了裸编译目录。
+脚本会测试/编译 `swift-demo-voice-indexer.exe`、配置 CMake、编译启动器和翻译，并运行 CTest。`-SkipVpkCheck` 只适用于非打包构建，它不会执行 `windeployqt`；因此 `launcher\build\Release\SwiftDemoUIPro.exe` 依赖 Qt 开发环境，不应直接双击运行。出现缺少 `Qt6Gui.dll` 的提示，通常就是误用了裸编译目录。
 
 ### 生成可运行包
 
@@ -76,7 +76,7 @@ launcher\package\SwiftDemoUIPro-v<版本号>\SwiftDemoUIPro.exe
 launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
 ```
 
-本地端到端测试请运行展开版本目录中的 EXE。打包步骤会通过 `windeployqt` 收集 `Qt6Core.dll`、`Qt6Gui.dll`、`Qt6Network.dll`、`Qt6Widgets.dll`、Windows TLS 后端和 `platforms\qwindows.dll`。`SwiftDemoUIPro.exe`、DLL/插件、翻译和 `swift_demo_menu_override.vpk` 必须保持在同一完整目录结构中。
+本地端到端测试请运行展开版本目录中的 EXE。打包步骤会通过 `windeployqt` 收集 `Qt6Core.dll`、`Qt6Gui.dll`、`Qt6Network.dll`、`Qt6Widgets.dll`、Windows TLS 后端和 `platforms\qwindows.dll`。`SwiftDemoUIPro.exe`、`swift-demo-voice-indexer.exe`、DLL/插件、翻译和 `swift_demo_menu_override.vpk` 必须保持在同一完整目录结构中。
 
 仓库根目录的 `release.ps1` 用于已经提交的 Release 候选版本，而不是日常开发测试。由于源码包从 `HEAD` 生成，只要 Git 工作区不干净，它就会拒绝继续。
 
@@ -97,6 +97,7 @@ ZIP 支持由项目内置的 miniz 3.1.2 源码直接编译进 `SwiftDemoUIPro.e
 - CS2 运行时拒绝安装、替换或删除 VPK。
 - 首次修改 `gameinfo.gi` 前会创建 `gameinfo.gi.swift_demo_launcher.restore.bak`。
 - 清理时只移除本项目精确的 SearchPath 和自有临时文件，不覆盖玩家或其他工具的修改。
+- 解析后的语音数据只在项目自有 addon 目录中编译，打包为小型会话 VPK，通过独立 VPK SearchPath 挂载，并在清理时删除；源 Demo 不会被重写。
 - 持久化会话标记让程序能够提示并恢复被中断的清理。
 - ZIP 处理只枚举压缩包内容，并把选中的 `.dem` 流式写入自有的 `current.dem`；同时校验解压大小与 CRC、检查磁盘余量，并限制解压后最大为 8 GB。
 - 加密条目或不支持的压缩方式会给出错误，压缩包内其他文件不会落盘。

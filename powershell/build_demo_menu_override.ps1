@@ -41,12 +41,14 @@ Write-SwiftMenuTextNoBom -Path (Join-Path $contentAddon "addoninfo.txt") -Value 
 $sourceLayout = Join-Path $root "addon\panorama\layout\hud\huddemocontroller.xml"
 $sourceStyle = Join-Path $root "addon\panorama\styles\hud\swift_demo_voice.css"
 $sourceScript = Join-Path $root "addon\panorama\scripts\hud\swift_demo_voice.js"
+$sourceDataScript = Join-Path $root "addon\panorama\scripts\hud\swift_demo_voice_data.js"
 $sourceLocalizationDir = Join-Path $root "addon\resource"
 $localizationFiles = @("platform_english.txt", "platform_schinese.txt")
 
 Assert-SwiftMenuFileExists -Path $sourceLayout -Message "Missing demo HUD layout: $sourceLayout"
 Assert-SwiftMenuFileExists -Path $sourceStyle -Message "Missing demo voice style: $sourceStyle"
 Assert-SwiftMenuFileExists -Path $sourceScript -Message "Missing demo voice script: $sourceScript"
+Assert-SwiftMenuFileExists -Path $sourceDataScript -Message "Missing demo voice data fallback script: $sourceDataScript"
 foreach ($localizationFile in $localizationFiles) {
 	$sourceLocalization = Join-Path $sourceLocalizationDir $localizationFile
 	Assert-SwiftMenuFileExists -Path $sourceLocalization -Message "Missing Panorama localization file: $sourceLocalization"
@@ -55,16 +57,19 @@ foreach ($localizationFile in $localizationFiles) {
 $layoutInput = Join-Path $layoutDir "huddemocontroller.vxml"
 $styleInput = Join-Path $styleDir "swift_demo_voice.vcss"
 $scriptInput = Join-Path $panoramaScriptDir "swift_demo_voice.vjs"
+$dataScriptInput = Join-Path $panoramaScriptDir "swift_demo_voice_data.vjs"
 
 Write-SwiftMenuTextNoBom -Path $layoutInput -Value (Get-Content -Raw -LiteralPath $sourceLayout)
 Write-SwiftMenuTextNoBom -Path $styleInput -Value (Get-Content -Raw -LiteralPath $sourceStyle)
 Write-SwiftMenuTextNoBom -Path $scriptInput -Value (Get-Content -Raw -LiteralPath $sourceScript)
+Write-SwiftMenuTextNoBom -Path $dataScriptInput -Value (Get-Content -Raw -LiteralPath $sourceDataScript)
 
-$compileInputs = @($scriptInput, $styleInput, $layoutInput)
+$compileInputs = @($dataScriptInput, $scriptInput, $styleInput, $layoutInput)
 $expectedOutputs = @(
 	(Join-Path $gameAddon "panorama\layout\hud\huddemocontroller.vxml_c"),
 	(Join-Path $gameAddon "panorama\styles\hud\swift_demo_voice.vcss_c"),
-	(Join-Path $gameAddon "panorama\scripts\hud\swift_demo_voice.vjs_c")
+	(Join-Path $gameAddon "panorama\scripts\hud\swift_demo_voice.vjs_c"),
+	(Join-Path $gameAddon "panorama\scripts\hud\swift_demo_voice_data.vjs_c")
 )
 
 Invoke-SwiftMenuResourceCompiler -ResourceCompiler $resourceCompiler -GameDir $gameDir -Inputs $compileInputs

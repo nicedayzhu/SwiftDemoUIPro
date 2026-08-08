@@ -271,6 +271,70 @@
         <source>Demo mode has stopped. The VPK and temporary files were removed, and CS2 can now be started normally from Steam.</source>
         <translation>Demo 模式已停止。VPK 与临时文件均已移除，现在可以从 Steam 正常启动 CS2。</translation>
     </message>
+    <message>
+        <source>Refusing to remove an unexpected voice-session directory: %1</source>
+        <translation>拒绝删除非预期的语音会话目录：%1</translation>
+    </message>
+    <message>
+        <source>Unable to remove the temporary voice-session directory: %1</source>
+        <translation>无法删除临时语音会话目录：%1</translation>
+    </message>
+    <message>
+        <source>Unable to start %1: %2</source>
+        <translation>无法启动 %1：%2</translation>
+    </message>
+    <message>
+        <source>%1 timed out while preparing parsed voice status data.</source>
+        <translation>%1 在准备已解析的语音状态数据时超时。</translation>
+    </message>
+    <message>
+        <source>%1 failed with exit code %2.&#10;%3</source>
+        <translation>%1 执行失败，退出代码为 %2。&#10;%3</translation>
+    </message>
+    <message>
+        <source>The Demo voice indexer was not found. Rebuild or reinstall Swift DemoUI Pro.</source>
+        <translation>找不到 Demo 语音索引器。请重新构建或重新安装 Swift DemoUI Pro。</translation>
+    </message>
+    <message>
+        <source>CS2 resourcecompiler.exe was not found, so parsed voice status data cannot be prepared.</source>
+        <translation>找不到 CS2 resourcecompiler.exe，无法准备已解析的语音状态数据。</translation>
+    </message>
+    <message>
+        <source>The staged Demo is missing, so parsed voice status data cannot be prepared.</source>
+        <translation>找不到已暂存的 Demo，无法准备已解析的语音状态数据。</translation>
+    </message>
+    <message>
+        <source>Unable to create the temporary voice-index workspace.</source>
+        <translation>无法创建临时语音索引工作目录。</translation>
+    </message>
+    <message>
+        <source>Demo voice indexer</source>
+        <translation>Demo 语音索引器</translation>
+    </message>
+    <message>
+        <source>CS2 ResourceCompiler</source>
+        <translation>CS2 ResourceCompiler</translation>
+    </message>
+    <message>
+        <source>CS2 ResourceCompiler did not create the parsed voice status resource.</source>
+        <translation>CS2 ResourceCompiler 未生成已解析的语音状态资源。</translation>
+    </message>
+    <message>
+        <source>Demo voice VPK packer</source>
+        <translation>Demo 语音 VPK 打包器</translation>
+    </message>
+    <message>
+        <source>The Demo voice packer did not create the session VPK.</source>
+        <translation>Demo 语音打包器未生成会话 VPK。</translation>
+    </message>
+    <message>
+        <source>Unable to remove the Demo voice session VPK.</source>
+        <translation>无法删除 Demo 语音会话 VPK。</translation>
+    </message>
+    <message>
+        <source>Parsed Demo voice status data is ready.</source>
+        <translation>已解析的 Demo 语音状态数据已准备完成。</translation>
+    </message>
 </context>
 <context>
     <name>LauncherWindow</name>

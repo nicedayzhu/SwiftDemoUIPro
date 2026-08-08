@@ -59,10 +59,28 @@ function Resolve-QtRoot {
     throw "Qt 6 desktop kit was not found. Pass -QtRoot C:\Qt\<version>\msvc2022_64."
 }
 
+function Resolve-Cargo {
+    $command = Get-Command cargo -ErrorAction SilentlyContinue
+    if ($command) { return $command.Source }
+
+    $candidate = Join-Path $env:USERPROFILE ".cargo\bin\cargo.exe"
+    if (Test-Path -LiteralPath $candidate) { return $candidate }
+    throw "Rust/Cargo was not found. Install the Rust stable toolchain to build the Demo voice indexer."
+}
+
 $vpk = Join-Path $projectRoot "dist\swift_demo_menu_override.vpk"
 if (-not (Test-Path -LiteralPath $vpk) -and ($Package -or -not $SkipVpkCheck)) {
     throw "Missing menu VPK. Run ..\demo-menu.ps1 first."
 }
+
+$cargo = Resolve-Cargo
+$voiceIndexerManifest = Join-Path $projectRoot "tools\voice-indexer\Cargo.toml"
+& $cargo test --locked --manifest-path $voiceIndexerManifest
+if ($LASTEXITCODE -ne 0) { throw "Demo voice indexer tests failed." }
+& $cargo build --release --locked --manifest-path $voiceIndexerManifest
+if ($LASTEXITCODE -ne 0) { throw "Demo voice indexer build failed." }
+$voiceIndexer = Join-Path $projectRoot "tools\voice-indexer\target\release\swift-demo-voice-indexer.exe"
+if (-not (Test-Path -LiteralPath $voiceIndexer)) { throw "Built Demo voice indexer was not found." }
 
 $cmake = Resolve-CMake
 $qt = Resolve-QtRoot -RequestedRoot $QtRoot
@@ -90,6 +108,7 @@ if ($Package) {
     if (-not $launcherExe) { throw "Built launcher executable was not found." }
 
     Copy-Item -LiteralPath $launcherExe.FullName -Destination (Join-Path $packageDir "SwiftDemoUIPro.exe")
+    Copy-Item -LiteralPath $voiceIndexer -Destination (Join-Path $packageDir "swift-demo-voice-indexer.exe")
     Copy-Item -LiteralPath $vpk -Destination (Join-Path $packageDir "swift_demo_menu_override.vpk")
     Copy-Item -LiteralPath (Join-Path $launcherRoot "README.md") -Destination (Join-Path $packageDir "README.txt")
     Copy-Item -LiteralPath (Join-Path $launcherRoot "README_CN.md") -Destination (Join-Path $packageDir "README_CN.txt")
@@ -117,6 +136,9 @@ if ($Package) {
 
     $minizLicense = Join-Path $launcherRoot "third_party\miniz\LICENSE"
     Copy-Item -LiteralPath $minizLicense -Destination (Join-Path $licenseDir "miniz-MIT.txt")
+
+    $source2DemoLicense = Join-Path $projectRoot "tools\voice-indexer\SOURCE2_DEMO_LICENSE-MIT.txt"
+    Copy-Item -LiteralPath $source2DemoLicense -Destination (Join-Path $licenseDir "source2-demo-MIT.txt")
 
     $zipPath = Join-Path $launcherRoot "package\SwiftDemoUIPro-v$version-win64.zip"
     if (Test-Path -LiteralPath $zipPath) { Remove-Item -LiteralPath $zipPath -Force }

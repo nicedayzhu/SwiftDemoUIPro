@@ -92,6 +92,18 @@ qt_add_resources(SwiftDemoLauncher "embedded_fonts"
     FILES assets/fonts/NotoSansSC-VF.ttf
 )
 
+set(VOICE_INDEXER_EXE "${CMAKE_CURRENT_SOURCE_DIR}/../tools/voice-indexer/target/release/swift-demo-voice-indexer.exe")
+if(EXISTS "${VOICE_INDEXER_EXE}")
+    add_custom_command(TARGET SwiftDemoLauncher POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${VOICE_INDEXER_EXE}"
+            "$<TARGET_FILE_DIR:SwiftDemoLauncher>/swift-demo-voice-indexer.exe"
+        COMMENT "Copying the Demo voice indexer next to the launcher"
+    )
+else()
+    message(WARNING "Demo voice indexer is missing. Run cargo build --release in ../tools/voice-indexer before packaging the launcher.")
+endif()
+
 file(GLOB APP_TS_FILES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/translations/swift_demoui_pro_*.ts"
 )
@@ -173,4 +185,12 @@ install(FILES third_party/miniz/LICENSE
 )
 if(EXISTS "${MENU_VPK}")
     install(FILES "${MENU_VPK}" DESTINATION .)
+endif()
+if(EXISTS "${VOICE_INDEXER_EXE}")
+    install(FILES "${VOICE_INDEXER_EXE}" DESTINATION . RENAME swift-demo-voice-indexer.exe)
+    install(FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/../tools/voice-indexer/SOURCE2_DEMO_LICENSE-MIT.txt"
+        DESTINATION licenses
+        RENAME source2-demo-MIT.txt
+    )
 endif()

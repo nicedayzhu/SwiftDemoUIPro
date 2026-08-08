@@ -35,12 +35,14 @@ class Cs2Manager
 {
 public:
     static constexpr const char *kVpkName = "swift_demo_menu_override.vpk";
+    static constexpr const char *kVoiceIndexerName = "swift-demo-voice-indexer.exe";
     static constexpr const char *kCfgName = "swift_demo_launcher.cfg";
     static constexpr const char *kSessionMarker = ".swift_demo_launcher_active";
 
     static Cs2Paths detect(const QString &preferredRoot = {}, QString *error = nullptr);
     static Cs2Paths fromSelection(const QString &selectedPath, QString *error = nullptr);
     static QString findBundledVpk();
+    static QString findBundledVoiceIndexer();
 
     static bool isCs2Running();
     static bool isOverrideInstalled(const Cs2Paths &paths);
@@ -49,6 +51,7 @@ public:
     static LauncherResult installOverride(const Cs2Paths &paths, const QString &sourceVpk);
     static LauncherResult inspectDemoArchive(const QString &archivePath, QList<DemoArchiveEntry> *entries);
     static LauncherResult prepareDemoSession(const Cs2Paths &paths, const QString &demoPath, const QString &archiveEntry = {}, bool trueViewEnabled = false);
+    static LauncherResult prepareVoiceStatusData(const Cs2Paths &paths);
     static LauncherResult removeDemoSession(const Cs2Paths &paths);
     static LauncherResult launchDemo(const Cs2Paths &paths);
 
@@ -62,4 +65,5 @@ public:
 
 private:
     static QString overrideSearchPath();
+    static QString voiceSessionSearchPath();
 };

@@ -40,6 +40,16 @@ Tenacious Software LLC. It is distributed under the MIT License.
 A copy of the license is included as licenses/miniz-MIT.txt.
 https://github.com/richgel999/miniz/tree/3.1.2
 
+source2-demo 0.5.8
+------------------
+The bundled swift-demo-voice-indexer statically links the source2-demo parser
+by Artem Rupasov to read CS2 VoiceData messages without modifying the Demo.
+source2-demo is available under the MIT or Apache-2.0 license; this package
+uses it under the MIT license.
+
+A copy of that license is included as licenses/source2-demo-MIT.txt.
+https://github.com/Rupas1k/source2-demo
+
 Noto Sans SC
 ------------
 This application embeds Noto Sans SC, part of the Noto CJK font project.

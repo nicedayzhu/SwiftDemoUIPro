@@ -21,6 +21,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
@@ -31,6 +34,10 @@ jobs:
       - name: Test Panorama logic
         shell: pwsh
         run: node .\tests\test_demo_voice_mask.js
+
+      - name: Test Demo voice indexer
+        shell: pwsh
+        run: cargo test --locked --manifest-path .\tools\voice-indexer\Cargo.toml
 
       - name: Build and test Qt launcher
         shell: pwsh

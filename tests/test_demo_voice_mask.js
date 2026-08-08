@@ -7,6 +7,8 @@ var crypto = require("crypto");
 
 var sourcePath = path.join(__dirname, "..", "addon", "panorama", "scripts", "hud", "swift_demo_voice.js");
 var source = fs.readFileSync(sourcePath, "utf8");
+var dataSourcePath = path.join(__dirname, "..", "addon", "panorama", "scripts", "hud", "swift_demo_voice_data.js");
+var dataSource = fs.readFileSync(dataSourcePath, "utf8");
 var layoutPath = path.join(__dirname, "..", "addon", "panorama", "layout", "hud", "huddemocontroller.xml");
 var layout = fs.readFileSync(layoutPath, "utf8");
 var stylePath = path.join(__dirname, "..", "addon", "panorama", "styles", "hud", "swift_demo_voice.css");
@@ -80,7 +82,7 @@ function extractNativeRoot(xml) {
 	throw new Error("native DemoUI Root panel is incomplete");
 }
 
-if (/[^\x00-\x7f]/.test(source)) {
+if (/[^\x00-\x7f]/.test(source + dataSource)) {
 	throw new Error("Panorama voice runtime must remain ASCII-only to avoid ResourceCompiler encoding corruption");
 }
 
@@ -137,8 +139,25 @@ if (/swift-demo-playback|#(?:Contents|PlayButton|SliderRow|Slider|RoundMarkers|H
 	throw new Error("custom stylesheet must not target native DemoUI controls");
 }
 
-if (/SwiftDemoVoiceActivity|SwiftDemoVoiceSpeaking|NOW SPEAKING|hudvoicestatus/.test(layout) || /swift-demo-voice-activity|player\.speaking|player__speaking/.test(style) || /_PollVoiceActivity|VoiceNotice|VoiceTextMatchesPlayer/.test(source)) {
-	throw new Error("live speaker UI and polling must remain removed");
+if (!/swift_demo_voice_data\.vjs_c/.test(layout)
+	|| !/id="SwiftDemoVoiceStatusOverlay"/.test(layout)
+	|| !/id="SwiftDemoVoiceNoticeList"/.test(layout)
+	|| !/id="SwiftDemoVoiceIndexStatus"/.test(layout)
+	|| !/SwiftDemoSpeakingPlayer/.test(layout)
+	|| !/_PollVoiceActivity/.test(source)
+	|| !/_UpdateVoiceIndexStatus/.test(source)
+	|| !/_SpeakingPlayerForSlot/.test(source)
+	|| !/SpeakingSlotsForTick/.test(source)
+	|| !/swift-demo-speaking-player/.test(style)
+	|| !/swift-demo-voice__index-status/.test(style)
+	|| !/generated:\s*false/.test(dataSource)) {
+	throw new Error("parsed Demo voice activity must drive the custom speaker HUD");
+}
+
+if (!/sourceDataScript/.test(buildScript)
+	|| !/swift_demo_voice_data\.vjs_c/.test(buildScript)
+	|| !/dataScriptInput/.test(buildScript)) {
+	throw new Error("menu build must compile the fallback parsed-voice data resource");
 }
 
 if (!/spec_mode 2/.test(source) || /spec_mode 4/.test(source)) {
@@ -198,6 +217,7 @@ var context = {
 	GameInterfaceAPI: { ConsoleCommand: function (command) { commands.push(command); } }
 };
 vm.createContext(context);
+vm.runInContext(dataSource, context, { filename: dataSourcePath });
 vm.runInContext(source, context, { filename: sourcePath });
 
 if (startupClasses["demo-active"] !== true || startupClasses.collapsed !== false) {
@@ -223,6 +243,22 @@ assertMasks([63], 0, -2147483648);
 assertMasks([3, 4, 8, 10, 11], 3352, 0);
 assertMasks(Array.from({ length: 64 }, function (_, index) { return index; }), -1, -1);
 assertMasks([-1, 64, "bad", 0, 0], 1, 0);
+
+var speakingData = {
+	holdTicks: 30,
+	pulsesBySlot: {
+		"3": [100, 110, 200],
+		"40": [115]
+	}
+};
+var speakingAt120 = context.SwiftDemoVoice.SpeakingSlotsForTick(120, speakingData);
+var speakingAt141 = context.SwiftDemoVoice.SpeakingSlotsForTick(141, speakingData);
+var speakingAt200 = context.SwiftDemoVoice.SpeakingSlotsForTick(200, speakingData);
+if (JSON.stringify(speakingAt120) !== JSON.stringify([3, 40])
+	|| JSON.stringify(speakingAt141) !== JSON.stringify([40])
+	|| JSON.stringify(speakingAt200) !== JSON.stringify([3])) {
+	throw new Error("parsed voice pulse lookup failed");
+}
 
 var testRounds = [
 	{ nTickStart: 0, nTickEnd: 100 },

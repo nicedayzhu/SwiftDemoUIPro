@@ -24,7 +24,7 @@ Swift DemoUI Pro 是一款非官方的 Counter-Strike 2 Demo 与 HLTV 回放客�
 
 ![Swift DemoUI Pro 在 CS2 Demo 回放中的玩家语音、POV 与回合导航面板](docs/images/demo-voice-ui.png)
 
-新增面板会保留原生时间轴和播放控制，同时提供按玩家控制已录制语音、切换 POV 和直接跳转回合等功能。
+新增面板会保留原生时间轴和播放控制，同时提供按玩家控制已录制语音、切换 POV 和直接跳转回合等功能。通过启动器开始回放时，左下角还会显示当前 Demo tick 正在发出已录制语音包的玩家头像与名称。
 
 ## 主要功能
 
@@ -32,6 +32,7 @@ Swift DemoUI Pro 是一款非官方的 Counter-Strike 2 Demo 与 HLTV 回放客�
 - 自动检测 Steam 多个库中的 CS2，仅为本次启动附加 `-insecure`，不会修改 Steam 永久启动项。
 - 默认关闭 **TrueView 预测**，避免缺少兼容 TrueView 指令数据的 Demo 出现画面闪烁。
 - 支持全部 64 个显示槽位，可收听全部、仅 T、仅 CT 或单独玩家的已录制语音。
+- 启动前解析已录制的 `VoiceData`，按 Demo tick 显示正在说话的玩家，无需修改 Demo，也不 patch `client.dll`。
 - 核验目标后，一键切换到存活玩家的第一人称 POV。
 - 直接跳转到任意已录制回合的开头。
 - 支持英文和简体中文：启动器跟随系统语言，游戏内 DemoUI 自动跟随 CS2 的界面语言。
@@ -57,6 +58,7 @@ Swift DemoUI Pro 是一款非官方的 Counter-Strike 2 Demo 与 HLTV 回放客�
 - 点击存活玩家的名称切换第一人称 POV；当前 POV 会以金色高亮。
 - 点击玩家行右侧的音频按钮，只切换该玩家的已录制语音。
 - 使用**收听全部 / 全部静音 / 仅 T 方 / 仅 CT 方**快速筛选语音；按钮会随 CS2 语言显示英文或中文。
+- 左下角说话状态由当前 Demo tick 驱动，因此跳转、暂停和倍速播放后都能重新计算，不依赖实时麦克风回调。
 - 展开**回合导航**，选择回合即可跳转到其起始 tick。
 - 面板使用固定位置并向左避让右侧武器槽位；点击整个标题栏区域可展开或收起。
 
@@ -68,6 +70,7 @@ Swift DemoUI Pro 是一款非官方的 Counter-Strike 2 Demo 与 HLTV 回放客�
 | Windows 提示缺少 `Qt6Gui.dll` | 请运行解压后的 Release 包，不要运行裸编译目录 `launcher\build\Release` 中的 EXE。 |
 | 启动器提示仍有待清理内容 | 彻底退出 CS2；必要时重新打开启动器，再点击**停止观看并恢复**。 |
 | 部分或全部玩家没有语音 | 启动器只能播放 Demo 中已经录制的语音包，无法恢复从未录制的数据。 |
+| 能听到语音，但左下角没有说话玩家 | 请从完整启动器 Release 包开始回放。单独安装 DemoUI VPK 时只有空索引回退；旧包也不包含 `swift-demo-voice-indexer.exe`。 |
 
 ## 兼容性与安全说明
 

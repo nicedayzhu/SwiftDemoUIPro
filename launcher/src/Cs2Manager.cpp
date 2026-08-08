@@ -233,6 +233,95 @@ QString targetVpkPath(const Cs2Paths &paths)
     return QDir(paths.csgoDir).filePath(QStringLiteral("overrides/") + QString::fromLatin1(Cs2Manager::kVpkName));
 }
 
+QString voiceSessionDirectory(const Cs2Paths &paths)
+{
+    return QDir(paths.csgoDir).filePath(QStringLiteral("overrides/swift_demo_voice_session"));
+}
+
+QString targetVoiceSessionVpkPath(const Cs2Paths &paths)
+{
+    return QDir(paths.csgoDir).filePath(QStringLiteral("overrides/swift_demo_voice_session.vpk"));
+}
+
+QString voiceContentAddonDirectory(const Cs2Paths &paths)
+{
+    return QDir(paths.cs2Root).filePath(QStringLiteral("content/csgo_addons/swift_demoui_voice_session"));
+}
+
+QString voiceGameAddonDirectory(const Cs2Paths &paths)
+{
+    return QDir(paths.cs2Root).filePath(QStringLiteral("game/csgo_addons/swift_demoui_voice_session"));
+}
+
+QString voiceSourcePath(const Cs2Paths &paths)
+{
+    return QDir(voiceContentAddonDirectory(paths)).filePath(QStringLiteral("panorama/scripts/hud/swift_demo_voice_data.vjs"));
+}
+
+QString compiledVoiceDataPath(const Cs2Paths &paths)
+{
+    return QDir(voiceGameAddonDirectory(paths)).filePath(QStringLiteral("panorama/scripts/hud/swift_demo_voice_data.vjs_c"));
+}
+
+QString builtVoiceSessionVpkPath(const Cs2Paths &paths)
+{
+    return QDir(voiceGameAddonDirectory(paths)).filePath(QStringLiteral("swift_demo_voice_session.vpk"));
+}
+
+bool removeOwnedDirectory(const QString &path, const QString &expectedSuffix, QString *error)
+{
+    const QString cleanPath = QDir::cleanPath(path);
+    if (!cleanPath.endsWith(QDir::cleanPath(expectedSuffix), Qt::CaseInsensitive)) {
+        if (error) {
+            *error = QCoreApplication::translate("Cs2Manager", "Refusing to remove an unexpected voice-session directory: %1")
+                         .arg(QDir::toNativeSeparators(cleanPath));
+        }
+        return false;
+    }
+    QDir directory(cleanPath);
+    if (!directory.exists())
+        return true;
+    if (!directory.removeRecursively()) {
+        if (error) {
+            *error = QCoreApplication::translate("Cs2Manager", "Unable to remove the temporary voice-session directory: %1")
+                         .arg(QDir::toNativeSeparators(cleanPath));
+        }
+        return false;
+    }
+    return true;
+}
+
+LauncherResult runSessionTool(const QString &program, const QStringList &arguments, const QString &workingDirectory, const QString &toolName)
+{
+    QProcess process;
+    process.setProcessChannelMode(QProcess::MergedChannels);
+    process.setProgram(program);
+    process.setArguments(arguments);
+    process.setWorkingDirectory(workingDirectory);
+    process.start();
+    if (!process.waitForStarted(10000)) {
+        return LauncherResult::failure(
+            QCoreApplication::translate("Cs2Manager", "Unable to start %1: %2").arg(toolName, process.errorString()));
+    }
+    if (!process.waitForFinished(300000)) {
+        process.kill();
+        process.waitForFinished(5000);
+        return LauncherResult::failure(
+            QCoreApplication::translate("Cs2Manager", "%1 timed out while preparing parsed voice status data.").arg(toolName));
+    }
+    if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
+        QString output = QString::fromLocal8Bit(process.readAll()).trimmed();
+        if (output.size() > 3000)
+            output = output.right(3000);
+        return LauncherResult::failure(
+            QCoreApplication::translate("Cs2Manager", "%1 failed with exit code %2.\n%3")
+                .arg(toolName)
+                .arg(process.exitCode())
+                .arg(output));
+    }
+    return LauncherResult::success();
+}
+
 QString cfgPath(const Cs2Paths &paths)
 {
     return QDir(paths.csgoDir).filePath(QStringLiteral("cfg/") + QString::fromLatin1(Cs2Manager::kCfgName));
@@ -570,6 +659,25 @@ QString Cs2Manager::findBundledVpk()
     return {};
 }
 
+QString Cs2Manager::findBundledVoiceIndexer()
+{
+    QDir cursor(QCoreApplication::applicationDirPath());
+    for (int depth = 0; depth < 6; ++depth) {
+        const QStringList candidates = {
+            cursor.filePath(QString::fromLatin1(kVoiceIndexerName)),
+            cursor.filePath(QStringLiteral("resources/") + QString::fromLatin1(kVoiceIndexerName)),
+            cursor.filePath(QStringLiteral("tools/voice-indexer/target/release/") + QString::fromLatin1(kVoiceIndexerName))
+        };
+        for (const QString &candidate : candidates) {
+            if (QFileInfo::exists(candidate))
+                return QDir::cleanPath(candidate);
+        }
+        if (!cursor.cdUp())
+            break;
+    }
+    return {};
+}
+
 bool Cs2Manager::isCs2Running()
 {
 #ifdef Q_OS_WIN
@@ -618,26 +726,73 @@ QString Cs2Manager::overrideSearchPath()
     return QStringLiteral("Game\tcsgo/overrides/") + QString::fromLatin1(kVpkName);
 }
 
+QString Cs2Manager::voiceSessionSearchPath()
+{
+    return QStringLiteral("Game\tcsgo/overrides/swift_demo_voice_session.vpk");
+}
+
 QString Cs2Manager::addOverrideSearchPath(const QString &gameInfoText, bool *changed, QString *error)
 {
     *changed = false;
     const QString newline = gameInfoText.contains(QStringLiteral("\r\n")) ? QStringLiteral("\r\n") : QStringLiteral("\n");
     QStringList lines = gameInfoText.split(QRegularExpression(QStringLiteral("\r\n|\n")), Qt::KeepEmptyParts);
     const QRegularExpression overrideLine(QStringLiteral(R"(^\s*Game\s+csgo/overrides/swift_demo_menu_override\.vpk\s*$)"), QRegularExpression::CaseInsensitiveOption);
+    const QRegularExpression voiceLine(QStringLiteral(R"(^\s*Game\s+csgo/overrides/swift_demo_voice_session\.vpk\s*$)"), QRegularExpression::CaseInsensitiveOption);
+    const QRegularExpression legacyVoiceLine(QStringLiteral(R"(^\s*Game\s+csgo/overrides/swift_demo_voice_session\s*$)"), QRegularExpression::CaseInsensitiveOption);
     const QRegularExpression baseGameLine(QStringLiteral(R"(^(\s*)Game\s+csgo\s*(?://.*)?$)"), QRegularExpression::CaseInsensitiveOption);
 
-    for (const QString &line : std::as_const(lines)) {
-        if (overrideLine.match(line).hasMatch())
-            return gameInfoText;
+    int overrideIndex = -1;
+    bool hasVoicePath = false;
+    bool hasLegacyVoicePath = false;
+    for (int index = 0; index < lines.size(); ++index) {
+        if (overrideLine.match(lines[index]).hasMatch())
+            overrideIndex = index;
+        if (voiceLine.match(lines[index]).hasMatch())
+            hasVoicePath = true;
+        if (legacyVoiceLine.match(lines[index]).hasMatch())
+            hasLegacyVoicePath = true;
+    }
+    if (overrideIndex >= 0 && hasVoicePath && !hasLegacyVoicePath)
+        return gameInfoText;
+
+    if (hasLegacyVoicePath) {
+        for (int index = lines.size() - 1; index >= 0; --index) {
+            if (legacyVoiceLine.match(lines[index]).hasMatch())
+                lines.removeAt(index);
+        }
+        overrideIndex = -1;
+        for (int index = 0; index < lines.size(); ++index) {
+            if (overrideLine.match(lines[index]).hasMatch()) {
+                overrideIndex = index;
+                break;
+            }
+        }
     }
 
-    for (int index = 0; index < lines.size(); ++index) {
-        const QRegularExpressionMatch match = baseGameLine.match(lines[index]);
-        if (match.hasMatch()) {
-            lines.insert(index, match.captured(1) + overrideSearchPath());
-            *changed = true;
-            return lines.join(newline);
+    QString indentation;
+    if (overrideIndex < 0) {
+        for (int index = 0; index < lines.size(); ++index) {
+            const QRegularExpressionMatch match = baseGameLine.match(lines[index]);
+            if (match.hasMatch()) {
+                indentation = match.captured(1);
+                lines.insert(index, indentation + overrideSearchPath());
+                overrideIndex = index;
+                break;
+            }
         }
+    }
+
+    if (overrideIndex >= 0 && !hasVoicePath) {
+        if (indentation.isEmpty()) {
+            const QRegularExpressionMatch match = QRegularExpression(QStringLiteral(R"(^(\s*))")).match(lines[overrideIndex]);
+            indentation = match.captured(1);
+        }
+        lines.insert(overrideIndex, indentation + voiceSessionSearchPath());
+    }
+
+    if (overrideIndex >= 0) {
+        *changed = true;
+        return lines.join(newline);
     }
 
     if (error)
@@ -650,7 +805,7 @@ QString Cs2Manager::removeOverrideSearchPath(const QString &gameInfoText, bool *
     *changed = false;
     const QString newline = gameInfoText.contains(QStringLiteral("\r\n")) ? QStringLiteral("\r\n") : QStringLiteral("\n");
     const QStringList lines = gameInfoText.split(QRegularExpression(QStringLiteral("\r\n|\n")), Qt::KeepEmptyParts);
-    const QRegularExpression overrideLine(QStringLiteral(R"(^\s*Game\s+csgo/overrides/swift_demo_menu_override\.vpk\s*$)"), QRegularExpression::CaseInsensitiveOption);
+    const QRegularExpression overrideLine(QStringLiteral(R"(^\s*Game\s+csgo/overrides/(?:swift_demo_menu_override\.vpk|swift_demo_voice_session(?:\.vpk)?)\s*$)"), QRegularExpression::CaseInsensitiveOption);
     QStringList kept;
     kept.reserve(lines.size());
     for (const QString &line : lines) {
@@ -781,6 +936,111 @@ LauncherResult Cs2Manager::prepareDemoSession(const Cs2Paths &paths, const QStri
     return LauncherResult::success(QCoreApplication::translate("Cs2Manager", "The Demo and launch configuration are ready."));
 }
 
+LauncherResult Cs2Manager::prepareVoiceStatusData(const Cs2Paths &paths)
+{
+    if (!paths.isValid())
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "The CS2 installation folder is invalid."));
+
+    const QString indexer = findBundledVoiceIndexer();
+    if (indexer.isEmpty()) {
+        return LauncherResult::failure(
+            QCoreApplication::translate("Cs2Manager", "The Demo voice indexer was not found. Rebuild or reinstall Swift DemoUI Pro."));
+    }
+    const QString resourceCompiler = QDir(paths.cs2Root).filePath(QStringLiteral("game/bin/win64/resourcecompiler.exe"));
+    if (!QFileInfo::exists(resourceCompiler)) {
+        return LauncherResult::failure(
+            QCoreApplication::translate("Cs2Manager", "CS2 resourcecompiler.exe was not found, so parsed voice status data cannot be prepared."));
+    }
+    const QString stagedDemo = stagedDemoPath(paths);
+    if (!QFileInfo::exists(stagedDemo)) {
+        return LauncherResult::failure(
+            QCoreApplication::translate("Cs2Manager", "The staged Demo is missing, so parsed voice status data cannot be prepared."));
+    }
+
+    QString error;
+    if (!removeOwnedDirectory(voiceSessionDirectory(paths), QStringLiteral("overrides/swift_demo_voice_session"), &error)
+        || !removeOwnedDirectory(voiceContentAddonDirectory(paths), QStringLiteral("content/csgo_addons/swift_demoui_voice_session"), &error)
+        || !removeOwnedDirectory(voiceGameAddonDirectory(paths), QStringLiteral("game/csgo_addons/swift_demoui_voice_session"), &error)) {
+        return LauncherResult::failure(error);
+    }
+    if (!QDir().mkpath(QFileInfo(voiceSourcePath(paths)).absolutePath())) {
+        return LauncherResult::failure(
+            QCoreApplication::translate("Cs2Manager", "Unable to create the temporary voice-index workspace."));
+    }
+    const QString addonInfo = QStringLiteral(
+        "<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->\n"
+        "{\n"
+        "    IsPlayable = false\n"
+        "}\n");
+    const QString preprocessorConfig = QStringLiteral(
+        "\"PanzipCfg\"\n"
+        "{\n"
+        "    \"BlockDefs\"\n"
+        "    {\n"
+        "    }\n"
+        "}\n");
+    const QString addonInfoPath = QDir(voiceContentAddonDirectory(paths)).filePath(QStringLiteral("addoninfo.txt"));
+    const QString preprocessorPath = QDir(voiceContentAddonDirectory(paths)).filePath(QStringLiteral("panorama/preprocessor_config.txt"));
+    if (!writeTextFile(addonInfoPath, addonInfo, TextEncoding::Utf8, &error)
+        || !writeTextFile(preprocessorPath, preprocessorConfig, TextEncoding::Utf8, &error)) {
+        return LauncherResult::failure(error);
+    }
+
+    LauncherResult result = runSessionTool(
+        indexer,
+        { stagedDemo, voiceSourcePath(paths) },
+        QFileInfo(indexer).absolutePath(),
+        QCoreApplication::translate("Cs2Manager", "Demo voice indexer"));
+    if (result.ok) {
+        result = runSessionTool(
+            resourceCompiler,
+            {
+                QStringLiteral("-game"),
+                paths.csgoDir,
+                QStringLiteral("-i"),
+                voiceSourcePath(paths),
+                QStringLiteral("-f"),
+                QStringLiteral("-nop4"),
+                QStringLiteral("-v")
+            },
+            QFileInfo(resourceCompiler).absolutePath(),
+            QCoreApplication::translate("Cs2Manager", "CS2 ResourceCompiler"));
+    }
+    if (result.ok && !QFileInfo::exists(compiledVoiceDataPath(paths))) {
+        result = LauncherResult::failure(
+            QCoreApplication::translate("Cs2Manager", "CS2 ResourceCompiler did not create the parsed voice status resource."));
+    }
+    if (result.ok) {
+        result = runSessionTool(
+            indexer,
+            {
+                QStringLiteral("pack-vpk"),
+                compiledVoiceDataPath(paths),
+                builtVoiceSessionVpkPath(paths)
+            },
+            QFileInfo(indexer).absolutePath(),
+            QCoreApplication::translate("Cs2Manager", "Demo voice VPK packer"));
+    }
+    if (result.ok && !QFileInfo::exists(builtVoiceSessionVpkPath(paths))) {
+        result = LauncherResult::failure(
+            QCoreApplication::translate("Cs2Manager", "The Demo voice packer did not create the session VPK."));
+    }
+    if (result.ok && !copyFileAtomically(builtVoiceSessionVpkPath(paths), targetVoiceSessionVpkPath(paths), &error))
+        result = LauncherResult::failure(error);
+
+    QString cleanupError;
+    const bool contentRemoved = removeOwnedDirectory(
+        voiceContentAddonDirectory(paths), QStringLiteral("content/csgo_addons/swift_demoui_voice_session"), &cleanupError);
+    const bool gameRemoved = removeOwnedDirectory(
+        voiceGameAddonDirectory(paths), QStringLiteral("game/csgo_addons/swift_demoui_voice_session"), &cleanupError);
+    if (result.ok && (!contentRemoved || !gameRemoved))
+        result = LauncherResult::failure(cleanupError);
+    if (!result.ok)
+        return result;
+
+    return LauncherResult::success(QCoreApplication::translate("Cs2Manager", "Parsed Demo voice status data is ready."));
+}
+
 QStringList Cs2Manager::buildSteamLaunchArguments()
 {
     return {
@@ -842,6 +1102,17 @@ LauncherResult Cs2Manager::removeDemoSession(const Cs2Paths &paths)
     const QString marker = markerPath(paths);
     if (QFileInfo::exists(marker) && !QFile::remove(marker))
         errors.append(QCoreApplication::translate("Cs2Manager", "Unable to remove the Demo session marker."));
+
+    QString voiceCleanupError;
+    const QString voiceVpk = targetVoiceSessionVpkPath(paths);
+    if (QFileInfo::exists(voiceVpk) && !QFile::remove(voiceVpk))
+        errors.append(QCoreApplication::translate("Cs2Manager", "Unable to remove the Demo voice session VPK."));
+    if (!removeOwnedDirectory(voiceSessionDirectory(paths), QStringLiteral("overrides/swift_demo_voice_session"), &voiceCleanupError))
+        errors.append(voiceCleanupError);
+    if (!removeOwnedDirectory(voiceContentAddonDirectory(paths), QStringLiteral("content/csgo_addons/swift_demoui_voice_session"), &voiceCleanupError))
+        errors.append(voiceCleanupError);
+    if (!removeOwnedDirectory(voiceGameAddonDirectory(paths), QStringLiteral("game/csgo_addons/swift_demoui_voice_session"), &voiceCleanupError))
+        errors.append(voiceCleanupError);
 
     QDir demoDirectory(QFileInfo(stagedDemoPath(paths)).absolutePath());
     const QString expectedSuffix = QDir::cleanPath(QStringLiteral("demos/swift_demo_launcher"));
