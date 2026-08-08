@@ -116,9 +116,9 @@ flowchart LR
 flowchart LR
     A["用户选择 demo"] --> B["只读暂存副本"]
     B --> C["Rust voice indexer"]
-    C --> D["swift_demo_voice_data.vjs"]
-    D --> E["CS2 ResourceCompiler"]
-    E --> F["swift_demo_voice_data.vjs_c"]
+    C --> D["内存中的紧凑语音索引 JS"]
+    D --> E["内置最小 VJS_C 编译器"]
+    E --> F["内置 VPK v1 写入器"]
     F --> G["session VPK"]
     G --> H["本次启动的 SearchPaths"]
     H --> I["Panorama 加载索引"]
@@ -150,18 +150,29 @@ var g_SwiftDemoVoiceData = {
 同一个可执行文件还提供：
 
 ```text
+build-session-vpk <input.dem> <output.vpk>
+compile-vjs <input.vjs> <output.vjs_c>
 pack-vpk <input.vjs_c> <output.vpk>
 ```
 
-用于把本次生成的已编译 Panorama 资源封装成 VPK。
+启动器使用 `build-session-vpk` 一次完成解析、VJS_C 编译和 VPK 打包。后两个命令保留给开发验证和独立诊断。
 
-### 4.2 为什么仍需要 ResourceCompiler
+### 4.2 内置 VJS_C 编译器
 
-Panorama 不能直接可靠加载运行时生成的松散 `.js`。索引必须先编译为 Source 2 资源 `.vjs_c`，因此目前需要 CS2 自带的 `resourcecompiler.exe`。
+Panorama 不能直接可靠加载运行时生成的松散 `.js`，索引仍必须成为 Source 2 编译资源 `.vjs_c`。但普通 CS2 安装只有在用户另外安装并启用 Workshop Tools DLC 后才会包含 `resourcecompiler.exe`，因此它不能作为玩家端运行时依赖。
 
-这不是额外要求用户安装 Source 2 工具。正常安装的 CS2 包含该程序；启动器会自动定位并调用它。如果用户的 CS2 安装不完整，启动器会明确报告索引生成失败，并保留空索引回退，不会改动 demo。
+项目参考 `F:\cs2dev\SkinTools\res\PanoramaCompiler` 中已经验证过的 JavaScript 编译逻辑，把最小编译器移植进 Rust sidecar。动态语音索引使用的资源结构为：
 
-编译时还需要最小 addon 元数据。启动器会在自己的暂存目录内生成这些动态资源，不污染 Valve 原始内容。
+```text
+Source 2 resource header: 0x0004000C
+resource version:         8
+RED2:                     空块
+DATA:                     紧凑 UTF-8 JavaScript
+```
+
+同一份测试脚本分别经过 Rust 内置编译器和原 `PanoramaCompiler` 后，生成的 `.vjs_c` 长度、SHA-256 和逐字节内容完全一致。Rust 测试还会检查文件长度、版本、块表、相对偏移、16 字节对齐和 DATA 内容。
+
+因此玩家端现在不需要 Workshop Tools DLC 或 `resourcecompiler.exe`，也不再创建临时 `content/csgo_addons`、`game/csgo_addons` 编译目录。
 
 ### 4.3 为什么松散目录没有生效
 
@@ -184,7 +195,7 @@ Game csgo/overrides/swift_demo_menu_override.vpk
 Game csgo
 ```
 
-这样 session VPK 中的真实索引会覆盖静态菜单 VPK 中的空索引。生成器使用 VPK v1、CRC32 和内嵌数据索引 `0x7fff`；产物已用 VPKEdit 验证目录树与校验和。
+这样 session VPK 中的真实索引会覆盖静态菜单 VPK 中的空索引。Rust 生成器直接写入一个仅含 `swift_demo_voice_data.vjs_c` 的最小 VPK v1：包括签名、版本、目录树长度、扩展名/路径/文件名字符串、CRC32、`0x7fff` 内嵌数据索引、长度与结束标记，最后紧跟资源数据。实现没有复制、链接或调用 VPKEdit 源码；VPKEditCLI 只用于独立验证生成物的目录树与校验和，运行时不调用也不分发它。
 
 ### 4.4 Panorama HUD
 
@@ -206,11 +217,10 @@ Game csgo
 
 1. 验证 CS2、demo 和工具路径；
 2. 将 demo 复制到受控暂存位置；
-3. 运行 voice indexer；
-4. 调用 ResourceCompiler 生成 `.vjs_c`；
-5. 调用 `pack-vpk` 生成 session VPK；
-6. 写入仅包含 SwiftDemoUIPro SearchPath 的启动配置；
-7. 启动 CS2 并播放暂存 demo。
+3. 调用内置 voice sidecar 解析 demo；
+4. sidecar 在内存中生成索引、VJS_C 和 session VPK；
+5. 写入仅包含 SwiftDemoUIPro SearchPath 的启动配置；
+6. 启动 CS2 并播放暂存 demo。
 
 启动器只管理自己拥有的资源：
 
@@ -232,7 +242,8 @@ Game csgo
 
 ### 6.2 自动化检查
 
-- Rust voice indexer：4 项测试通过；
+- Rust voice indexer、VJS_C 与 VPK 写入器：6 项测试通过；
+- 内置 VJS_C 编译器与原 `PanoramaCompiler` 产物逐字节一致；
 - Panorama voice mask：测试通过；
 - Launcher：编译通过；
 - Launcher CTest：1/1 通过；
@@ -272,7 +283,7 @@ Game csgo
 
 | 路径 | 作用 |
 | --- | --- |
-| `tools/voice-indexer/` | Rust demo 语音解析与 VPK 打包 |
+| `tools/voice-indexer/` | Rust demo 语音解析、VJS_C 编译与 VPK 打包 |
 | `addon/panorama/scripts/hud/swift_demo_voice_data.js` | 静态空索引回退 |
 | `addon/panorama/scripts/hud/swift_demo_voice.js` | tick 查询、玩家映射与 HUD 控制 |
 | `addon/panorama/layout/hud/huddemocontroller.xml` | 语音 HUD 与诊断区域布局 |
@@ -287,7 +298,7 @@ Game csgo
 
 1. demo protobuf 或 `SvcVoiceData` 字段是否变化；
 2. 当前 tick 的 Panorama 接口是否变化；
-3. ResourceCompiler 输出格式或查找路径是否变化；
+3. Source 2 `vjs` Version 4 资源头、块表或 Panorama 加载格式是否变化；
 4. SearchPath 对显式 VPK 的加载顺序是否变化；
 5. 玩家槽位、实体索引与记分板映射是否变化。
 

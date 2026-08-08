@@ -15,7 +15,7 @@ The launcher keeps the playback workflow on one page: choose a Demo, review the 
 1. Select or drag in a `.dem` file or `.zip` archive. A ZIP containing one Demo is selected automatically; if it contains several, choose one from the displayed list.
 2. Confirm the automatically detected CS2 path, or choose a different installation.
 3. Leave **TrueView prediction** off for maximum compatibility. This writes `cl_demo_predict 0` to the temporary CFG and prevents prediction flicker in Demos without TrueView command data. Enable it only for a supported recording; the preference is remembered.
-4. Select **Start Watching Demo**. The launcher installs/verifies the VPK, copies the Demo—or streams only the selected ZIP entry—into a dedicated staging directory, parses `SvcVoiceData`, compiles a session-only Panorama data resource with CS2's ResourceCompiler, creates `swift_demo_launcher.cfg`, and runs:
+4. Select **Start Watching Demo**. The launcher installs/verifies the VPK, copies the Demo—or streams only the selected ZIP entry—into a dedicated staging directory, then asks the bundled Rust sidecar to parse `SvcVoiceData`, compile the session-only Panorama data resource, and write its VPK. It creates `swift_demo_launcher.cfg` and runs:
 
    ```text
    steam.exe -applaunch 730 -insecure -novid +exec swift_demo_launcher.cfg
@@ -76,7 +76,7 @@ launcher\package\SwiftDemoUIPro-v<version>\SwiftDemoUIPro.exe
 launcher\package\SwiftDemoUIPro-v<version>-win64.zip
 ```
 
-Run the EXE from the unpacked version directory for local end-to-end testing. The packaging step uses `windeployqt` to collect `Qt6Core.dll`, `Qt6Gui.dll`, `Qt6Network.dll`, `Qt6Widgets.dll`, the Windows TLS backend, and `platforms\qwindows.dll`. `SwiftDemoUIPro.exe`, `swift-demo-voice-indexer.exe`, its DLLs/plugins, translations, and `swift_demo_menu_override.vpk` must remain together.
+Run the EXE from the unpacked version directory for local end-to-end testing. The packaging step uses `windeployqt` to collect `Qt6Core.dll`, `Qt6Gui.dll`, `Qt6Network.dll`, `Qt6Widgets.dll`, the Windows TLS backend, and `platforms\qwindows.dll`. `SwiftDemoUIPro.exe`, `swift-demo-voice-indexer.exe`, its DLLs/plugins, translations, and `swift_demo_menu_override.vpk` must remain together. Player machines do not need the Workshop Tools DLC, `resourcecompiler.exe`, or VPKEdit.
 
 The repository-level `release.ps1` command is for committed release candidates, not ordinary development testing. It refuses a dirty Git working tree because the source archive is generated from `HEAD`.
 
@@ -97,7 +97,7 @@ The interface embeds the variable Noto Sans SC font to provide consistent Chines
 - It refuses to install, replace, or remove the VPK while CS2 is running.
 - Before the first `gameinfo.gi` modification, it creates `gameinfo.gi.swift_demo_launcher.restore.bak`.
 - Cleanup removes only the project's exact SearchPath and owned temporary files; it does not overwrite unrelated user or tool changes.
-- Parsed voice data is compiled under project-owned addon directories, packed into a small session VPK, mounted through a separate VPK SearchPath, and removed during cleanup; the source Demo is never rewritten.
+- Parsed voice data is compiled and packed directly by the bundled Rust sidecar into a small session VPK, mounted through a separate VPK SearchPath, and removed during cleanup; the source Demo is never rewritten.
 - A persistent session marker allows the application to warn about and recover an interrupted cleanup.
 - ZIP handling enumerates entries without expanding the archive, streams only the selected `.dem` to the owned `current.dem`, verifies the uncompressed size and CRC, reserves free disk space, and enforces an 8 GB safety limit.
 - Encrypted ZIP entries and unsupported compression methods are rejected with an error; unrelated entries are never written to disk.

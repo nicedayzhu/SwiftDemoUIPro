@@ -153,6 +153,15 @@ void LauncherCoreTest::removesOnlyOwnedSearchPath()
 
 void LauncherCoreTest::buildsTemporaryInsecureLaunch()
 {
+    const QStringList voiceArguments = Cs2Manager::buildVoiceSessionArguments(
+        QStringLiteral("C:/Demos/match.dem"),
+        QStringLiteral("C:/CS2/game/csgo/overrides/swift_demo_voice_session.vpk"));
+    QCOMPARE(voiceArguments, QStringList({
+        QStringLiteral("build-session-vpk"),
+        QStringLiteral("C:/Demos/match.dem"),
+        QStringLiteral("C:/CS2/game/csgo/overrides/swift_demo_voice_session.vpk")
+    }));
+
     const QStringList arguments = Cs2Manager::buildSteamLaunchArguments();
     QCOMPARE(arguments.mid(0, 2), QStringList({ QStringLiteral("-applaunch"), QStringLiteral("730") }));
     QVERIFY(arguments.contains(QStringLiteral("-insecure")));

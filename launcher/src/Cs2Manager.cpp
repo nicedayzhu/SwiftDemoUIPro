@@ -253,21 +253,6 @@ QString voiceGameAddonDirectory(const Cs2Paths &paths)
     return QDir(paths.cs2Root).filePath(QStringLiteral("game/csgo_addons/swift_demoui_voice_session"));
 }
 
-QString voiceSourcePath(const Cs2Paths &paths)
-{
-    return QDir(voiceContentAddonDirectory(paths)).filePath(QStringLiteral("panorama/scripts/hud/swift_demo_voice_data.vjs"));
-}
-
-QString compiledVoiceDataPath(const Cs2Paths &paths)
-{
-    return QDir(voiceGameAddonDirectory(paths)).filePath(QStringLiteral("panorama/scripts/hud/swift_demo_voice_data.vjs_c"));
-}
-
-QString builtVoiceSessionVpkPath(const Cs2Paths &paths)
-{
-    return QDir(voiceGameAddonDirectory(paths)).filePath(QStringLiteral("swift_demo_voice_session.vpk"));
-}
-
 bool removeOwnedDirectory(const QString &path, const QString &expectedSuffix, QString *error)
 {
     const QString cleanPath = QDir::cleanPath(path);
@@ -946,11 +931,6 @@ LauncherResult Cs2Manager::prepareVoiceStatusData(const Cs2Paths &paths)
         return LauncherResult::failure(
             QCoreApplication::translate("Cs2Manager", "The Demo voice indexer was not found. Rebuild or reinstall Swift DemoUI Pro."));
     }
-    const QString resourceCompiler = QDir(paths.cs2Root).filePath(QStringLiteral("game/bin/win64/resourcecompiler.exe"));
-    if (!QFileInfo::exists(resourceCompiler)) {
-        return LauncherResult::failure(
-            QCoreApplication::translate("Cs2Manager", "CS2 resourcecompiler.exe was not found, so parsed voice status data cannot be prepared."));
-    }
     const QString stagedDemo = stagedDemoPath(paths);
     if (!QFileInfo::exists(stagedDemo)) {
         return LauncherResult::failure(
@@ -963,82 +943,28 @@ LauncherResult Cs2Manager::prepareVoiceStatusData(const Cs2Paths &paths)
         || !removeOwnedDirectory(voiceGameAddonDirectory(paths), QStringLiteral("game/csgo_addons/swift_demoui_voice_session"), &error)) {
         return LauncherResult::failure(error);
     }
-    if (!QDir().mkpath(QFileInfo(voiceSourcePath(paths)).absolutePath())) {
-        return LauncherResult::failure(
-            QCoreApplication::translate("Cs2Manager", "Unable to create the temporary voice-index workspace."));
-    }
-    const QString addonInfo = QStringLiteral(
-        "<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->\n"
-        "{\n"
-        "    IsPlayable = false\n"
-        "}\n");
-    const QString preprocessorConfig = QStringLiteral(
-        "\"PanzipCfg\"\n"
-        "{\n"
-        "    \"BlockDefs\"\n"
-        "    {\n"
-        "    }\n"
-        "}\n");
-    const QString addonInfoPath = QDir(voiceContentAddonDirectory(paths)).filePath(QStringLiteral("addoninfo.txt"));
-    const QString preprocessorPath = QDir(voiceContentAddonDirectory(paths)).filePath(QStringLiteral("panorama/preprocessor_config.txt"));
-    if (!writeTextFile(addonInfoPath, addonInfo, TextEncoding::Utf8, &error)
-        || !writeTextFile(preprocessorPath, preprocessorConfig, TextEncoding::Utf8, &error)) {
-        return LauncherResult::failure(error);
-    }
-
     LauncherResult result = runSessionTool(
         indexer,
-        { stagedDemo, voiceSourcePath(paths) },
+        buildVoiceSessionArguments(stagedDemo, targetVoiceSessionVpkPath(paths)),
         QFileInfo(indexer).absolutePath(),
         QCoreApplication::translate("Cs2Manager", "Demo voice indexer"));
-    if (result.ok) {
-        result = runSessionTool(
-            resourceCompiler,
-            {
-                QStringLiteral("-game"),
-                paths.csgoDir,
-                QStringLiteral("-i"),
-                voiceSourcePath(paths),
-                QStringLiteral("-f"),
-                QStringLiteral("-nop4"),
-                QStringLiteral("-v")
-            },
-            QFileInfo(resourceCompiler).absolutePath(),
-            QCoreApplication::translate("Cs2Manager", "CS2 ResourceCompiler"));
-    }
-    if (result.ok && !QFileInfo::exists(compiledVoiceDataPath(paths))) {
-        result = LauncherResult::failure(
-            QCoreApplication::translate("Cs2Manager", "CS2 ResourceCompiler did not create the parsed voice status resource."));
-    }
-    if (result.ok) {
-        result = runSessionTool(
-            indexer,
-            {
-                QStringLiteral("pack-vpk"),
-                compiledVoiceDataPath(paths),
-                builtVoiceSessionVpkPath(paths)
-            },
-            QFileInfo(indexer).absolutePath(),
-            QCoreApplication::translate("Cs2Manager", "Demo voice VPK packer"));
-    }
-    if (result.ok && !QFileInfo::exists(builtVoiceSessionVpkPath(paths))) {
+    if (result.ok && !QFileInfo::exists(targetVoiceSessionVpkPath(paths))) {
         result = LauncherResult::failure(
             QCoreApplication::translate("Cs2Manager", "The Demo voice packer did not create the session VPK."));
     }
-    if (result.ok && !copyFileAtomically(builtVoiceSessionVpkPath(paths), targetVoiceSessionVpkPath(paths), &error))
-        result = LauncherResult::failure(error);
-
-    QString cleanupError;
-    const bool contentRemoved = removeOwnedDirectory(
-        voiceContentAddonDirectory(paths), QStringLiteral("content/csgo_addons/swift_demoui_voice_session"), &cleanupError);
-    const bool gameRemoved = removeOwnedDirectory(
-        voiceGameAddonDirectory(paths), QStringLiteral("game/csgo_addons/swift_demoui_voice_session"), &cleanupError);
-    if (result.ok && (!contentRemoved || !gameRemoved))
-        result = LauncherResult::failure(cleanupError);
     if (!result.ok)
         return result;
 
     return LauncherResult::success(QCoreApplication::translate("Cs2Manager", "Parsed Demo voice status data is ready."));
+}
+
+QStringList Cs2Manager::buildVoiceSessionArguments(const QString &demoPath, const QString &sessionVpkPath)
+{
+    return {
+        QStringLiteral("build-session-vpk"),
+        demoPath,
+        sessionVpkPath
+    };
 }
 
 QStringList Cs2Manager::buildSteamLaunchArguments()

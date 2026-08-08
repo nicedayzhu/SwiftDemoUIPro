@@ -10,17 +10,17 @@ Swift DemoUI Pro 由三个协作组件组成：
 
 1. Panorama override：扩展 Valve 原生 `huddemocontroller`，加入已录制语音控制、解析后的说话状态、经过核验的 POV 切换和回合导航。
 2. C++17/Qt 6 Widgets 启动器：检测 CS2，接收 `.dem` 和 `.zip` 文件，准备独立回放会话，使用 `-insecure` 启动 CS2，并在结束后恢复本项目产生的修改。
-3. Rust `swift-demo-voice-indexer` 辅助程序：只读 `SvcVoiceData`，输出紧凑的 tick/槽位 Panorama 数据脚本，不会重写源 Demo。
+3. Rust `swift-demo-voice-indexer` 辅助程序：只读 `SvcVoiceData`，输出紧凑的 tick/槽位 Panorama 数据脚本，将其编译为最小 Source 2 `vjs` Version 4 资源，并直接写入每个 Demo 的 session VPK；不会重写源 Demo。
 
 ZIP 读取功能由仓库内置的 miniz 源码直接编译进启动器。程序会在进程内枚举压缩包，并且只流式写出玩家选择的 `.dem`；发布包无需携带或调用外部解压程序。
 
 ## 开发环境
 
-### Panorama/VPK
+### 静态 Panorama/VPK 开发构建
 
 - Windows PowerShell。
-- 当前版本的 CS2，安装中需包含 Valve `resourcecompiler.exe`。
-- [VPKEdit](https://github.com/craftablescience/VPKEdit) 命令行工具。
+- 当前版本的 CS2；只有开发者构建静态 DemoUI VPK 时才需要安装 Valve `resourcecompiler.exe`。
+- [VPKEdit](https://github.com/craftablescience/VPKEdit) 命令行工具；只用于开发阶段打包/检查静态 DemoUI VPK。
 - 用于 Panorama 测试的 Node.js。
 
 ### Qt 启动器
@@ -107,7 +107,7 @@ launcher\package\SwiftDemoUIPro-v<版本号>\SwiftDemoUIPro.exe
 launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
 ```
 
-打包过程使用 `windeployqt`。产物必须包含启动器、`swift-demo-voice-indexer.exe`、Qt 运行库、`platforms\qwindows.dll`、DemoUI VPK、翻译、README、项目许可证、第三方说明和依赖许可文本。本地端到端测试请运行展开版本目录中的 EXE，并保持整个目录结构完整。
+打包过程使用 `windeployqt`。产物必须包含启动器、`swift-demo-voice-indexer.exe`、Qt 运行库、`platforms\qwindows.dll`、DemoUI VPK、翻译、README、项目许可证、第三方说明和依赖许可文本。玩家端不携带也不依赖 Valve ResourceCompiler、Workshop Tools DLC 或 VPKEdit。本地端到端测试请运行展开版本目录中的 EXE，并保持整个目录结构完整。
 
 启动器流程、国际化、ZIP 防护与清理边界详见[启动器指南](launcher/README_CN.md)。
 
@@ -116,7 +116,7 @@ launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
 | 修改范围 | 最低验证要求 |
 | --- | --- |
 | Panorama JavaScript/布局/样式/本地化 | 运行 `node .\tests\test_demo_voice_mask.js`；具备 CS2 工具时构建 VPK，并确认原始语言文件进入 VPK。 |
-| Rust 语音索引器或 Demo 语音 schema | 运行 Cargo 测试，并解析一份确认含语音的 Demo；核对消息、槽位与 tick 数量。 |
+| Rust 语音索引器、VJS_C/VPK 写入器或 Demo 语音 schema | 运行 Cargo 测试，并解析一份确认含语音的 Demo；核对消息、槽位、tick、Source 2 资源头与 VPK 内容。 |
 | 启动器核心、ZIP、SearchPath、暂存、启动或清理 | 编译启动器并运行 CTest；新增或更新 `tst_launcher_core.cpp`。 |
 | 启动器 UI/QSS/对话框 | 编译和测试后，在每种受影响语言下检查真实渲染或交互状态。 |
 | 翻译文本 | 更新 `.ts`，完成新增翻译，构建 `.qm` 并检查布局与占位符。 |
@@ -125,7 +125,7 @@ launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
 | Release 逻辑 | 不带 `-Publish` 生成对应的完整候选包或 `-MenuOnly` 候选包，核对所有 SHA-256 与 `update-manifest.json`。 |
 | 仅文档 | 检查相对链接和图片资源，然后运行 `git diff --check`。 |
 
-GitHub Actions 会在 Windows Server 2022 上运行可移植的 Panorama 与 Qt 测试。Panorama 测试已完全包含在仓库内，通过固定 SHA-256 保护导入的原生 DemoUI Root，不再读取相邻的 `res_panorama` 目录。托管环境仍有意不构建 VPK，因为 Valve `resourcecompiler.exe` 及其匹配的运行文件来自当前 CS2 安装。
+GitHub Actions 会在 Windows Server 2022 上运行可移植的 Panorama、Rust 与 Qt 测试。Panorama 测试已完全包含在仓库内，通过固定 SHA-256 保护导入的原生 DemoUI Root，不再读取相邻的 `res_panorama` 目录；Cargo 测试会完整覆盖运行时 VJS_C 与 session VPK 写入器。托管环境仍有意不重新构建静态 DemoUI VPK，因为 Valve `resourcecompiler.exe` 及其匹配的运行文件来自当前 CS2 安装。
 
 [DepotDownloader](https://github.com/SteamRE/DepotDownloader) 在 Valve 允许时可以匿名获取 App 730 内容，也支持用 `-filelist` 限制下载文件。因此 GitHub 托管 runner 理论上可以构建 VPK，但会依赖 Valve 随时变化的 depot 结构、完整且同版本的 ResourceCompiler 依赖、Steam 可用性和第三方下载器引导。建议继续使用现有本机构建，或使用安装了当前 CS2 的受控 Windows 自托管 runner；不要让普通 CI 依赖下载游戏 depot。
 
@@ -257,7 +257,7 @@ Get-Content .\SHA256SUMS.txt
 - miniz 位于 `launcher/third_party/miniz/`，使用 MIT License。
 - Noto Sans SC 使用 SIL Open Font License 1.1。
 - 打包的 Qt 库以 `LGPL-3.0-only` 动态链接；必须保持可替换，并保留 Qt 说明与许可文本。
-- VPKEdit 仅用于构建，不随 Release 包分发。
+- VPKEdit 使用 MIT License，保留版权与许可文本即可再分发；但本项目只在开发阶段用它构建/检查静态 VPK，因此 Release 不携带它。运行时 session VPK 由内置 Rust 辅助程序写入。
 - Valve 游戏资源、名称和商标不会因本仓库的 MIT License 而重新授权。
 
 依赖或分发方式变化时，请同步更新 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) 和 [launcher/THIRD_PARTY_NOTICES.txt](launcher/THIRD_PARTY_NOTICES.txt)。

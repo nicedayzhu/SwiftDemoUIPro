@@ -10,17 +10,17 @@ Swift DemoUI Pro has three cooperating components:
 
 1. A Panorama override that extends Valve's native `huddemocontroller` with recorded-voice controls, parsed speaker status, validated POV switching, and round navigation.
 2. A C++17/Qt 6 Widgets launcher that discovers CS2, accepts `.dem` and `.zip` files, stages an isolated playback session, starts CS2 with `-insecure`, and restores project-owned changes afterward.
-3. A Rust `swift-demo-voice-indexer` sidecar that reads `SvcVoiceData`, emits a compact tick/slot Panorama data script, and never rewrites the source Demo.
+3. A Rust `swift-demo-voice-indexer` sidecar that reads `SvcVoiceData`, emits a compact tick/slot Panorama data script, compiles it into a minimal Source 2 `vjs` Version 4 resource, and writes the per-Demo session VPK without rewriting the source Demo.
 
 ZIP reading is compiled into the launcher from the vendored miniz source. It enumerates archive entries in process and streams only the selected `.dem`; no external extraction executable is bundled or required.
 
 ## Prerequisites
 
-### Panorama/VPK
+### Static Panorama/VPK developer build
 
 - Windows PowerShell.
-- A current CS2 installation containing Valve's `resourcecompiler.exe`.
-- [VPKEdit](https://github.com/craftablescience/VPKEdit) command-line tools.
+- A current CS2 installation containing Valve's `resourcecompiler.exe`, only for developer builds of the static DemoUI VPK.
+- [VPKEdit](https://github.com/craftablescience/VPKEdit) command-line tools, only for developer packing/inspection of the static DemoUI VPK.
 - Node.js for Panorama tests.
 
 ### Qt launcher
@@ -107,7 +107,7 @@ launcher\package\SwiftDemoUIPro-v<version>\SwiftDemoUIPro.exe
 launcher\package\SwiftDemoUIPro-v<version>-win64.zip
 ```
 
-Packaging uses `windeployqt`. The output must contain the launcher, `swift-demo-voice-indexer.exe`, Qt runtime DLLs, `platforms\qwindows.dll`, the DemoUI VPK, translations, README files, the project license, third-party notices, and dependency license texts. For end-to-end testing, run the EXE from the unpacked version directory and keep the directory intact.
+Packaging uses `windeployqt`. The output must contain the launcher, `swift-demo-voice-indexer.exe`, Qt runtime DLLs, `platforms\qwindows.dll`, the DemoUI VPK, translations, README files, the project license, third-party notices, and dependency license texts. The player package does not contain or require Valve's ResourceCompiler, the Workshop Tools DLC, or VPKEdit. For end-to-end testing, run the EXE from the unpacked version directory and keep the directory intact.
 
 See the [Launcher Guide](launcher/README.md) for its workflow, localization, ZIP protections, and cleanup boundaries.
 
@@ -116,7 +116,7 @@ See the [Launcher Guide](launcher/README.md) for its workflow, localization, ZIP
 | Change | Minimum verification |
 | --- | --- |
 | Panorama JavaScript/layout/style/localization | Run `node .\tests\test_demo_voice_mask.js`; build the VPK when CS2 tools are available and confirm that the raw localization files are present in it. |
-| Rust voice indexer or Demo voice schema | Run Cargo tests and parse a known voice-bearing Demo; verify packet, slot, and tick counts. |
+| Rust voice indexer, VJS_C writer, VPK writer, or Demo voice schema | Run Cargo tests and parse a known voice-bearing Demo; verify packet, slot, tick, Source 2 resource header, and VPK contents. |
 | Launcher core, ZIP, SearchPath, staging, launch, or cleanup | Build the launcher and run CTest; add or update `tst_launcher_core.cpp`. |
 | Launcher UI/QSS/dialogs | Build and test, then inspect an actual rendered or interactive state in each affected language. |
 | Translation strings | Update `.ts`, complete new translations, build `.qm`, and inspect layout/placeholders. |
@@ -125,7 +125,7 @@ See the [Launcher Guide](launcher/README.md) for its workflow, localization, ZIP
 | Release logic | Create the matching full or `-MenuOnly` local candidate without `-Publish`; verify every listed SHA-256 entry and `update-manifest.json`. |
 | Documentation only | Validate relative links and assets, then run `git diff --check`. |
 
-GitHub Actions runs portable Panorama and Qt tests on Windows Server 2022. The Panorama test is fully repository-contained and protects the imported native DemoUI root with a canonical SHA-256; it does not read a sibling `res_panorama` checkout. The hosted workflow intentionally does not build the VPK because Valve's `resourcecompiler.exe` and its matching runtime files come from a current CS2 installation.
+GitHub Actions runs portable Panorama, Rust, and Qt tests on Windows Server 2022. The Panorama test is fully repository-contained and protects the imported native DemoUI root with a canonical SHA-256; it does not read a sibling `res_panorama` checkout. Cargo tests fully exercise the runtime VJS_C and session-VPK writers. The hosted workflow intentionally does not rebuild the static DemoUI VPK because Valve's `resourcecompiler.exe` and its matching runtime files come from a current CS2 installation.
 
 [DepotDownloader](https://github.com/SteamRE/DepotDownloader) can technically fetch App 730 content, supports anonymous access where Valve permits it, and can restrict downloads with `-filelist`. A GitHub-hosted VPK build is therefore possible in principle, but it would depend on Valve's changing depot layout, the complete current ResourceCompiler dependency set, Steam availability, and third-party downloader bootstrap. Prefer the existing local build or a controlled self-hosted Windows runner with CS2 installed; do not make ordinary CI depend on downloading game depots.
 
@@ -257,7 +257,7 @@ Coding agents should also follow [AGENTS.md](AGENTS.md), which records the proje
 - miniz is vendored under MIT in `launcher/third_party/miniz/`.
 - Noto Sans SC is distributed under the SIL Open Font License 1.1.
 - Packaged Qt libraries are dynamically linked under `LGPL-3.0-only`; keep them replaceable and retain the Qt notice/license text.
-- VPKEdit is a build-time tool and is not bundled in the release package.
+- VPKEdit is MIT licensed and redistributable with its copyright/license notice, but it is only a static-VPK build/inspection tool here and is not bundled in the release package. Runtime session VPKs are written by the bundled Rust sidecar.
 - Valve game resources, names, and trademarks are not relicensed by this repository's MIT license.
 
 Keep [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [launcher/THIRD_PARTY_NOTICES.txt](launcher/THIRD_PARTY_NOTICES.txt) aligned with dependency or distribution changes.

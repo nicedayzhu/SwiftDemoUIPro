@@ -79,11 +79,11 @@ The launcher must never imply that an `-insecure` session is suitable for matchm
 
 ## Prerequisites
 
-### Panorama/VPK
+### Static Panorama/VPK developer build
 
 - Windows PowerShell.
-- A current CS2 installation containing `resourcecompiler.exe`.
-- VPKEdit CLI for packing the compiled files.
+- A current CS2 installation containing `resourcecompiler.exe`, only for developer builds of the static DemoUI VPK.
+- VPKEdit CLI for developer packing/inspection of the static DemoUI VPK. Player runtime session VPKs are written by the bundled Rust sidecar.
 - Node.js for the Panorama tests.
 
 ### Qt launcher
@@ -183,7 +183,7 @@ Useful direct CTest command for an existing build tree:
 ctest --test-dir .\launcher\build -C Release --output-on-failure
 ```
 
-GitHub CI uses Windows Server 2022, Node 22, Qt 6.8.x/MSVC 2022, and `-SkipVpkCheck`. It intentionally does not build the VPK: obtaining the matching proprietary CS2 ResourceCompiler toolchain on every hosted run would make ordinary CI dependent on Valve's changing depot layout and Steam availability.
+GitHub CI uses Windows Server 2022, Node 22, Qt 6.8.x/MSVC 2022, and `-SkipVpkCheck`. Cargo tests cover the runtime VJS_C/session-VPK writers. CI intentionally does not rebuild the static DemoUI VPK: obtaining the matching proprietary CS2 ResourceCompiler toolchain on every hosted run would make ordinary CI dependent on Valve's changing depot layout and Steam availability.
 
 ## Localization Workflow
 
@@ -269,7 +269,7 @@ Do not edit generated `launcher/build/generated/AppVersion.h`, generated Windows
 - Noto Sans SC uses the SIL Open Font License 1.1.
 - The packaged Qt runtime is dynamically linked under LGPL-3.0-only; retain the Qt license text and notices.
 - Keep `THIRD_PARTY_NOTICES.md` and `launcher/THIRD_PARTY_NOTICES.txt` synchronized with dependency/distribution changes.
-- VPKEdit is a build-time tool and is not currently bundled in the release package.
+- VPKEdit is MIT licensed and redistributable with its notice, but remains a build-time tool and is not bundled in the release package. Runtime session VPKs do not use it.
 - Valve game resources, names, and trademarks are not relicensed by this repository's MIT license. Treat game-derived UI changes and redistribution carefully.
 
 ## Coding and Editing Rules

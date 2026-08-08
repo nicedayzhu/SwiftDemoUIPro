@@ -7,7 +7,7 @@
 
 Swift DemoUI Pro is an unofficial, client-side enhancement for Counter-Strike 2 Demo and HLTV playback. Its Windows launcher opens `.dem` files or downloaded `.zip` archives, while the in-game panel adds recorded-voice controls, one-click POV switching, and round navigation without replacing Valve's native DemoUI.
 
-No SwiftlyS2 installation, server plugin, Workshop item, or manual ZIP extraction is required.
+No SwiftlyS2 installation, server plugin, Counter-Strike 2 Workshop Tools DLC, Workshop item, or manual ZIP extraction is required. The release package contains the voice-index compiler and session VPK writer it needs at runtime.
 
 > [!IMPORTANT]
 > Demo playback is started with `-insecure`, and the launcher temporarily adds an override SearchPath to `gameinfo.gi`. Do not use that CS2 session for matchmaking. When finished, fully exit CS2 and select **Stop and restore** in the launcher.
@@ -33,6 +33,7 @@ The added panel keeps the native timeline and playback controls available while 
 - Defaults **TrueView prediction** off to prevent flicker in Demos that do not contain compatible TrueView command data.
 - Controls recorded voice for everyone, T only, CT only, or individual players across all 64 display slots.
 - Parses recorded `VoiceData` before launch and shows active speakers by Demo tick without modifying the Demo or patching `client.dll`.
+- Compiles the per-Demo Panorama voice index and session VPK with the bundled Rust sidecar; players do not need Valve's ResourceCompiler or VPKEdit.
 - Switches to a live player's first-person POV after validating the target.
 - Jumps directly to the beginning of any recorded round.
 - Supports English and Simplified Chinese: the launcher follows the system language, while the in-game DemoUI automatically follows the CS2 interface language.

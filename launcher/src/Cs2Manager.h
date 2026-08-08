@@ -60,6 +60,7 @@ public:
     static QString addOverrideSearchPath(const QString &gameInfoText, bool *changed, QString *error);
     static QString removeOverrideSearchPath(const QString &gameInfoText, bool *changed);
     static QString buildDemoCfg(bool trueViewEnabled = false);
+    static QStringList buildVoiceSessionArguments(const QString &demoPath, const QString &sessionVpkPath);
     static QStringList buildSteamLaunchArguments();
     static QString displayFileSize(qint64 bytes);
 

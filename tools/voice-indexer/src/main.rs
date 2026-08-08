@@ -11,6 +11,8 @@ use std::path::{Path, PathBuf};
 
 const MAX_PLAYER_ENTITY_INDEX: i32 = 64;
 const SPEAKING_HOLD_TICKS: u32 = 30;
+const SOURCE2_VJS_HEADER_VERSION: u32 = 0x0004_000c;
+const SOURCE2_RESOURCE_VERSION: u32 = 8;
 const VPK_SIGNATURE: u32 = 0x55aa_1234;
 const VPK_VERSION: u32 = 1;
 const VPK_EMBEDDED_ARCHIVE_INDEX: u16 = 0x7fff;
@@ -112,7 +114,7 @@ fn parse_demo(path: &Path) -> Result<VoiceIndex> {
 
 fn render_panorama_source(index: &VoiceIndex) -> String {
     let mut source = String::from(
-        "\"use strict\";\nvar SwiftDemoVoiceData = {\"schemaVersion\":1,\"generated\":true,\"holdTicks\":",
+        "\"use strict\";var SwiftDemoVoiceData={\"schemaVersion\":1,\"generated\":true,\"holdTicks\":",
     );
     source.push_str(&SPEAKING_HOLD_TICKS.to_string());
     source.push_str(",\"voicePacketCount\":");
@@ -142,7 +144,7 @@ fn render_panorama_source(index: &VoiceIndex) -> String {
         }
         source.push(']');
     }
-    source.push_str("}};\n");
+    source.push_str("}};");
     source
 }
 
@@ -212,6 +214,36 @@ fn push_c_string(output: &mut Vec<u8>, value: &str) {
     output.push(0);
 }
 
+fn build_panorama_vjs_resource(source: &[u8]) -> Result<Vec<u8>> {
+    let source_length = u32::try_from(source.len())
+        .context("Panorama voice index is too large for a Source 2 resource")?;
+
+    // This is the minimal vjs [Version 4] resource emitted by PanoramaCompiler:
+    // a Source 2 resource header followed by an empty RED2 block and the UTF-8
+    // JavaScript in DATA. Both blocks begin at the same 16-byte-aligned offset
+    // because RED2 is empty.
+    let mut resource = Vec::with_capacity(48 + source.len());
+    resource.extend_from_slice(&0u32.to_le_bytes());
+    resource.extend_from_slice(&SOURCE2_VJS_HEADER_VERSION.to_le_bytes());
+    resource.extend_from_slice(&SOURCE2_RESOURCE_VERSION.to_le_bytes());
+    resource.extend_from_slice(&2u32.to_le_bytes());
+
+    resource.extend_from_slice(b"RED2");
+    resource.extend_from_slice(&28u32.to_le_bytes());
+    resource.extend_from_slice(&0u32.to_le_bytes());
+
+    resource.extend_from_slice(b"DATA");
+    resource.extend_from_slice(&16u32.to_le_bytes());
+    resource.extend_from_slice(&source_length.to_le_bytes());
+
+    resource.resize(48, 0);
+    resource.extend_from_slice(source);
+    let file_size =
+        u32::try_from(resource.len()).context("compiled Panorama voice resource is too large")?;
+    resource[0..4].copy_from_slice(&file_size.to_le_bytes());
+    Ok(resource)
+}
+
 fn build_session_vpk(resource: &[u8]) -> Result<Vec<u8>> {
     let resource_length = u32::try_from(resource.len())
         .context("compiled voice resource is too large for a VPK entry")?;
@@ -261,6 +293,57 @@ fn pack_session_vpk(input_path: &Path, output_path: &Path) -> Result<()> {
     Ok(())
 }
 
+fn trim_ascii_whitespace(bytes: &[u8]) -> &[u8] {
+    let start = bytes
+        .iter()
+        .position(|byte| !byte.is_ascii_whitespace())
+        .unwrap_or(bytes.len());
+    let end = bytes
+        .iter()
+        .rposition(|byte| !byte.is_ascii_whitespace())
+        .map_or(start, |index| index + 1);
+    &bytes[start..end]
+}
+
+fn compile_panorama_vjs(input_path: &Path, output_path: &Path) -> Result<()> {
+    if !input_path.is_file() {
+        bail!(
+            "Panorama JavaScript input does not exist: {}",
+            input_path.display()
+        );
+    }
+    if input_path == output_path {
+        bail!("input and output paths must differ");
+    }
+
+    let source = fs::read(input_path).with_context(|| {
+        format!(
+            "failed to read Panorama JavaScript: {}",
+            input_path.display()
+        )
+    })?;
+    let source = source.strip_prefix(&[0xef, 0xbb, 0xbf]).unwrap_or(&source);
+    let source = trim_ascii_whitespace(source);
+    let resource = build_panorama_vjs_resource(source)?;
+    write_output_bytes(output_path, &resource)?;
+    println!("compiled Panorama vjs resource ready");
+    println!("  source bytes: {}", source.len());
+    println!("  resource bytes: {}", resource.len());
+    Ok(())
+}
+
+fn print_voice_index_summary(index: &VoiceIndex) {
+    println!("  voice packets: {}", index.voice_packets);
+    println!("  display pulses: {}", index.pulse_count());
+    println!("  speaker slots: {}", index.pulses_by_slot.len());
+    println!(
+        "  tick range: {:?}..={:?}",
+        index.first_tick, index.last_tick
+    );
+    println!("  malformed packets: {}", index.malformed_packets);
+    println!("  unresolved packets: {}", index.unresolved_packets);
+}
+
 fn build_voice_index(input_path: &Path, output_path: &Path) -> Result<()> {
     if !input_path.is_file() {
         bail!("input demo does not exist: {}", input_path.display());
@@ -274,15 +357,29 @@ fn build_voice_index(input_path: &Path, output_path: &Path) -> Result<()> {
     write_output(output_path, &source)?;
 
     println!("voice index ready");
-    println!("  voice packets: {}", index.voice_packets);
-    println!("  display pulses: {}", index.pulse_count());
-    println!("  speaker slots: {}", index.pulses_by_slot.len());
-    println!(
-        "  tick range: {:?}..={:?}",
-        index.first_tick, index.last_tick
-    );
-    println!("  malformed packets: {}", index.malformed_packets);
-    println!("  unresolved packets: {}", index.unresolved_packets);
+    print_voice_index_summary(&index);
+    Ok(())
+}
+
+fn build_voice_session(input_path: &Path, output_path: &Path) -> Result<()> {
+    if !input_path.is_file() {
+        bail!("input demo does not exist: {}", input_path.display());
+    }
+    if input_path == output_path {
+        bail!("input and output paths must differ");
+    }
+
+    let index = parse_demo(input_path)?;
+    let source = render_panorama_source(&index);
+    let resource = build_panorama_vjs_resource(source.as_bytes())?;
+    let vpk = build_session_vpk(&resource)?;
+    write_output_bytes(output_path, &vpk)?;
+
+    println!("voice session VPK ready");
+    print_voice_index_summary(&index);
+    println!("  source bytes: {}", source.len());
+    println!("  resource bytes: {}", resource.len());
+    println!("  VPK bytes: {}", vpk.len());
     Ok(())
 }
 
@@ -293,8 +390,14 @@ fn run() -> Result<()> {
         [_, command, input, output] if command == "pack-vpk" => {
             pack_session_vpk(Path::new(input), Path::new(output))
         }
+        [_, command, input, output] if command == "compile-vjs" => {
+            compile_panorama_vjs(Path::new(input), Path::new(output))
+        }
+        [_, command, input, output] if command == "build-session-vpk" => {
+            build_voice_session(Path::new(input), Path::new(output))
+        }
         _ => bail!(
-            "usage: swift-demo-voice-indexer <input.dem> <output.vjs>\n       swift-demo-voice-indexer pack-vpk <input.vjs_c> <output.vpk>"
+            "usage: swift-demo-voice-indexer <input.dem> <output.vjs>\n       swift-demo-voice-indexer compile-vjs <input.vjs> <output.vjs_c>\n       swift-demo-voice-indexer pack-vpk <input.vjs_c> <output.vpk>\n       swift-demo-voice-indexer build-session-vpk <input.dem> <output.vpk>"
         ),
     }
 }
@@ -348,10 +451,10 @@ mod tests {
         index.record_voice(6, 101);
         let source = render_panorama_source(&index);
         assert!(source.is_ascii());
-        assert!(source.contains("var SwiftDemoVoiceData ="));
+        assert!(source.contains("var SwiftDemoVoiceData="));
         assert!(source.contains("\"generated\":true"));
         assert!(source.contains("\"6\":[100,101]"));
-        assert!(source.ends_with("}};\n"));
+        assert!(source.ends_with("}};"));
     }
 
     #[test]
@@ -373,5 +476,50 @@ mod tests {
             .windows(b"panorama/scripts/hud".len())
             .any(|window| window == b"panorama/scripts/hud"));
         assert_eq!(&vpk[12 + tree_length..], resource);
+    }
+
+    #[test]
+    fn builds_minimal_panorama_vjs_version_4_resource() {
+        let source = b"\"use strict\";\nvar SwiftDemoVoiceData={};\n";
+        let resource = build_panorama_vjs_resource(source).expect("vjs resource should build");
+
+        assert_eq!(
+            u32::from_le_bytes(resource[0..4].try_into().unwrap()) as usize,
+            resource.len()
+        );
+        assert_eq!(
+            u32::from_le_bytes(resource[4..8].try_into().unwrap()),
+            SOURCE2_VJS_HEADER_VERSION
+        );
+        assert_eq!(
+            u32::from_le_bytes(resource[8..12].try_into().unwrap()),
+            SOURCE2_RESOURCE_VERSION
+        );
+        assert_eq!(u32::from_le_bytes(resource[12..16].try_into().unwrap()), 2);
+        assert_eq!(&resource[16..20], b"RED2");
+        assert_eq!(u32::from_le_bytes(resource[20..24].try_into().unwrap()), 28);
+        assert_eq!(u32::from_le_bytes(resource[24..28].try_into().unwrap()), 0);
+        assert_eq!(&resource[28..32], b"DATA");
+        assert_eq!(u32::from_le_bytes(resource[32..36].try_into().unwrap()), 16);
+        assert_eq!(
+            u32::from_le_bytes(resource[36..40].try_into().unwrap()) as usize,
+            source.len()
+        );
+        assert!(resource[40..48].iter().all(|byte| *byte == 0));
+        assert_eq!(&resource[48..], source);
+    }
+
+    #[test]
+    fn packs_compiled_panorama_voice_resource() {
+        let source = render_panorama_source(&VoiceIndex::default());
+        let resource = build_panorama_vjs_resource(source.as_bytes()).unwrap();
+        let vpk = build_session_vpk(&resource).unwrap();
+        let tree_length = u32::from_le_bytes(vpk[8..12].try_into().unwrap()) as usize;
+        let embedded = &vpk[12 + tree_length..];
+        assert_eq!(embedded, resource);
+        assert_eq!(
+            u32::from_le_bytes(embedded[4..8].try_into().unwrap()),
+            SOURCE2_VJS_HEADER_VERSION
+        );
     }
 }
