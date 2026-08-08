@@ -142,6 +142,17 @@ var SwiftDemoVoice = (function () {
 		return result;
 	}
 
+	function _FilterSpeakingSlotsForSelection(slots) {
+		var result = [];
+		if (!slots || _selectionMode === "none") return result;
+		for (var index = 0; index < slots.length; index++) {
+			var slot = _NormalizeSlot(slots[index]);
+			if (slot < 0) continue;
+			if (_selectionMode === "all" || _selectedSlots[slot]) result.push(slot);
+		}
+		return result;
+	}
+
 	function _PlayerBySlot(slot) {
 		for (var index = 0; index < _players.length; index++) {
 			if (_players[index].slot === slot) return _players[index];
@@ -231,7 +242,9 @@ var SwiftDemoVoice = (function () {
 		try {
 			data = _GetVoiceData();
 			state = _GetDemoState();
-			slots = data && state ? _SpeakingSlotsForTick(state.nTick, data) : [];
+			slots = data && state
+				? _FilterSpeakingSlotsForSelection(_SpeakingSlotsForTick(state.nTick, data))
+				: [];
 			_RenderSpeakingPlayers(slots);
 			_UpdateVoiceIndexStatus(data, state, slots, "");
 			if (data && !_voiceDataLogged) {
@@ -913,6 +926,7 @@ var SwiftDemoVoice = (function () {
 		FocusPlayer: FocusPlayer,
 		RoundNumberForTick: _RoundNumberForTick,
 		SpeakingSlotsForTick: _SpeakingSlotsForTick,
+		FilterSpeakingSlotsForSelection: _FilterSpeakingSlotsForSelection,
 		JumpToRound: JumpToRound,
 		ToggleRoundPicker: ToggleRoundPicker,
 		Refresh: Refresh,

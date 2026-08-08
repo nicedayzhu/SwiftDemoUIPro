@@ -148,6 +148,7 @@ if (!/swift_demo_voice_data\.vjs_c/.test(layout)
 	|| !/_UpdateVoiceIndexStatus/.test(source)
 	|| !/_SpeakingPlayerForSlot/.test(source)
 	|| !/SpeakingSlotsForTick/.test(source)
+	|| !/FilterSpeakingSlotsForSelection/.test(source)
 	|| !/swift-demo-speaking-player/.test(style)
 	|| !/swift-demo-voice__index-status/.test(style)
 	|| !/generated:\s*false/.test(dataSource)) {
@@ -297,6 +298,26 @@ if (players.length !== 2 || players[0].slot !== 3 || players[0].team !== "TERROR
 	throw new Error("demo player discovery/fallback failed: " + JSON.stringify(players));
 }
 context.SwiftDemoVoice.Refresh(false);
+
+function assertVisibleSpeakers(expected, label) {
+	var actual = context.SwiftDemoVoice.FilterSpeakingSlotsForSelection([3, 8, 40]);
+	if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+		throw new Error(label + " speaker HUD filter failed: " + JSON.stringify(actual));
+	}
+}
+
+context.SwiftDemoVoice.SelectAll();
+assertVisibleSpeakers([3, 8, 40], "all voices");
+context.SwiftDemoVoice.SelectNone();
+assertVisibleSpeakers([], "muted voices");
+context.SwiftDemoVoice.SelectTeam("TERRORIST");
+assertVisibleSpeakers([3], "T only");
+context.SwiftDemoVoice.SelectTeam("CT");
+assertVisibleSpeakers([8], "CT only");
+context.SwiftDemoVoice.SelectNone();
+context.SwiftDemoVoice.TogglePlayer(8, "Fallback Name");
+assertVisibleSpeakers([8], "single player");
+context.SwiftDemoVoice.SelectAll();
 
 commands.length = 0;
 if (context.SwiftDemoVoice.AccountIdFromXuid("76561198000000123") !== 39734395) {
