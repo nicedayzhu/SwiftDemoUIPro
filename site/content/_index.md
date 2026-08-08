@@ -35,7 +35,7 @@ sections:
         alt: CS2 Demo 回放中，Swift DemoUI Pro 显示语音控制面板和正在说话的玩家头像
     design:
       layout: split-left
-      size: none
+      no_padding: true
       css_class: "dark swift-hero"
       background:
         color: "#0b0f14"
