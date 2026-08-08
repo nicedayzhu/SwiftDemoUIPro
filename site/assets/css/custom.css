@@ -28,8 +28,7 @@ body {
 
 .page-header {
   border-bottom: 1px solid var(--swift-rule);
-  background: rgb(16 18 16 / 96%);
-  backdrop-filter: blur(10px);
+  background: var(--swift-bg);
 }
 
 #site-header .navbar {
