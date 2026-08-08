@@ -30,12 +30,9 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 24
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          package_json_file: site/package.json
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
 
       - name: Set up Hugo
         uses: peaceiris/actions-hugo@v3
@@ -45,7 +42,7 @@ jobs:
 
       - name: Install website dependencies
         working-directory: site
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Configure GitHub Pages
         id: pages

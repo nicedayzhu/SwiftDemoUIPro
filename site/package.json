@@ -2,7 +2,6 @@
   "name": "swiftdemouipro-hugo-site",
   "version": "0.1.2",
   "private": true,
-  "packageManager": "pnpm@10.14.0",
   "description": "Swift DemoUI Pro promotional website built with Hugo Blox",
   "scripts": {
     "dev": "hugo server --disableFastRender",
