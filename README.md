@@ -34,6 +34,7 @@ The added panel keeps the native timeline and playback controls available while 
 - Controls recorded voice for everyone, T only, CT only, or individual players across all 64 display slots.
 - Parses recorded `VoiceData` before launch and shows active speakers by Demo tick without modifying the Demo or patching `client.dll`.
 - Compiles the per-Demo Panorama voice index and session VPK with the bundled Rust sidecar; players do not need Valve's ResourceCompiler or VPKEdit.
+- Prepares large Demos and voice indexes in the background, with visible stage feedback instead of freezing the launcher window.
 - Switches to a live player's first-person POV after validating the target.
 - Jumps directly to the beginning of any recorded round.
 - Supports English and Simplified Chinese: the launcher follows the system language, while the in-game DemoUI automatically follows the CS2 interface language.

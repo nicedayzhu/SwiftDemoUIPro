@@ -21,7 +21,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Network Widgets LinguistTools)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Concurrent Core Gui Network Widgets LinguistTools)
 find_package(Git QUIET)
 
 set(SWIFT_DEMOUI_GIT_COMMIT "unknown")
@@ -82,6 +82,7 @@ endif()
 target_include_directories(SwiftDemoLauncher PRIVATE "${SWIFT_DEMOUI_GENERATED_DIR}")
 target_link_libraries(SwiftDemoLauncher PRIVATE
     swift_demo_launcher_core
+    Qt6::Concurrent
     Qt6::Gui
     Qt6::Widgets
 )

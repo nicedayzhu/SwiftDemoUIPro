@@ -13,6 +13,7 @@ class QDragLeaveEvent;
 class QDropEvent;
 class QFrame;
 class QLabel;
+class QProgressBar;
 class QPushButton;
 class QResizeEvent;
 class QStackedWidget;
@@ -67,6 +68,7 @@ private:
     QString lastStatus_;
     QString currentLanguage_;
     bool trueViewEnabled_ = false;
+    bool demoPreparationInProgress_ = false;
     bool updateCheckInProgress_ = false;
     bool updateBubbleDismissed_ = false;
     UpdateInfo updateInfo_;
@@ -83,6 +85,7 @@ private:
     QLabel *cs2Path_ = nullptr;
     QLabel *vpkStatus_ = nullptr;
     QLabel *statusLabel_ = nullptr;
+    QProgressBar *preparationProgress_ = nullptr;
     QLabel *updateStatus_ = nullptr;
     QLabel *updateBubbleText_ = nullptr;
     QPushButton *chooseDemoButton_ = nullptr;

@@ -15,7 +15,7 @@ The launcher keeps the playback workflow on one page: choose a Demo, review the 
 1. Select or drag in a `.dem` file or `.zip` archive. A ZIP containing one Demo is selected automatically; if it contains several, choose one from the displayed list.
 2. Confirm the automatically detected CS2 path, or choose a different installation.
 3. Leave **TrueView prediction** off for maximum compatibility. This writes `cl_demo_predict 0` to the temporary CFG and prevents prediction flicker in Demos without TrueView command data. Enable it only for a supported recording; the preference is remembered.
-4. Select **Start Watching Demo**. The launcher installs/verifies the VPK, copies the Demo—or streams only the selected ZIP entry—into a dedicated staging directory, then asks the bundled Rust sidecar to parse `SvcVoiceData`, compile the session-only Panorama data resource, and write its VPK. It creates `swift_demo_launcher.cfg` and runs:
+4. Select **Start Watching Demo**. The launcher performs the potentially slow staging and voice-index work on a background thread, keeps the window responsive, and reports each preparation stage. It installs/verifies the VPK, copies the Demo—or streams only the selected ZIP entry—into a dedicated staging directory, then asks the bundled Rust sidecar to parse `SvcVoiceData`, compile the session-only Panorama data resource, and write its VPK. It creates `swift_demo_launcher.cfg` and runs:
 
    ```text
    steam.exe -applaunch 730 -insecure -novid +exec swift_demo_launcher.cfg

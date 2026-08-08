@@ -15,7 +15,7 @@
 1. 选择或拖入一个 `.dem` 文件或 `.zip` 压缩包。ZIP 中只有一个 Demo 时会自动选择；存在多个时，请从列表中选择一个。
 2. 确认自动检测到的 CS2 路径，必要时选择其他安装目录。
 3. 为获得最佳兼容性，建议保持 **TrueView 预测**关闭。启动器会在临时 CFG 中写入 `cl_demo_predict 0`，避免缺少 TrueView 指令数据的 Demo 出现预测闪烁。只有确认录像支持时再启用；启动器会记住该选项。
-4. 点击**开始观看 Demo**。启动器会安装/校验 VPK，把 Demo 复制到专用临时目录；如果选择的是 ZIP，则只流式写入所选条目。随后由内置 Rust 辅助程序解析 `SvcVoiceData`、编译会话专用 Panorama 数据资源并写入 VPK，再创建 `swift_demo_launcher.cfg` 并执行：
+4. 点击**开始观看 Demo**。启动器会在后台线程完成可能较慢的暂存和语音索引，窗口保持响应并显示当前准备阶段。随后会安装/校验 VPK，把 Demo 复制到专用临时目录；如果选择的是 ZIP，则只流式写入所选条目，再由内置 Rust 辅助程序解析 `SvcVoiceData`、编译会话专用 Panorama 数据资源并写入 VPK，最后创建 `swift_demo_launcher.cfg` 并执行：
 
    ```text
    steam.exe -applaunch 730 -insecure -novid +exec swift_demo_launcher.cfg

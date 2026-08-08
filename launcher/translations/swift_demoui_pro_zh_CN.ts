@@ -20,12 +20,12 @@
     </message>
     <message>
         <location line="+26"/>
-        <location line="+262"/>
+        <location line="+336"/>
         <source>Unable to create directory: %1</source>
         <translation>无法创建目录：%1</translation>
     </message>
     <message>
-        <location line="-252"/>
+        <location line="-326"/>
         <source>Failed to copy file: %1</source>
         <translation>复制文件失败：%1</translation>
     </message>
@@ -40,7 +40,7 @@
         <translation>无法完成文件安装：%1</translation>
     </message>
     <message>
-        <location line="+89"/>
+        <location line="+163"/>
         <source>Unable to open the ZIP archive: %1</source>
         <translation>无法打开 ZIP 压缩包：%1</translation>
     </message>
@@ -147,17 +147,18 @@
         <translation>所选目录不是有效的 CS2 安装目录。请选择 Counter-Strike Global Offensive、game 或 game\csgo 目录。</translation>
     </message>
     <message>
-        <location line="+96"/>
+        <location line="+162"/>
         <source>The base &apos;Game csgo&apos; SearchPath was not found in gameinfo.gi. Installation was stopped to avoid damaging the file.</source>
         <translation>gameinfo.gi 中找不到基础的 &apos;Game csgo&apos; SearchPath，已停止安装以避免破坏文件。</translation>
     </message>
     <message>
         <location line="+25"/>
+        <location line="+118"/>
         <source>The CS2 installation folder is invalid.</source>
         <translation>CS2 安装目录无效。</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="-116"/>
         <source>The DemoUI VPK was not found. Build the project first, or place %1 next to the launcher.</source>
         <translation>找不到 DemoUI VPK。请先构建项目，或将 %1 放在启动器旁边。</translation>
     </message>
@@ -227,7 +228,7 @@
         <translation>Demo 与启动配置已准备完成。</translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="+75"/>
         <source>Unable to start Steam/CS2. Make sure Steam is installed and try running the launcher as administrator.</source>
         <translation>无法启动 Steam/CS2。请确认 Steam 已安装并尝试以管理员身份运行启动器。</translation>
     </message>
@@ -262,7 +263,7 @@
         <translation>无法删除 Demo 会话标记。</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+17"/>
         <source>Unable to remove the copied Demo file.</source>
         <translation>无法删除复制的 Demo 文件。</translation>
     </message>
@@ -272,66 +273,79 @@
         <translation>Demo 模式已停止。VPK 与临时文件均已移除，现在可以从 Steam 正常启动 CS2。</translation>
     </message>
     <message>
+        <location line="-791"/>
         <source>Refusing to remove an unexpected voice-session directory: %1</source>
         <translation>拒绝删除非预期的语音会话目录：%1</translation>
     </message>
     <message>
+        <location line="+10"/>
         <source>Unable to remove the temporary voice-session directory: %1</source>
         <translation>无法删除临时语音会话目录：%1</translation>
     </message>
     <message>
+        <location line="+18"/>
         <source>Unable to start %1: %2</source>
         <translation>无法启动 %1：%2</translation>
     </message>
     <message>
+        <location line="+6"/>
         <source>%1 timed out while preparing parsed voice status data.</source>
         <translation>%1 在准备已解析的语音状态数据时超时。</translation>
     </message>
     <message>
-        <source>%1 failed with exit code %2.&#10;%3</source>
-        <translation>%1 执行失败，退出代码为 %2。&#10;%3</translation>
+        <location line="+7"/>
+        <source>%1 failed with exit code %2.
+%3</source>
+        <translation>%1 执行失败，退出代码为 %2。
+%3</translation>
     </message>
     <message>
+        <location line="+630"/>
         <source>The Demo voice indexer was not found. Rebuild or reinstall Swift DemoUI Pro.</source>
         <translation>找不到 Demo 语音索引器。请重新构建或重新安装 Swift DemoUI Pro。</translation>
     </message>
     <message>
         <source>CS2 resourcecompiler.exe was not found, so parsed voice status data cannot be prepared.</source>
-        <translation>找不到 CS2 resourcecompiler.exe，无法准备已解析的语音状态数据。</translation>
+        <translation type="vanished">找不到 CS2 resourcecompiler.exe，无法准备已解析的语音状态数据。</translation>
     </message>
     <message>
+        <location line="+5"/>
         <source>The staged Demo is missing, so parsed voice status data cannot be prepared.</source>
         <translation>找不到已暂存的 Demo，无法准备已解析的语音状态数据。</translation>
     </message>
     <message>
         <source>Unable to create the temporary voice-index workspace.</source>
-        <translation>无法创建临时语音索引工作目录。</translation>
+        <translation type="vanished">无法创建临时语音索引工作目录。</translation>
     </message>
     <message>
+        <location line="+13"/>
         <source>Demo voice indexer</source>
         <translation>Demo 语音索引器</translation>
     </message>
     <message>
         <source>CS2 ResourceCompiler</source>
-        <translation>CS2 ResourceCompiler</translation>
+        <translation type="vanished">CS2 ResourceCompiler</translation>
     </message>
     <message>
         <source>CS2 ResourceCompiler did not create the parsed voice status resource.</source>
-        <translation>CS2 ResourceCompiler 未生成已解析的语音状态资源。</translation>
+        <translation type="vanished">CS2 ResourceCompiler 未生成已解析的语音状态资源。</translation>
     </message>
     <message>
         <source>Demo voice VPK packer</source>
-        <translation>Demo 语音 VPK 打包器</translation>
+        <translation type="vanished">Demo 语音 VPK 打包器</translation>
     </message>
     <message>
+        <location line="+3"/>
         <source>The Demo voice packer did not create the session VPK.</source>
         <translation>Demo 语音打包器未生成会话 VPK。</translation>
     </message>
     <message>
+        <location line="+82"/>
         <source>Unable to remove the Demo voice session VPK.</source>
         <translation>无法删除 Demo 语音会话 VPK。</translation>
     </message>
     <message>
+        <location line="-77"/>
         <source>Parsed Demo voice status data is ready.</source>
         <translation>已解析的 Demo 语音状态数据已准备完成。</translation>
     </message>
@@ -339,7 +353,7 @@
 <context>
     <name>LauncherWindow</name>
     <message>
-        <location filename="../src/LauncherWindow.cpp" line="+230"/>
+        <location filename="../src/LauncherWindow.cpp" line="+234"/>
         <source>CS2 Demo Tool</source>
         <translation>CS2 回放工具</translation>
     </message>
@@ -356,23 +370,23 @@
     </message>
     <message>
         <location line="-66"/>
-        <location line="+207"/>
+        <location line="+214"/>
         <source>DemoUI Management</source>
         <translation>DemoUI 管理</translation>
     </message>
     <message>
-        <location line="-200"/>
+        <location line="-207"/>
         <source>More</source>
         <translation>其他</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+284"/>
+        <location line="+291"/>
         <source>About</source>
         <translation>关于</translation>
     </message>
     <message>
-        <location line="-280"/>
+        <location line="-287"/>
         <source>Interface language</source>
         <translation>界面语言</translation>
     </message>
@@ -396,12 +410,12 @@
     </message>
     <message>
         <location line="+15"/>
-        <location line="+1191"/>
+        <location line="+1263"/>
         <source>✓</source>
         <translation>✓</translation>
     </message>
     <message>
-        <location line="-1161"/>
+        <location line="-1233"/>
         <source>Choose Demo</source>
         <translation>选择录像</translation>
     </message>
@@ -429,7 +443,7 @@
         <translation>正在检查环境...</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+29"/>
         <location line="+5"/>
         <source>Enabled</source>
         <translation>已开启</translation>
@@ -442,11 +456,12 @@
     </message>
     <message>
         <location line="+9"/>
+        <location line="+1196"/>
         <source>Start playback</source>
         <translation>开始观看</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="-1189"/>
         <source>Stop and restore</source>
         <translation>停止观看并恢复</translation>
     </message>
@@ -487,12 +502,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+761"/>
+        <location line="+770"/>
         <source>Checking...</source>
         <translation>正在检查...</translation>
     </message>
     <message>
-        <location line="-757"/>
+        <location line="-766"/>
         <source>Install / Repair</source>
         <translation>安装 / 修复</translation>
     </message>
@@ -566,7 +581,7 @@
         <translation>为 CS2 Demo 社区而制作</translation>
     </message>
     <message>
-        <location line="+512"/>
+        <location line="+521"/>
         <source>Unable to switch language</source>
         <translation>无法切换语言</translation>
     </message>
@@ -607,7 +622,7 @@
         <translation type="vanished">请选择有效的 CS2 .dem 文件。</translation>
     </message>
     <message>
-        <location line="-1068"/>
+        <location line="-1084"/>
         <source>Swift DemoUI Pro · %1</source>
         <translation>Swift DemoUI Pro · %1</translation>
     </message>
@@ -627,7 +642,7 @@
         <translation>支持 CS2 .dem 文件和 ZIP 压缩包</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+40"/>
         <source>TrueView prediction</source>
         <translation>TrueView 预测</translation>
     </message>
@@ -641,12 +656,12 @@
         <translation type="vanished">版本 %1（%2）· Qt 6 Widgets</translation>
     </message>
     <message>
-        <location line="-237"/>
+        <location line="-244"/>
         <source>Downloading DemoUI update... %1%</source>
         <translation>正在下载 DemoUI 更新……%1%</translation>
     </message>
     <message>
-        <location line="+398"/>
+        <location line="+405"/>
         <source>Launcher %1 (%2) · DemoUI %3 · Qt 6 Widgets</source>
         <translation>启动器 %1（%2）· DemoUI %3 · Qt 6 Widgets</translation>
     </message>
@@ -657,12 +672,12 @@
     </message>
     <message>
         <location line="+7"/>
-        <location line="+689"/>
+        <location line="+698"/>
         <source>Check for updates</source>
         <translation>检查更新</translation>
     </message>
     <message>
-        <location line="-607"/>
+        <location line="-616"/>
         <source>View</source>
         <translation>查看</translation>
     </message>
@@ -672,7 +687,7 @@
         <translation>关闭提示</translation>
     </message>
     <message>
-        <location line="+527"/>
+        <location line="+536"/>
         <source>Downloading DemoUI update...</source>
         <translation>正在下载 DemoUI 更新……</translation>
     </message>
@@ -815,7 +830,7 @@ Demo：%2</translation>
         <translation>CS2 运行时不会替换 VPK。请完全退出游戏后再安装或修复。</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+14"/>
         <source>Not ready</source>
         <translation>尚未准备好</translation>
     </message>
@@ -860,12 +875,32 @@ The launcher does not change permanent Steam launch options.</source>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+162"/>
+        <location line="+232"/>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
     <message>
-        <location line="-137"/>
+        <location line="-222"/>
+        <source>Preparing the DemoUI component...</source>
+        <translation>正在准备 DemoUI 组件...</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Preparing the Demo file...</source>
+        <translation>正在准备 Demo 文件...</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Analyzing Demo voice data... Large files may take a moment.</source>
+        <translation>正在分析 Demo 语音数据... 大文件可能需要一些时间。</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Voice data is ready. Starting CS2...</source>
+        <translation>语音数据已准备完成，正在启动 CS2...</translation>
+    </message>
+    <message>
+        <location line="+65"/>
         <source>Demo session is still active</source>
         <translation>仍处于 Demo 会话</translation>
     </message>
@@ -880,7 +915,7 @@ The launcher does not change permanent Steam launch options.</source>
         <translation>操作未完成</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+28"/>
         <source>Waiting for the CS2 path</source>
         <translation>等待设置 CS2 路径</translation>
     </message>
@@ -895,7 +930,22 @@ The launcher does not change permanent Steam launch options.</source>
         <translation>未安装 · 启动时自动处理</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+7"/>
+        <source>Preparing...</source>
+        <translation>正在准备...</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Preparing Demo</source>
+        <translation>正在准备 Demo</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>The launcher is copying and analyzing the Demo in the background. You can continue using the window.</source>
+        <translation>启动器正在后台复制并分析 Demo，窗口仍可正常使用。</translation>
+    </message>
+    <message>
+        <location line="+3"/>
         <source>Path required</source>
         <translation>需要设置路径</translation>
     </message>
@@ -981,6 +1031,16 @@ The launcher does not change permanent Steam launch options.</source>
     </message>
     <message>
         <location line="+65"/>
+        <source>Demo preparation is in progress</source>
+        <translation>正在准备 Demo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Please wait for Demo preparation to finish before closing the launcher.</source>
+        <translation>请等待 Demo 准备完成后再关闭启动器。</translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Demo mode has not been cleaned up</source>
         <translation>Demo 模式尚未清理</translation>
     </message>
@@ -1002,12 +1062,12 @@ After watching, exit CS2, reopen the launcher, and stop Demo playback.</source>
 <context>
     <name>UpdateService</name>
     <message>
-        <location filename="../src/UpdateService.cpp" line="+120"/>
+        <location filename="../src/UpdateService.cpp" line="+126"/>
         <source>GitHub API rate limit reached. Please try again later.</source>
         <translation>已达到 GitHub API 访问频率限制，请稍后再试。</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+17"/>
         <source>GitHub returned an invalid JSON response (HTTP %1, %2, %3 bytes).</source>
         <translation>GitHub 返回了无效的 JSON 响应（HTTP %1，%2，%3 字节）。</translation>
     </message>

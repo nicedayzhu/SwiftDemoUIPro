@@ -13,6 +13,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFrame>
+#include <QFutureWatcher>
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QInputDialog>
@@ -22,6 +23,8 @@
 #include <QMimeData>
 #include <QPainter>
 #include <QPolygonF>
+#include <QPointer>
+#include <QProgressBar>
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QSettings>
@@ -31,6 +34,7 @@
 #include <QTranslator>
 #include <QUrl>
 #include <QVBoxLayout>
+#include <QtConcurrent/QtConcurrentRun>
 
 #include <algorithm>
 #include <utility>
@@ -397,6 +401,13 @@ void LauncherWindow::buildInterface()
     statusLabel_->setProperty("state", QStringLiteral("neutral"));
     statusLabel_->setWordWrap(true);
     actions->addWidget(statusLabel_);
+    preparationProgress_ = new QProgressBar(actionCard);
+    preparationProgress_->setObjectName(QStringLiteral("PreparationProgress"));
+    preparationProgress_->setRange(0, 0);
+    preparationProgress_->setTextVisible(false);
+    preparationProgress_->setFixedHeight(4);
+    preparationProgress_->hide();
+    actions->addWidget(preparationProgress_);
 
     auto *trueViewRow = new QFrame(actionCard);
     trueViewRow->setObjectName(QStringLiteral("SettingsRow"));
@@ -934,6 +945,15 @@ void LauncherWindow::applyStyle()
         QLabel#StatusText[state="safe"] { color: #168557; }
         QLabel#StatusText[state="active"] { color: #966315; }
         QLabel#StatusText[state="danger"] { color: #bd3b45; }
+        QProgressBar#PreparationProgress {
+            border: none;
+            border-radius: 2px;
+            background: #e8edf4;
+        }
+        QProgressBar#PreparationProgress::chunk {
+            border-radius: 2px;
+            background: #347fd8;
+        }
         QFrame#InfoCard {
             border: 1px solid #e6e9ed;
             border-radius: 12px;
@@ -1467,6 +1487,9 @@ void LauncherWindow::installOrRepairMenu()
 
 void LauncherWindow::startWatchingDemo()
 {
+    if (demoPreparationInProgress_)
+        return;
+
     if (!paths_.isValid() || demoPath_.isEmpty()) {
         QMessageBox::warning(this, tr("Not ready"), tr("Choose a valid Demo and confirm the CS2 installation folder first."));
         return;
@@ -1489,27 +1512,74 @@ void LauncherWindow::startWatchingDemo()
     if (confirmation.clickedButton() != continueButton)
         return;
 
+    const Cs2Paths paths = paths_;
+    const QString demoPath = demoPath_;
+    const QString archiveEntry = demoArchiveEntry_;
+    const bool trueViewEnabled = trueViewEnabled_;
     const QString vpk = UpdateService::preferredMenuVpk();
-    LauncherResult result = Cs2Manager::installOverride(paths_, vpk);
-    if (!result.ok) {
-        showResult(result);
-        return;
-    }
-    result = Cs2Manager::prepareDemoSession(paths_, demoPath_, demoArchiveEntry_, trueViewEnabled_);
-    if (!result.ok) {
-        showResult(result);
-        refreshState();
-        return;
-    }
-    result = Cs2Manager::prepareVoiceStatusData(paths_);
-    if (!result.ok) {
-        showResult(result);
-        refreshState();
-        return;
-    }
-    result = Cs2Manager::launchDemo(paths_);
-    showResult(result);
+    const QString installStage = tr("Preparing the DemoUI component...");
+    const QString stagingStage = tr("Preparing the Demo file...");
+    const QString voiceStage = tr("Analyzing Demo voice data... Large files may take a moment.");
+    const QString launchStage = tr("Voice data is ready. Starting CS2...");
+
+    demoPreparationInProgress_ = true;
+    lastStatus_ = installStage;
+    if (stateTimer_)
+        stateTimer_->stop();
     refreshState();
+
+    const QPointer<LauncherWindow> window(this);
+    const auto reportStage = [window](const QString &message) {
+        if (!window)
+            return;
+        QMetaObject::invokeMethod(window, [window, message]() {
+            if (!window || !window->demoPreparationInProgress_)
+                return;
+            window->lastStatus_ = message;
+            window->statusLabel_->setText(message);
+        }, Qt::QueuedConnection);
+    };
+
+    auto *watcher = new QFutureWatcher<LauncherResult>(this);
+    connect(watcher, &QFutureWatcher<LauncherResult>::finished, this, [this, watcher]() {
+        const LauncherResult result = watcher->result();
+        watcher->deleteLater();
+        demoPreparationInProgress_ = false;
+        if (stateTimer_)
+            stateTimer_->start();
+        showResult(result);
+        refreshState();
+    });
+    watcher->setFuture(QtConcurrent::run([
+        paths,
+        demoPath,
+        archiveEntry,
+        trueViewEnabled,
+        vpk,
+        installStage,
+        stagingStage,
+        voiceStage,
+        launchStage,
+        reportStage
+    ]() {
+        reportStage(installStage);
+        LauncherResult result = Cs2Manager::installOverride(paths, vpk);
+        if (!result.ok)
+            return result;
+
+        reportStage(stagingStage);
+        result = Cs2Manager::prepareDemoSession(paths, demoPath, archiveEntry, trueViewEnabled);
+        if (!result.ok)
+            return result;
+
+        reportStage(voiceStage);
+        result = Cs2Manager::prepareVoiceStatusData(paths);
+        if (!result.ok)
+            return result;
+
+        reportStage(launchStage);
+        return Cs2Manager::launchDemo(paths);
+    }));
 }
 
 void LauncherWindow::stopWatchingDemo()
@@ -1552,6 +1622,7 @@ void LauncherWindow::refreshState()
     const bool running = valid && Cs2Manager::isCs2Running();
     const bool installed = valid && Cs2Manager::isOverrideInstalled(paths_);
     const bool active = valid && Cs2Manager::isSessionActive(paths_);
+    const bool preparing = demoPreparationInProgress_;
 
     if (valid)
         cs2Path_->setText(QDir::toNativeSeparators(paths_.cs2Root));
@@ -1560,14 +1631,21 @@ void LauncherWindow::refreshState()
                                : installed ? tr("Installed and ready") : tr("Not installed · handled automatically at launch"));
     repolish(vpkStatus_);
 
-    chooseDemoButton_->setEnabled(!active);
-    chooseCs2Button_->setEnabled(!running && !active);
-    installButton_->setEnabled(valid && !running && !active);
-    startButton_->setEnabled(valid && !demoPath_.isEmpty() && !running && !active);
-    stopButton_->setEnabled(valid && !running && (active || installed));
-    trueViewCheckBox_->setEnabled(!running && !active);
+    chooseDemoButton_->setEnabled(!preparing && !active);
+    chooseCs2Button_->setEnabled(!preparing && !running && !active);
+    installButton_->setEnabled(!preparing && valid && !running && !active);
+    startButton_->setEnabled(!preparing && valid && !demoPath_.isEmpty() && !running && !active);
+    startButton_->setText(preparing ? tr("Preparing...") : tr("Start playback"));
+    stopButton_->setEnabled(!preparing && valid && !running && (active || installed));
+    trueViewCheckBox_->setEnabled(!preparing && !running && !active);
+    languageCombo_->setEnabled(!preparing);
+    preparationProgress_->setVisible(preparing);
+    setAcceptDrops(!preparing);
 
-    if (!valid) {
+    if (preparing) {
+        setSecurityState(QStringLiteral("active"), tr("Preparing Demo"), tr("The launcher is copying and analyzing the Demo in the background. You can continue using the window."));
+        statusLabel_->setText(lastStatus_);
+    } else if (!valid) {
         setSecurityState(QStringLiteral("danger"), tr("Path required"), tr("No valid CS2 installation was found. Select Change to choose it manually."));
         statusLabel_->setText(lastStatus_);
     } else if (active && running) {
@@ -1646,6 +1724,15 @@ void LauncherWindow::dropEvent(QDropEvent *event)
 
 void LauncherWindow::closeEvent(QCloseEvent *event)
 {
+    if (demoPreparationInProgress_) {
+        QMessageBox::information(
+            this,
+            tr("Demo preparation is in progress"),
+            tr("Please wait for Demo preparation to finish before closing the launcher."));
+        event->ignore();
+        return;
+    }
+
     if (paths_.isValid() && (Cs2Manager::isSessionActive(paths_) || Cs2Manager::isOverrideInstalled(paths_))) {
         QMessageBox warning(this);
         warning.setIcon(QMessageBox::Warning);

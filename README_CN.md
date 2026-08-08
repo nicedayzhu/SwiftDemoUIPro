@@ -34,6 +34,7 @@ Swift DemoUI Pro 是一款非官方的 Counter-Strike 2 Demo 与 HLTV 回放客�
 - 支持全部 64 个显示槽位，可收听全部、仅 T、仅 CT 或单独玩家的已录制语音。
 - 启动前解析已录制的 `VoiceData`，按 Demo tick 显示正在说话的玩家，无需修改 Demo，也不 patch `client.dll`。
 - 每个 Demo 的 Panorama 语音索引和 session VPK 都由内置 Rust 辅助程序生成；玩家无需安装 Valve ResourceCompiler 或 VPKEdit。
+- 大型 Demo 的暂存和语音索引会在后台完成，并显示当前准备阶段，不会再冻结启动器窗口。
 - 核验目标后，一键切换到存活玩家的第一人称 POV。
 - 直接跳转到任意已录制回合的开头。
 - 支持英文和简体中文：启动器跟随系统语言，游戏内 DemoUI 自动跟随 CS2 的界面语言。
