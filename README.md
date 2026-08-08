@@ -2,6 +2,8 @@
 
 [English](README.md) | [简体中文](README_CN.md)
 
+[Official website](https://nicedayzhu.github.io/SwiftDemoUIPro/) · [Download latest release](https://github.com/nicedayzhu/SwiftDemoUIPro/releases/latest)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078D6.svg)](#quick-start)
 

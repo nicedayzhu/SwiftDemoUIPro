@@ -1,0 +1,8 @@
+build:
+  hugo_version: "0.162.0"
+deploy:
+  host: github-pages
+template:
+  id: saas-landing-page
+  name: SaaS Landing Page
+  source: https://github.com/HugoBlox/hugo-theme-saas-landing-page

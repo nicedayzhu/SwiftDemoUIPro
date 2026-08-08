@@ -2,6 +2,8 @@
 
 [English](README.md) | [简体中文](README_CN.md)
 
+[项目官网](https://nicedayzhu.github.io/SwiftDemoUIPro/) · [下载最新版本](https://github.com/nicedayzhu/SwiftDemoUIPro/releases/latest)
+
 [![许可证：MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![平台：Windows](https://img.shields.io/badge/Platform-Windows-0078D6.svg)](#快速开始)
 

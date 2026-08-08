@@ -1,0 +1,35 @@
+title: Swift DemoUI Pro
+baseURL: https://nicedayzhu.github.io/SwiftDemoUIPro/
+
+defaultContentLanguage: zh
+hasCJKLanguage: true
+defaultContentLanguageInSubdir: false
+removePathAccents: true
+
+build:
+  writeStats: true
+enableGitInfo: false
+enableEmoji: true
+enableRobotsTXT: true
+summaryLength: 30
+disableAliases: true
+timeout: 600000
+
+outputs:
+  home: [HTML, RSS]
+  section: [HTML, RSS]
+
+imaging:
+  resampleFilter: lanczos
+  quality: 90
+  anchor: smart
+  hint: picture
+
+markup:
+  _merge: deep
+
+security:
+  _merge: deep
+
+sitemap:
+  _merge: deep

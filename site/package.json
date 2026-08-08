@@ -1,0 +1,17 @@
+{
+  "name": "swiftdemouipro-hugo-site",
+  "version": "0.1.2",
+  "private": true,
+  "packageManager": "pnpm@11.5.1",
+  "description": "Swift DemoUI Pro promotional website built with Hugo Blox",
+  "scripts": {
+    "dev": "hugo server --disableFastRender",
+    "build": "hugo --gc --minify"
+  },
+  "dependencies": {
+    "@tailwindcss/cli": "4.2.4",
+    "@tailwindcss/typography": "0.5.19",
+    "preact": "10.29.1",
+    "tailwindcss": "4.2.4"
+  }
+}

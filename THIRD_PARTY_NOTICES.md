@@ -46,6 +46,15 @@ The launcher embeds Noto Sans SC from the Noto CJK project. The font is licensed
 
 - <https://github.com/notofonts/noto-cjk>
 
+## Promotional website
+
+The GitHub Pages promotional website under `site/` uses the MIT-licensed
+[Hugo Blox](https://github.com/HugoBlox/kit) framework and its official SaaS
+Landing Page template. Its build also uses the MIT-licensed
+[Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) toolchain and the
+MIT-licensed [Preact](https://github.com/preactjs/preact) runtime. The website
+keeps Hugo Blox attribution enabled.
+
 ## cs2-demo-opener Reference
 
 The Steam/CS2 launch flow was informed by the MIT-licensed [drjackild/cs2-demo-opener](https://github.com/drjackild/cs2-demo-opener). No 2D replay, demo parser, web frontend, or source files from that project are included.

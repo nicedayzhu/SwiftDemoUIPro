@@ -1,0 +1,117 @@
+hugoblox:
+  schema: "2.0"
+
+  identity:
+    name: Swift DemoUI Pro
+    organization: Swift DemoUI Pro
+    type: organization
+    tagline: 让 CS2 Demo 回放听得见，也看得懂。
+    description: >-
+      Swift DemoUI Pro 是免费的 Counter-Strike 2 Demo 回放增强工具，支持录制语音控制、
+      说话玩家头像、POV 切换、回合跳转，以及 .dem、.zip 和 .dem.zst 文件。
+    social:
+      links:
+        - icon: brands/github
+          url: https://github.com/nicedayzhu/SwiftDemoUIPro
+
+  theme:
+    mode: dark
+    pack: default
+    colors:
+      primary: "#e7aa35"
+      secondary: "#c97b24"
+      neutral: zinc
+    surfaces:
+      background: "#0b0f14"
+      foreground: "#e7eaf0"
+      header:
+        background: "#0b0f14"
+        foreground: "#f4f4f5"
+      footer:
+        background: "#080b0f"
+        foreground: "#a1a1aa"
+
+  typography:
+    pack: geometric
+
+  layout:
+    radius: md
+    spacing: comfortable
+    avatar_shape: rounded
+
+  header:
+    enable: true
+    block: navbar
+    sticky: true
+    show_logo: true
+    show_title: true
+    align: center
+    search: false
+    theme_toggle: false
+    theme_picker: false
+    language_switcher: false
+    cta:
+      enable: true
+      text: 下载 v0.1.2
+      url: https://github.com/nicedayzhu/SwiftDemoUIPro/releases/latest
+
+  footer:
+    style: minimal
+    show_logo: true
+    show_title: true
+    show_tagline: true
+    language_switcher: false
+    show_social: true
+    text: "非官方开源项目，与 Valve 或 FACEIT 无隶属或背书关系。"
+
+  copyright:
+    notice: "© {year} {name}. Original project code is MIT licensed."
+    license:
+      type: custom
+      allow_derivatives: true
+      share_alike: false
+      allow_commercial: true
+
+  seo:
+    title: Swift DemoUI Pro — CS2 Demo 回放增强工具
+
+  content:
+    math:
+      enable: false
+    toc:
+      enable: false
+    reading_time:
+      enable: false
+
+  search:
+    enable: false
+
+  comments:
+    enable: false
+    provider: ""
+
+  analytics:
+    google:
+      measurement_id: ""
+
+  repository:
+    enable: true
+    url: https://github.com/nicedayzhu/SwiftDemoUIPro
+    branch: main
+    content_dir: site/content
+
+  locale:
+    date_format: "2006年1月2日"
+    time_format: "15:04"
+    address_format: zh-cn
+
+  privacy:
+    enable: false
+    anonymize_analytics: true
+
+  debug:
+    enable: false
+
+  pro:
+    hide_attribution: false
+    affiliate_code: ""

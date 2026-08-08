@@ -1,0 +1,44 @@
+html {
+  scroll-behavior: smooth;
+}
+
+.swift-hero img,
+.swift-showcase img {
+  border: 1px solid rgb(255 255 255 / 10%);
+  background: #10151d;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 42%);
+}
+
+.swift-hero img {
+  border-radius: 0.9rem;
+}
+
+.swift-stats {
+  border-block: 1px solid rgb(255 255 255 / 8%);
+  background: #0e131a;
+}
+
+.swift-showcase,
+.swift-steps {
+  background: #0e131a;
+}
+
+.swift-capabilities,
+.swift-safety {
+  background: #0b0f14;
+}
+
+.swift-final-cta {
+  background: #080b0f;
+}
+
+code {
+  color: #f2bd5a;
+}
+
+@media (max-width: 768px) {
+  .swift-hero img,
+  .swift-showcase img {
+    box-shadow: 0 16px 44px rgb(0 0 0 / 36%);
+  }
+}
