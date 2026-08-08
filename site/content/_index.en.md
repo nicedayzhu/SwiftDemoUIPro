@@ -53,7 +53,7 @@ sections:
             url: https://github.com/nicedayzhu/SwiftDemoUIPro#using-the-in-game-panel
         - title: Choose a file, start playback
           text: >-
-            This is the shipping Windows launcher. Choose a `.dem`, `.zip`, or `.dem.zst`; it validates
+            This is the Windows launcher included with the release. Choose a `.dem`, `.zip`, or `.dem.zst`; it validates
             the file, prepares the voice index, and starts CS2 with a setup that can be restored afterward.
           feature_icon: check
           features:
