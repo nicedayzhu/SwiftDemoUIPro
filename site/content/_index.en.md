@@ -51,16 +51,16 @@ sections:
           button:
             text: In-game panel guide
             url: https://github.com/nicedayzhu/SwiftDemoUIPro#using-the-in-game-panel
-        - title: Open downloaded demos directly
+        - title: Choose a file, start playback
           text: >-
-            Drop a `.dem`, `.zip`, or `.dem.zst` into the launcher. Copying, decompression, validation,
-            and voice indexing run in the background.
+            This is the shipping Windows launcher. Choose a `.dem`, `.zip`, or `.dem.zst`; it validates
+            the file, prepares the voice index, and starts CS2 with a setup that can be restored afterward.
           feature_icon: check
           features:
-            - Handles FACEIT `.dem.zst` files without a separate zstd installation
-            - Switch POV by selecting a living player
-            - Seek to parsed round-start ticks
-          image: voice-panel-zh.webp
+            - Confirm the selected file, compression format, and session state on one screen
+            - Handle FACEIT `.dem.zst` files natively while large-file work stays in the background
+            - After exiting CS2, use “Stop and restore” to clean up the session
+          image: launcher-en.png
           button:
             text: Full usage guide
             url: https://github.com/nicedayzhu/SwiftDemoUIPro#quick-start

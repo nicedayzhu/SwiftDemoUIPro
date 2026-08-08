@@ -51,16 +51,16 @@ sections:
           button:
             text: 面板使用说明
             url: https://github.com/nicedayzhu/SwiftDemoUIPro#using-the-in-game-panel
-        - title: 从下载文件直接进入回放
+        - title: 选择文件，启动回放
           text: >-
-            把 `.dem`、`.zip` 或 `.dem.zst` 拖进启动器。复制、解压、格式检查与语音索引
-            都在后台完成，窗口不会因为大文件失去响应。
+            这里展示的是实际 Windows 启动器。选择 `.dem`、`.zip` 或 `.dem.zst` 后，
+            它会检查文件、准备语音索引，再以可还原的方式启动 CS2。
           feature_icon: check
           features:
-            - 原生处理 FACEIT 下载的 `.dem.zst`，无需另装 zstd
-            - 点击存活玩家即可切换第一视角
-            - 按已解析的回合起点定位时间轴
-          image: voice-panel-en.webp
+            - 在同一页确认所选文件、压缩格式与当前运行状态
+            - 原生处理 FACEIT 下载的 `.dem.zst`，大型文件在后台准备
+            - 完全退出 CS2 后，点击“停止观看并恢复”清理本次会话
+          image: launcher-zh.png
           button:
             text: 查看完整使用流程
             url: https://github.com/nicedayzhu/SwiftDemoUIPro#quick-start
