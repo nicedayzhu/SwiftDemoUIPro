@@ -46,6 +46,10 @@ body {
   letter-spacing: -0.02em;
 }
 
+#site-header .navbar > .order-0 {
+  flex-shrink: 0;
+}
+
 #site-header .navbar-brand svg {
   width: 1.35rem;
   height: 1.35rem;
@@ -232,6 +236,12 @@ body {
 
 .swift-steps .step-item p {
   color: var(--swift-muted);
+}
+
+.swift-steps .step-item {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
 }
 
 .swift-faq {

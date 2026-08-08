@@ -51,7 +51,7 @@ hugoblox:
     theme_picker: false
     language_switcher: true
     cta:
-      enable: true
+      enable: false
       text: 下载 v0.1.2
       url: https://github.com/nicedayzhu/SwiftDemoUIPro/releases/latest
 
