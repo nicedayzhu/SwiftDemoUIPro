@@ -42,3 +42,9 @@ code {
     box-shadow: 0 16px 44px rgb(0 0 0 / 36%);
   }
 }
+
+@media (max-width: 420px) {
+  #site-header .order-1 > a {
+    display: none;
+  }
+}
