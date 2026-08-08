@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README_CN.md) | [项目主页](../README_CN.md)
 
-这是一个轻量级 Windows Qt 6 Widgets 应用，用于安全地安装本项目的 Panorama DemoUI，并直接打开 Counter-Strike 2 `.dem` 文件或下载的 `.zip` 压缩包。内置的只读 Rust 辅助程序会提取已录制语音的玩家/tick 数据；程序不包含 2D 回放或网络服务。
+这是一个轻量级 Windows Qt 6 Widgets 应用，用于安全地安装本项目的 Panorama DemoUI，并直接打开 Counter-Strike 2 `.dem` 文件、下载的 `.zip` 压缩包和 FACEIT `.dem.zst` 文件。内置的只读 Rust 辅助程序会解压 Zstandard Demo，并提取已录制语音的玩家/tick 数据；程序不包含 2D 回放或网络服务。
 
 ## 界面预览
 
@@ -12,10 +12,10 @@
 
 ## 使用流程
 
-1. 选择或拖入一个 `.dem` 文件或 `.zip` 压缩包。ZIP 中只有一个 Demo 时会自动选择；存在多个时，请从列表中选择一个。
+1. 选择或拖入一个 `.dem`、`.zip` 或 `.dem.zst` 文件。ZIP 中只有一个 Demo 时会自动选择；存在多个时，请从列表中选择一个。
 2. 确认自动检测到的 CS2 路径，必要时选择其他安装目录。
 3. 为获得最佳兼容性，建议保持 **TrueView 预测**关闭。启动器会在临时 CFG 中写入 `cl_demo_predict 0`，避免缺少 TrueView 指令数据的 Demo 出现预测闪烁。只有确认录像支持时再启用；启动器会记住该选项。
-4. 点击**开始观看 Demo**。启动器会在后台线程完成可能较慢的暂存和语音索引，窗口保持响应并显示当前准备阶段。随后会安装/校验 VPK，把 Demo 复制到专用临时目录；如果选择的是 ZIP，则只流式写入所选条目，再由内置 Rust 辅助程序解析 `SvcVoiceData`、编译会话专用 Panorama 数据资源并写入 VPK，最后创建 `swift_demo_launcher.cfg` 并执行：
+4. 点击**开始观看 Demo**。启动器会在后台线程完成可能较慢的暂存和语音索引，窗口保持响应并显示当前准备阶段。随后会安装/校验 VPK，把 Demo 复制到专用临时目录；ZIP 只流式写入所选条目，`.dem.zst` 则流式解压到暂存 Demo。之后由内置 Rust 辅助程序解析 `SvcVoiceData`、编译会话专用 Panorama 数据资源并写入 VPK，最后创建 `swift_demo_launcher.cfg` 并执行：
 
    ```text
    steam.exe -applaunch 730 -insecure -novid +exec swift_demo_launcher.cfg
@@ -82,6 +82,8 @@ launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
 
 ZIP 支持由项目内置的 miniz 3.1.2 源码直接编译进 `SwiftDemoUIPro.exe`，用户不需要安装 7-Zip、调用 PowerShell 解压或携带其他可执行程序。发布包会包含 `licenses/miniz-MIT.txt`。
 
+Zstandard 支持通过 `zstd-rs` 静态编译进 `swift-demo-voice-indexer.exe`，用户不需要安装 `zstd.exe` 或运行库 DLL。发布包会包含对应的 MIT 与 BSD-3-Clause 许可证文本。
+
 ## 国际化与字体
 
 - 程序源码和后备文本使用英文。选择**跟随系统**时，中文系统会自动使用简体中文；没有对应翻译时回退到英文。
@@ -101,6 +103,7 @@ ZIP 支持由项目内置的 miniz 3.1.2 源码直接编译进 `SwiftDemoUIPro.e
 - 持久化会话标记让程序能够提示并恢复被中断的清理。
 - ZIP 处理只枚举压缩包内容，并把选中的 `.dem` 流式写入自有的 `current.dem`；同时校验解压大小与 CRC、检查磁盘余量，并限制解压后最大为 8 GB。
 - 加密条目或不支持的压缩方式会给出错误，压缩包内其他文件不会落盘。
+- `.dem.zst` 会流式解压到原子临时文件，校验 `PBDEMS2` 文件头，并在发布 `current.dem` 前执行相同的 8 GB 上限。
 - Demo 回放使用 `-insecure`，不能用于正常匹配。
 
 ## 第三方组件与许可证

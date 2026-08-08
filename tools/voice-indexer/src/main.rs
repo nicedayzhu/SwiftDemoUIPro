@@ -6,9 +6,11 @@ use source2_demo::proto::{CSvcMsgVoiceData, Message};
 use std::collections::BTreeMap;
 use std::env;
 use std::fs::{self, File, OpenOptions};
-use std::io::Write;
+use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 
+const SOURCE2_DEMO_MAGIC: &[u8; 8] = b"PBDEMS2\0";
+const MAX_DECOMPRESSED_DEMO_SIZE: u64 = 8 * 1024 * 1024 * 1024;
 const MAX_PLAYER_ENTITY_INDEX: i32 = 64;
 const SPEAKING_HOLD_TICKS: u32 = 30;
 const SOURCE2_VJS_HEADER_VERSION: u32 = 0x0004_000c;
@@ -195,6 +197,90 @@ fn write_output_bytes(output_path: &Path, bytes: &[u8]) -> Result<()> {
 
 fn write_output(output_path: &Path, source: &str) -> Result<()> {
     write_output_bytes(output_path, source.as_bytes())
+}
+
+fn unpack_zstd_demo(input_path: &Path, output_path: &Path) -> Result<()> {
+    if !input_path.is_file() {
+        bail!(
+            "Zstandard-compressed demo does not exist: {}",
+            input_path.display()
+        );
+    }
+    if input_path == output_path {
+        bail!("input and output paths must differ");
+    }
+    if let Some(parent) = output_path.parent() {
+        fs::create_dir_all(parent)
+            .with_context(|| format!("failed to create output directory: {}", parent.display()))?;
+    }
+
+    let temporary_path = temporary_output_path(output_path);
+    if temporary_path.exists() {
+        fs::remove_file(&temporary_path).with_context(|| {
+            format!(
+                "failed to remove stale temporary output: {}",
+                temporary_path.display()
+            )
+        })?;
+    }
+
+    let unpacked = (|| -> Result<u64> {
+        let input = File::open(input_path).with_context(|| {
+            format!(
+                "failed to open Zstandard-compressed demo: {}",
+                input_path.display()
+            )
+        })?;
+        let mut decoder = zstd::stream::read::Decoder::new(input)
+            .context("failed to initialize the Zstandard decoder")?;
+        let mut output = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temporary_path)
+            .with_context(|| format!("failed to create output: {}", temporary_path.display()))?;
+
+        let mut magic = [0u8; SOURCE2_DEMO_MAGIC.len()];
+        decoder
+            .read_exact(&mut magic)
+            .context("the decompressed file is too short to be a CS2 demo")?;
+        if &magic != SOURCE2_DEMO_MAGIC {
+            bail!("the Zstandard payload is not a CS2 demo (PBDEMS2 header missing)");
+        }
+        output.write_all(&magic)?;
+
+        let remaining_limit = MAX_DECOMPRESSED_DEMO_SIZE - SOURCE2_DEMO_MAGIC.len() as u64;
+        let copied = io::copy(&mut decoder.take(remaining_limit + 1), &mut output)
+            .context("failed while decompressing the Zstandard demo")?;
+        if copied > remaining_limit {
+            bail!("the decompressed demo exceeds the 8 GB safety limit");
+        }
+        output.sync_all()?;
+        Ok(copied + SOURCE2_DEMO_MAGIC.len() as u64)
+    })();
+
+    let unpacked_bytes = match unpacked {
+        Ok(bytes) => bytes,
+        Err(error) => {
+            let _ = fs::remove_file(&temporary_path);
+            return Err(error);
+        }
+    };
+
+    if output_path.exists() {
+        fs::remove_file(output_path)
+            .with_context(|| format!("failed to replace output: {}", output_path.display()))?;
+    }
+    fs::rename(&temporary_path, output_path).with_context(|| {
+        format!(
+            "failed to publish {} as {}",
+            temporary_path.display(),
+            output_path.display()
+        )
+    })?;
+
+    println!("Zstandard demo ready");
+    println!("  decompressed bytes: {unpacked_bytes}");
+    Ok(())
 }
 
 fn crc32(bytes: &[u8]) -> u32 {
@@ -396,8 +482,11 @@ fn run() -> Result<()> {
         [_, command, input, output] if command == "build-session-vpk" => {
             build_voice_session(Path::new(input), Path::new(output))
         }
+        [_, command, input, output] if command == "unpack-zst" => {
+            unpack_zstd_demo(Path::new(input), Path::new(output))
+        }
         _ => bail!(
-            "usage: swift-demo-voice-indexer <input.dem> <output.vjs>\n       swift-demo-voice-indexer compile-vjs <input.vjs> <output.vjs_c>\n       swift-demo-voice-indexer pack-vpk <input.vjs_c> <output.vpk>\n       swift-demo-voice-indexer build-session-vpk <input.dem> <output.vpk>"
+            "usage: swift-demo-voice-indexer <input.dem> <output.vjs>\n       swift-demo-voice-indexer compile-vjs <input.vjs> <output.vjs_c>\n       swift-demo-voice-indexer pack-vpk <input.vjs_c> <output.vpk>\n       swift-demo-voice-indexer build-session-vpk <input.dem> <output.vpk>\n       swift-demo-voice-indexer unpack-zst <input.dem.zst> <output.dem>"
         ),
     }
 }
@@ -414,6 +503,18 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn unique_test_directory(name: &str) -> PathBuf {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock should be after the Unix epoch")
+            .as_nanos();
+        env::temp_dir().join(format!(
+            "swift-demo-voice-indexer-{name}-{}-{nonce}",
+            std::process::id()
+        ))
+    }
 
     #[test]
     fn resolves_current_and_legacy_speaker_fields() {
@@ -521,5 +622,39 @@ mod tests {
             u32::from_le_bytes(embedded[4..8].try_into().unwrap()),
             SOURCE2_VJS_HEADER_VERSION
         );
+    }
+
+    #[test]
+    fn unpacks_zstandard_compressed_cs2_demo_atomically() {
+        let directory = unique_test_directory("unpack-zst");
+        fs::create_dir_all(&directory).unwrap();
+        let input_path = directory.join("match.dem.zst");
+        let output_path = directory.join("current.dem");
+        let payload = [SOURCE2_DEMO_MAGIC.as_slice(), b"test-demo-payload"].concat();
+        let compressed = zstd::stream::encode_all(payload.as_slice(), 1).unwrap();
+        fs::write(&input_path, compressed).unwrap();
+
+        unpack_zstd_demo(&input_path, &output_path).unwrap();
+
+        assert_eq!(fs::read(&output_path).unwrap(), payload);
+        assert!(!temporary_output_path(&output_path).exists());
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn rejects_zstandard_payload_without_cs2_demo_header() {
+        let directory = unique_test_directory("reject-zst");
+        fs::create_dir_all(&directory).unwrap();
+        let input_path = directory.join("not-a-demo.zst");
+        let output_path = directory.join("current.dem");
+        let compressed = zstd::stream::encode_all(b"not a cs2 demo".as_slice(), 1).unwrap();
+        fs::write(&input_path, compressed).unwrap();
+
+        let error = unpack_zstd_demo(&input_path, &output_path).unwrap_err();
+
+        assert!(error.to_string().contains("PBDEMS2"));
+        assert!(!output_path.exists());
+        assert!(!temporary_output_path(&output_path).exists());
+        fs::remove_dir_all(directory).unwrap();
     }
 }

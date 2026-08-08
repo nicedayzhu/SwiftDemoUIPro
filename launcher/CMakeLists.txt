@@ -194,4 +194,14 @@ if(EXISTS "${VOICE_INDEXER_EXE}")
         DESTINATION licenses
         RENAME source2-demo-MIT.txt
     )
+    install(FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/../tools/voice-indexer/ZSTD_RS_LICENSE-MIT.txt"
+        DESTINATION licenses
+        RENAME zstd-rs-MIT.txt
+    )
+    install(FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/../tools/voice-indexer/ZSTD_LICENSE-BSD-3-Clause.txt"
+        DESTINATION licenses
+        RENAME zstd-BSD-3-Clause.txt
+    )
 endif()

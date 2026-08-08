@@ -153,6 +153,15 @@ void LauncherCoreTest::removesOnlyOwnedSearchPath()
 
 void LauncherCoreTest::buildsTemporaryInsecureLaunch()
 {
+    const QStringList zstdArguments = Cs2Manager::buildZstdDemoArguments(
+        QStringLiteral("C:/Demos/match.dem.zst"),
+        QStringLiteral("C:/CS2/game/csgo/demos/swift_demo_launcher/current.dem"));
+    QCOMPARE(zstdArguments, QStringList({
+        QStringLiteral("unpack-zst"),
+        QStringLiteral("C:/Demos/match.dem.zst"),
+        QStringLiteral("C:/CS2/game/csgo/demos/swift_demo_launcher/current.dem")
+    }));
+
     const QStringList voiceArguments = Cs2Manager::buildVoiceSessionArguments(
         QStringLiteral("C:/Demos/match.dem"),
         QStringLiteral("C:/CS2/game/csgo/overrides/swift_demo_voice_session.vpk"));

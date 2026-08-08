@@ -292,7 +292,7 @@ LauncherResult runSessionTool(const QString &program, const QStringList &argumen
         process.kill();
         process.waitForFinished(5000);
         return LauncherResult::failure(
-            QCoreApplication::translate("Cs2Manager", "%1 timed out while preparing parsed voice status data.").arg(toolName));
+            QCoreApplication::translate("Cs2Manager", "%1 timed out while preparing Demo session data.").arg(toolName));
     }
     if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
         QString output = QString::fromLocal8Bit(process.readAll()).trimmed();
@@ -881,11 +881,12 @@ LauncherResult Cs2Manager::prepareDemoSession(const Cs2Paths &paths, const QStri
 {
     const QFileInfo demoInfo(demoPath);
     if (!demoInfo.exists() || !demoInfo.isFile())
-        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Select a valid .dem or .zip file."));
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Select a valid .dem, .zip, or .zst file."));
 
     QString error;
     const bool isDemo = demoInfo.suffix().compare(QStringLiteral("dem"), Qt::CaseInsensitive) == 0;
     const bool isZip = demoInfo.suffix().compare(QStringLiteral("zip"), Qt::CaseInsensitive) == 0;
+    const bool isZstd = demoInfo.suffix().compare(QStringLiteral("zst"), Qt::CaseInsensitive) == 0;
     if (isDemo) {
         if (!copyFileAtomically(demoInfo.absoluteFilePath(), stagedDemoPath(paths), &error))
             return LauncherResult::failure(error);
@@ -895,8 +896,25 @@ LauncherResult Cs2Manager::prepareDemoSession(const Cs2Paths &paths, const QStri
         const LauncherResult staged = stageArchiveDemo(demoInfo.absoluteFilePath(), archiveEntry, stagedDemoPath(paths));
         if (!staged.ok)
             return staged;
+    } else if (isZstd) {
+        const QString indexer = findBundledVoiceIndexer();
+        if (indexer.isEmpty()) {
+            return LauncherResult::failure(
+                QCoreApplication::translate("Cs2Manager", "The bundled Zstandard Demo decoder was not found. Reinstall Swift DemoUI Pro."));
+        }
+        const LauncherResult staged = runSessionTool(
+            indexer,
+            buildZstdDemoArguments(demoInfo.absoluteFilePath(), stagedDemoPath(paths)),
+            QFileInfo(indexer).absolutePath(),
+            QCoreApplication::translate("Cs2Manager", "Zstandard Demo decoder"));
+        if (!staged.ok)
+            return staged;
+        if (!QFileInfo::exists(stagedDemoPath(paths))) {
+            return LauncherResult::failure(
+                QCoreApplication::translate("Cs2Manager", "The Zstandard Demo decoder did not create the staged Demo."));
+        }
     } else {
-        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Select a valid .dem or .zip file."));
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Select a valid .dem, .zip, or .zst file."));
     }
 
     if (!QDir().mkpath(QFileInfo(cfgPath(paths)).absolutePath()))
@@ -915,6 +933,8 @@ LauncherResult Cs2Manager::prepareDemoSession(const Cs2Paths &paths, const QStri
     };
     if (isZip)
         state.insert(QStringLiteral("archiveEntry"), archiveEntry);
+    if (isZstd)
+        state.insert(QStringLiteral("compression"), QStringLiteral("zstd"));
     if (!marker.open(QIODevice::WriteOnly) || marker.write(QJsonDocument(state).toJson(QJsonDocument::Compact)) < 0 || !marker.commit())
         return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Unable to save the Demo session state."));
 
@@ -964,6 +984,15 @@ QStringList Cs2Manager::buildVoiceSessionArguments(const QString &demoPath, cons
         QStringLiteral("build-session-vpk"),
         demoPath,
         sessionVpkPath
+    };
+}
+
+QStringList Cs2Manager::buildZstdDemoArguments(const QString &compressedDemoPath, const QString &stagedDemoPath)
+{
+    return {
+        QStringLiteral("unpack-zst"),
+        compressedDemoPath,
+        stagedDemoPath
     };
 }
 

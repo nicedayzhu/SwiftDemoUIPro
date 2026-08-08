@@ -9,10 +9,12 @@ This guide contains the technical material for building, testing, packaging, and
 Swift DemoUI Pro has three cooperating components:
 
 1. A Panorama override that extends Valve's native `huddemocontroller` with recorded-voice controls, parsed speaker status, validated POV switching, and round navigation.
-2. A C++17/Qt 6 Widgets launcher that discovers CS2, accepts `.dem` and `.zip` files, stages an isolated playback session, starts CS2 with `-insecure`, and restores project-owned changes afterward.
-3. A Rust `swift-demo-voice-indexer` sidecar that reads `SvcVoiceData`, emits a compact tick/slot Panorama data script, compiles it into a minimal Source 2 `vjs` Version 4 resource, and writes the per-Demo session VPK without rewriting the source Demo.
+2. A C++17/Qt 6 Widgets launcher that discovers CS2, accepts `.dem`, `.zip`, and `.dem.zst` files, stages an isolated playback session, starts CS2 with `-insecure`, and restores project-owned changes afterward.
+3. A Rust `swift-demo-voice-indexer` sidecar that stream-decompresses Zstandard Demos, reads `SvcVoiceData`, emits a compact tick/slot Panorama data script, compiles it into a minimal Source 2 `vjs` Version 4 resource, and writes the per-Demo session VPK without rewriting the source Demo.
 
 ZIP reading is compiled into the launcher from the vendored miniz source. It enumerates archive entries in process and streams only the selected `.dem`; no external extraction executable is bundled or required.
+
+Zstandard decoding is statically compiled into the Rust sidecar through `zstd-rs`. FACEIT `.dem.zst` files are streamed into the owned staging Demo with an 8 GB limit and `PBDEMS2` header validation; users do not need `zstd.exe` or a runtime Zstandard DLL.
 
 ## Prerequisites
 
@@ -116,8 +118,8 @@ See the [Launcher Guide](launcher/README.md) for its workflow, localization, ZIP
 | Change | Minimum verification |
 | --- | --- |
 | Panorama JavaScript/layout/style/localization | Run `node .\tests\test_demo_voice_mask.js`; build the VPK when CS2 tools are available and confirm that the raw localization files are present in it. |
-| Rust voice indexer, VJS_C writer, VPK writer, or Demo voice schema | Run Cargo tests and parse a known voice-bearing Demo; verify packet, slot, tick, Source 2 resource header, and VPK contents. |
-| Launcher core, ZIP, SearchPath, staging, launch, or cleanup | Build the launcher and run CTest; add or update `tst_launcher_core.cpp`. |
+| Rust voice indexer, Zstandard decoder, VJS_C writer, VPK writer, or Demo voice schema | Run Cargo tests and parse a known voice-bearing Demo; for decoder changes also unpack a real `.dem.zst` and verify its `PBDEMS2` header. |
+| Launcher core, ZIP/Zstandard selection, SearchPath, staging, launch, or cleanup | Build the launcher and run CTest; add or update `tst_launcher_core.cpp`. |
 | Launcher UI/QSS/dialogs | Build and test, then inspect an actual rendered or interactive state in each affected language. |
 | Translation strings | Update `.ts`, complete new translations, build `.qm`, and inspect layout/placeholders. |
 | PowerShell/CMake logic | Run the affected command end to end and inspect its artifact. |

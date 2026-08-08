@@ -5,9 +5,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078D6.svg)](#quick-start)
 
-Swift DemoUI Pro is an unofficial, client-side enhancement for Counter-Strike 2 Demo and HLTV playback. Its Windows launcher opens `.dem` files or downloaded `.zip` archives, while the in-game panel adds recorded-voice controls, one-click POV switching, and round navigation without replacing Valve's native DemoUI.
+Swift DemoUI Pro is an unofficial, client-side enhancement for Counter-Strike 2 Demo and HLTV playback. Its Windows launcher opens `.dem` files, downloaded `.zip` archives, and FACEIT `.dem.zst` downloads, while the in-game panel adds recorded-voice controls, one-click POV switching, and round navigation without replacing Valve's native DemoUI.
 
-No SwiftlyS2 installation, server plugin, Counter-Strike 2 Workshop Tools DLC, Workshop item, or manual ZIP extraction is required. The release package contains the voice-index compiler and session VPK writer it needs at runtime.
+No SwiftlyS2 installation, server plugin, Counter-Strike 2 Workshop Tools DLC, Workshop item, or manual archive extraction is required. The release package contains the voice-index compiler, Zstandard decoder, and session VPK writer it needs at runtime.
 
 > [!IMPORTANT]
 > Demo playback is started with `-insecure`, and the launcher temporarily adds an override SearchPath to `gameinfo.gi`. Do not use that CS2 session for matchmaking. When finished, fully exit CS2 and select **Stop and restore** in the launcher.
@@ -18,7 +18,7 @@ No SwiftlyS2 installation, server plugin, Counter-Strike 2 Workshop Tools DLC, W
 
 ![Swift DemoUI Pro launcher with Demo and ZIP selection and TrueView compatibility control](docs/images/launcher-playback-ui.png)
 
-Select or drag in a Demo or ZIP archive, confirm the detected CS2 installation, and start playback. The launcher remembers the interface language and TrueView preference, then removes its temporary files after playback.
+Select or drag in a Demo, ZIP archive, or `.dem.zst` download, confirm the detected CS2 installation, and start playback. The launcher remembers the interface language and TrueView preference, then removes its temporary files after playback.
 
 ### In-game DemoUI
 
@@ -28,7 +28,7 @@ The added panel keeps the native timeline and playback controls available while 
 
 ## Highlights
 
-- Opens `.dem` files and downloaded `.zip` archives directly. If an archive contains several Demos, the launcher lets you choose one and extracts only that entry.
+- Opens `.dem` files, downloaded `.zip` archives, and FACEIT `.dem.zst` files directly. ZIP archives expose only the selected Demo; Zstandard files are stream-decompressed in the background.
 - Detects CS2 across Steam libraries and starts it with a one-time `-insecure` argument without changing permanent Steam launch options.
 - Defaults **TrueView prediction** off to prevent flicker in Demos that do not contain compatible TrueView command data.
 - Controls recorded voice for everyone, T only, CT only, or individual players across all 64 display slots.
@@ -46,7 +46,7 @@ The added panel keeps the native timeline and playback controls available while 
 Download and extract `SwiftDemoUIPro-v<version>-win64.zip`, then:
 
 1. Run `SwiftDemoUIPro.exe` from the extracted folder. Keep the whole package together.
-2. Select or drag in a `.dem` file or `.zip` archive.
+2. Select or drag in a `.dem`, `.zip`, or `.dem.zst` file.
 3. Confirm the automatically detected CS2 installation.
 4. Leave **TrueView prediction** disabled for most downloaded or third-party Demos. Enable it only when the recording is known to support TrueView.
 5. Select **Start playback**. The launcher installs the DemoUI for this session and starts CS2.
@@ -78,6 +78,7 @@ If the launcher was interrupted, reopen it to resume the pending cleanup.
 
 - FACEIT Demos commonly contain recorded voice, but older, damaged, or differently sourced Demos may not.
 - ZIP entries must be unencrypted and use a compression method supported by the bundled miniz library. Extracted Demos are limited to 8 GB.
+- `.dem.zst` files must decompress to a CS2 Demo with a `PBDEMS2` header. Decompressed Demos are limited to 8 GB; no external `zstd.exe` is required.
 - Valve can change the native DemoUI at any time, which may require a project update.
 - This project is not affiliated with or endorsed by Valve or FACEIT.
 

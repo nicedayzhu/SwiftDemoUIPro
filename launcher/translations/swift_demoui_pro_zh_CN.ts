@@ -40,7 +40,12 @@
         <translation>无法完成文件安装：%1</translation>
     </message>
     <message>
-        <location line="+163"/>
+        <location line="+122"/>
+        <source>%1 timed out while preparing Demo session data.</source>
+        <translation>%1 在准备 Demo 会话数据时超时。</translation>
+    </message>
+    <message>
+        <location line="+41"/>
         <source>Unable to open the ZIP archive: %1</source>
         <translation>无法打开 ZIP 压缩包：%1</translation>
     </message>
@@ -153,12 +158,12 @@
     </message>
     <message>
         <location line="+25"/>
-        <location line="+118"/>
+        <location line="+138"/>
         <source>The CS2 installation folder is invalid.</source>
         <translation>CS2 安装目录无效。</translation>
     </message>
     <message>
-        <location line="-116"/>
+        <location line="-136"/>
         <source>The DemoUI VPK was not found. Build the project first, or place %1 next to the launcher.</source>
         <translation>找不到 DemoUI VPK。请先构建项目，或将 %1 放在启动器旁边。</translation>
     </message>
@@ -188,13 +193,11 @@
         <translation>ZIP 压缩包已准备完成。</translation>
     </message>
     <message>
-        <location line="+7"/>
-        <location line="+15"/>
         <source>Select a valid .dem or .zip file.</source>
-        <translation>请选择有效的 .dem 或 .zip 文件。</translation>
+        <translation type="vanished">请选择有效的 .dem 或 .zip 文件。</translation>
     </message>
     <message>
-        <location line="-5"/>
+        <location line="+18"/>
         <source>Choose a Demo from the ZIP archive first.</source>
         <translation>请先从 ZIP 压缩包中选择一个 Demo。</translation>
     </message>
@@ -203,7 +206,7 @@
         <translation type="vanished">请选择有效的 .dem 文件。</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+26"/>
         <source>Unable to create the CS2 cfg folder.</source>
         <translation>无法创建 CS2 cfg 目录。</translation>
     </message>
@@ -218,7 +221,7 @@
         <translation>无法创建 Demo 会话标记。</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+12"/>
         <source>Unable to save the Demo session state.</source>
         <translation>无法保存 Demo 会话状态。</translation>
     </message>
@@ -228,7 +231,7 @@
         <translation>Demo 与启动配置已准备完成。</translation>
     </message>
     <message>
-        <location line="+75"/>
+        <location line="+84"/>
         <source>Unable to start Steam/CS2. Make sure Steam is installed and try running the launcher as administrator.</source>
         <translation>无法启动 Steam/CS2。请确认 Steam 已安装并尝试以管理员身份运行启动器。</translation>
     </message>
@@ -273,7 +276,7 @@
         <translation>Demo 模式已停止。VPK 与临时文件均已移除，现在可以从 Steam 正常启动 CS2。</translation>
     </message>
     <message>
-        <location line="-791"/>
+        <location line="-820"/>
         <source>Refusing to remove an unexpected voice-session directory: %1</source>
         <translation>拒绝删除非预期的语音会话目录：%1</translation>
     </message>
@@ -288,19 +291,39 @@
         <translation>无法启动 %1：%2</translation>
     </message>
     <message>
-        <location line="+6"/>
         <source>%1 timed out while preparing parsed voice status data.</source>
-        <translation>%1 在准备已解析的语音状态数据时超时。</translation>
+        <translation type="vanished">%1 在准备已解析的语音状态数据时超时。</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+13"/>
         <source>%1 failed with exit code %2.
 %3</source>
         <translation>%1 执行失败，退出代码为 %2。
 %3</translation>
     </message>
     <message>
-        <location line="+630"/>
+        <location line="+582"/>
+        <location line="+33"/>
+        <source>Select a valid .dem, .zip, or .zst file.</source>
+        <translation>请选择有效的 .dem、.zip 或 .zst 文件。</translation>
+    </message>
+    <message>
+        <location line="-14"/>
+        <source>The bundled Zstandard Demo decoder was not found. Reinstall Swift DemoUI Pro.</source>
+        <translation>未找到内置的 Zstandard Demo 解码器。请重新安装 Swift DemoUI Pro。</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Zstandard Demo decoder</source>
+        <translation>Zstandard Demo 解码器</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The Zstandard Demo decoder did not create the staged Demo.</source>
+        <translation>Zstandard Demo 解码器未能创建暂存 Demo。</translation>
+    </message>
+    <message>
+        <location line="+38"/>
         <source>The Demo voice indexer was not found. Rebuild or reinstall Swift DemoUI Pro.</source>
         <translation>找不到 Demo 语音索引器。请重新构建或重新安装 Swift DemoUI Pro。</translation>
     </message>
@@ -340,12 +363,12 @@
         <translation>Demo 语音打包器未生成会话 VPK。</translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+91"/>
         <source>Unable to remove the Demo voice session VPK.</source>
         <translation>无法删除 Demo 语音会话 VPK。</translation>
     </message>
     <message>
-        <location line="-77"/>
+        <location line="-86"/>
         <source>Parsed Demo voice status data is ready.</source>
         <translation>已解析的 Demo 语音状态数据已准备完成。</translation>
     </message>
@@ -353,7 +376,7 @@
 <context>
     <name>LauncherWindow</name>
     <message>
-        <location filename="../src/LauncherWindow.cpp" line="+234"/>
+        <location filename="../src/LauncherWindow.cpp" line="+235"/>
         <source>CS2 Demo Tool</source>
         <translation>CS2 回放工具</translation>
     </message>
@@ -410,12 +433,12 @@
     </message>
     <message>
         <location line="+15"/>
-        <location line="+1263"/>
+        <location line="+1267"/>
         <source>✓</source>
         <translation>✓</translation>
     </message>
     <message>
-        <location line="-1233"/>
+        <location line="-1237"/>
         <source>Choose Demo</source>
         <translation>选择录像</translation>
     </message>
@@ -456,12 +479,12 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+1196"/>
+        <location line="+1200"/>
         <source>Start playback</source>
         <translation>开始观看</translation>
     </message>
     <message>
-        <location line="-1189"/>
+        <location line="-1193"/>
         <source>Stop and restore</source>
         <translation>停止观看并恢复</translation>
     </message>
@@ -612,7 +635,12 @@
         <translation>选择 CS2 Demo</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+2"/>
+        <source>CS2 Demo files (*.dem *.zip *.zst);;Demo files (*.dem);;Zstandard Demos (*.zst);;ZIP archives (*.zip)</source>
+        <translation>CS2 Demo 文件 (*.dem *.zip *.zst);;Demo 文件 (*.dem);;Zstandard Demo (*.zst);;ZIP 压缩包 (*.zip)</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <location line="+10"/>
         <source>Unable to use this file</source>
         <translation>无法使用该文件</translation>
@@ -627,22 +655,19 @@
         <translation>Swift DemoUI Pro · %1</translation>
     </message>
     <message>
-        <location line="+22"/>
         <source>Choose a Demo or ZIP archive and start CS2 with a safe, reversible setup</source>
-        <translation>选择 Demo 或 ZIP 压缩包，并通过安全、可恢复的方式启动 CS2</translation>
+        <translation type="vanished">选择 Demo 或 ZIP 压缩包，并通过安全、可恢复的方式启动 CS2</translation>
     </message>
     <message>
-        <location line="+52"/>
         <source>Drop a Demo or ZIP here</source>
-        <translation>将 Demo 或 ZIP 拖放到这里</translation>
+        <translation type="vanished">将 Demo 或 ZIP 拖放到这里</translation>
     </message>
     <message>
-        <location line="+2"/>
         <source>Supports CS2 .dem files and ZIP archives</source>
-        <translation>支持 CS2 .dem 文件和 ZIP 压缩包</translation>
+        <translation type="vanished">支持 CS2 .dem 文件和 ZIP 压缩包</translation>
     </message>
     <message>
-        <location line="+40"/>
+        <location line="+116"/>
         <source>TrueView prediction</source>
         <translation>TrueView 预测</translation>
     </message>
@@ -661,7 +686,22 @@
         <translation>正在下载 DemoUI 更新……%1%</translation>
     </message>
     <message>
-        <location line="+405"/>
+        <location line="+148"/>
+        <source>Choose a Demo, ZIP, or Zstandard file and start CS2 with a safe, reversible setup</source>
+        <translation>选择 Demo、ZIP 或 Zstandard 文件，以安全且可恢复的方式启动 CS2</translation>
+    </message>
+    <message>
+        <location line="+52"/>
+        <source>Drop a Demo, ZIP, or Zstandard file here</source>
+        <translation>将 Demo、ZIP 或 Zstandard 文件拖到这里</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Supports CS2 .dem, .zip, and .dem.zst files</source>
+        <translation>支持 CS2 .dem、.zip 和 .dem.zst 文件</translation>
+    </message>
+    <message>
+        <location line="+203"/>
         <source>Launcher %1 (%2) · DemoUI %3 · Qt 6 Widgets</source>
         <translation>启动器 %1（%2）· DemoUI %3 · Qt 6 Widgets</translation>
     </message>
@@ -767,23 +807,26 @@
         <translation>已是最新版本 · 启动器 %1 · DemoUI %2</translation>
     </message>
     <message>
-        <location line="+40"/>
         <source>CS2 Demo files (*.dem *.zip);;Demo files (*.dem);;ZIP archives (*.zip)</source>
-        <translation>CS2 Demo 文件 (*.dem *.zip);;Demo 文件 (*.dem);;ZIP 压缩包 (*.zip)</translation>
+        <translation type="vanished">CS2 Demo 文件 (*.dem *.zip);;Demo 文件 (*.dem);;ZIP 压缩包 (*.zip)</translation>
     </message>
     <message>
-        <location line="+9"/>
         <source>Select a valid CS2 .dem or .zip file.</source>
-        <translation>请选择有效的 CS2 .dem 或 .zip 文件。</translation>
+        <translation type="vanished">请选择有效的 CS2 .dem 或 .zip 文件。</translation>
+    </message>
+    <message>
+        <location line="+49"/>
+        <source>Select a valid CS2 .dem, .zip, or .zst file.</source>
+        <translation>请选择有效的 CS2 .dem、.zip 或 .zst 文件。</translation>
     </message>
     <message>
         <location line="+23"/>
-        <location line="+45"/>
+        <location line="+49"/>
         <source>%1  ·  %2</source>
         <translation>%1  ·  %2</translation>
     </message>
     <message>
-        <location line="-40"/>
+        <location line="-44"/>
         <source>Choose a Demo from the ZIP</source>
         <translation>从 ZIP 中选择 Demo</translation>
     </message>
@@ -793,7 +836,17 @@
         <translation>该 ZIP 中包含多个 Demo 文件，请选择一个播放：</translation>
     </message>
     <message>
-        <location line="+43"/>
+        <location line="+39"/>
+        <source>%1  ·  Zstandard ·  %2</source>
+        <translation>%1  ·  Zstandard ·  %2</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Compressed Demo: %1</source>
+        <translation>压缩 Demo：%1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
         <source>%1  ·  ZIP ·  %2</source>
         <translation>%1  ·  ZIP ·  %2</translation>
     </message>

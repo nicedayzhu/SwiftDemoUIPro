@@ -33,6 +33,13 @@ The packaged `swift-demo-voice-indexer.exe` statically links Artem Rupasov's `so
 
 - <https://github.com/Rupas1k/source2-demo>
 
+## zstd-rs 0.13.3 / Zstandard 1.5.7
+
+The packaged `swift-demo-voice-indexer.exe` statically links `zstd-rs` and its bundled Zstandard implementation to stream-decompress FACEIT `.dem.zst` downloads. No external `zstd.exe` or runtime DLL is required. The Rust bindings are used under the MIT option and the bundled Zstandard implementation under BSD-3-Clause. Packaged releases include `licenses/zstd-rs-MIT.txt` and `licenses/zstd-BSD-3-Clause.txt`.
+
+- <https://github.com/gyscos/zstd-rs>
+- <https://github.com/facebook/zstd>
+
 ## Noto Sans SC
 
 The launcher embeds Noto Sans SC from the Noto CJK project. The font is licensed under the SIL Open Font License 1.1 (`OFL-1.1`). A copy of the license is stored at `launcher/assets/fonts/OFL-1.1.txt` and included with packaged releases.

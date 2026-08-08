@@ -9,10 +9,12 @@
 Swift DemoUI Pro 由三个协作组件组成：
 
 1. Panorama override：扩展 Valve 原生 `huddemocontroller`，加入已录制语音控制、解析后的说话状态、经过核验的 POV 切换和回合导航。
-2. C++17/Qt 6 Widgets 启动器：检测 CS2，接收 `.dem` 和 `.zip` 文件，准备独立回放会话，使用 `-insecure` 启动 CS2，并在结束后恢复本项目产生的修改。
-3. Rust `swift-demo-voice-indexer` 辅助程序：只读 `SvcVoiceData`，输出紧凑的 tick/槽位 Panorama 数据脚本，将其编译为最小 Source 2 `vjs` Version 4 资源，并直接写入每个 Demo 的 session VPK；不会重写源 Demo。
+2. C++17/Qt 6 Widgets 启动器：检测 CS2，接收 `.dem`、`.zip` 和 `.dem.zst` 文件，准备独立回放会话，使用 `-insecure` 启动 CS2，并在结束后恢复本项目产生的修改。
+3. Rust `swift-demo-voice-indexer` 辅助程序：流式解压 Zstandard Demo，只读 `SvcVoiceData`，输出紧凑的 tick/槽位 Panorama 数据脚本，将其编译为最小 Source 2 `vjs` Version 4 资源，并直接写入每个 Demo 的 session VPK；不会重写源 Demo。
 
 ZIP 读取功能由仓库内置的 miniz 源码直接编译进启动器。程序会在进程内枚举压缩包，并且只流式写出玩家选择的 `.dem`；发布包无需携带或调用外部解压程序。
+
+Zstandard 解码通过 `zstd-rs` 静态编译进 Rust 辅助程序。FACEIT `.dem.zst` 会流式写入项目自有的暂存 Demo，同时限制最大 8 GB 并校验 `PBDEMS2` 文件头；玩家无需安装 `zstd.exe` 或 Zstandard 运行库 DLL。
 
 ## 开发环境
 
@@ -116,8 +118,8 @@ launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
 | 修改范围 | 最低验证要求 |
 | --- | --- |
 | Panorama JavaScript/布局/样式/本地化 | 运行 `node .\tests\test_demo_voice_mask.js`；具备 CS2 工具时构建 VPK，并确认原始语言文件进入 VPK。 |
-| Rust 语音索引器、VJS_C/VPK 写入器或 Demo 语音 schema | 运行 Cargo 测试，并解析一份确认含语音的 Demo；核对消息、槽位、tick、Source 2 资源头与 VPK 内容。 |
-| 启动器核心、ZIP、SearchPath、暂存、启动或清理 | 编译启动器并运行 CTest；新增或更新 `tst_launcher_core.cpp`。 |
+| Rust 语音索引器、Zstandard 解码器、VJS_C/VPK 写入器或 Demo 语音 schema | 运行 Cargo 测试，并解析一份确认含语音的 Demo；解码器修改还需解压真实 `.dem.zst` 并核对 `PBDEMS2` 文件头。 |
+| 启动器核心、ZIP/Zstandard 选择、SearchPath、暂存、启动或清理 | 编译启动器并运行 CTest；新增或更新 `tst_launcher_core.cpp`。 |
 | 启动器 UI/QSS/对话框 | 编译和测试后，在每种受影响语言下检查真实渲染或交互状态。 |
 | 翻译文本 | 更新 `.ts`，完成新增翻译，构建 `.qm` 并检查布局与占位符。 |
 | PowerShell/CMake 逻辑 | 完整运行受影响命令并检查实际产物。 |

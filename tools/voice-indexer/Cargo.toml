@@ -9,3 +9,4 @@ publish = false
 [dependencies]
 anyhow = "1.0"
 source2-demo = { git = "https://github.com/Rupas1k/source2-demo", rev = "c9f91d90c7a49fd3a19d7c3bd5963b6d0f634b9f", default-features = false, features = ["cs2"] }
+zstd = { version = "0.13.3", default-features = false }

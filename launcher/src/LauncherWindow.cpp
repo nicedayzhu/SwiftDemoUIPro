@@ -45,7 +45,8 @@ bool isDemoSource(const QString &path)
 {
     const QString suffix = QFileInfo(path).suffix();
     return suffix.compare(QStringLiteral("dem"), Qt::CaseInsensitive) == 0
-        || suffix.compare(QStringLiteral("zip"), Qt::CaseInsensitive) == 0;
+        || suffix.compare(QStringLiteral("zip"), Qt::CaseInsensitive) == 0
+        || suffix.compare(QStringLiteral("zst"), Qt::CaseInsensitive) == 0;
 }
 
 QPixmap makeLogo()
@@ -323,7 +324,7 @@ void LauncherWindow::buildInterface()
     replayTitleCopy->setSpacing(3);
     auto *replayTitle = new QLabel(tr("Demo Playback"), replayPage);
     replayTitle->setObjectName(QStringLiteral("PageTitle"));
-    auto *replaySubtitle = new QLabel(tr("Choose a Demo or ZIP archive and start CS2 with a safe, reversible setup"), replayPage);
+    auto *replaySubtitle = new QLabel(tr("Choose a Demo, ZIP, or Zstandard file and start CS2 with a safe, reversible setup"), replayPage);
     replaySubtitle->setObjectName(QStringLiteral("PageSubtitle"));
     replayTitleCopy->addWidget(replayTitle);
     replayTitleCopy->addWidget(replaySubtitle);
@@ -375,9 +376,9 @@ void LauncherWindow::buildInterface()
     auto *fileCopy = new QVBoxLayout;
     fileCopy->setSpacing(3);
     fileCopy->addWidget(sectionEyebrow(tr("Choose Demo"), dropCard_));
-    demoName_ = new QLabel(tr("Drop a Demo or ZIP here"), dropCard_);
+    demoName_ = new QLabel(tr("Drop a Demo, ZIP, or Zstandard file here"), dropCard_);
     demoName_->setObjectName(QStringLiteral("PrimaryText"));
-    demoMeta_ = new QLabel(tr("Supports CS2 .dem files and ZIP archives"), dropCard_);
+    demoMeta_ = new QLabel(tr("Supports CS2 .dem, .zip, and .dem.zst files"), dropCard_);
     demoMeta_->setObjectName(QStringLiteral("SecondaryText"));
     fileCopy->addWidget(demoName_);
     fileCopy->addWidget(demoMeta_);
@@ -1366,7 +1367,7 @@ void LauncherWindow::chooseDemo()
         this,
         tr("Choose a CS2 Demo"),
         startDirectory,
-        tr("CS2 Demo files (*.dem *.zip);;Demo files (*.dem);;ZIP archives (*.zip)"));
+        tr("CS2 Demo files (*.dem *.zip *.zst);;Demo files (*.dem);;Zstandard Demos (*.zst);;ZIP archives (*.zip)"));
     if (!path.isEmpty())
         setDemoPath(path);
 }
@@ -1375,7 +1376,7 @@ void LauncherWindow::setDemoPath(const QString &path, const QString &preferredAr
 {
     const QFileInfo info(path);
     if (!info.exists() || !info.isFile() || !isDemoSource(path)) {
-        QMessageBox::warning(this, tr("Unable to use this file"), tr("Select a valid CS2 .dem or .zip file."));
+        QMessageBox::warning(this, tr("Unable to use this file"), tr("Select a valid CS2 .dem, .zip, or .zst file."));
         return;
     }
 
@@ -1441,7 +1442,11 @@ void LauncherWindow::refreshDemoDetails()
     const QFileInfo info(demoPath_);
     if (!info.exists() || !info.isFile())
         return;
-    if (demoArchiveEntry_.isEmpty()) {
+    if (info.suffix().compare(QStringLiteral("zst"), Qt::CaseInsensitive) == 0) {
+        demoName_->setText(info.completeBaseName());
+        demoMeta_->setText(tr("%1  ·  Zstandard ·  %2").arg(Cs2Manager::displayFileSize(info.size()), info.fileName()));
+        demoMeta_->setToolTip(tr("Compressed Demo: %1").arg(QDir::toNativeSeparators(demoPath_)));
+    } else if (demoArchiveEntry_.isEmpty()) {
         demoName_->setText(info.fileName());
         demoMeta_->setText(tr("%1  ·  %2").arg(Cs2Manager::displayFileSize(info.size()), info.dir().dirName()));
         demoMeta_->setToolTip(QDir::toNativeSeparators(demoPath_));

@@ -114,7 +114,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    A["用户选择 demo"] --> B["只读暂存副本"]
+    A["用户选择 dem / ZIP / dem.zst"] --> B["只读暂存副本（Zstd 流式解压）"]
     B --> C["Rust voice indexer"]
     C --> D["内存中的紧凑语音索引 JS"]
     D --> E["内置最小 VJS_C 编译器"]
@@ -153,9 +153,10 @@ var g_SwiftDemoVoiceData = {
 build-session-vpk <input.dem> <output.vpk>
 compile-vjs <input.vjs> <output.vjs_c>
 pack-vpk <input.vjs_c> <output.vpk>
+unpack-zst <input.dem.zst> <output.dem>
 ```
 
-启动器使用 `build-session-vpk` 一次完成解析、VJS_C 编译和 VPK 打包。后两个命令保留给开发验证和独立诊断。
+启动器使用 `build-session-vpk` 一次完成解析、VJS_C 编译和 VPK 打包。`unpack-zst` 用于在解析前流式解压 FACEIT 下载文件，并校验 `PBDEMS2` 文件头与 8 GB 上限；Zstandard 实现静态编入同一个辅助程序，玩家无需安装 `zstd.exe`。其余命令保留给开发验证和独立诊断。
 
 ### 4.2 内置 VJS_C 编译器
 

@@ -140,6 +140,12 @@ if ($Package) {
     $source2DemoLicense = Join-Path $projectRoot "tools\voice-indexer\SOURCE2_DEMO_LICENSE-MIT.txt"
     Copy-Item -LiteralPath $source2DemoLicense -Destination (Join-Path $licenseDir "source2-demo-MIT.txt")
 
+    $zstdRsLicense = Join-Path $projectRoot "tools\voice-indexer\ZSTD_RS_LICENSE-MIT.txt"
+    Copy-Item -LiteralPath $zstdRsLicense -Destination (Join-Path $licenseDir "zstd-rs-MIT.txt")
+
+    $zstdLicense = Join-Path $projectRoot "tools\voice-indexer\ZSTD_LICENSE-BSD-3-Clause.txt"
+    Copy-Item -LiteralPath $zstdLicense -Destination (Join-Path $licenseDir "zstd-BSD-3-Clause.txt")
+
     $zipPath = Join-Path $launcherRoot "package\SwiftDemoUIPro-v$version-win64.zip"
     if (Test-Path -LiteralPath $zipPath) { Remove-Item -LiteralPath $zipPath -Force }
     Compress-Archive -LiteralPath $packageDir -DestinationPath $zipPath -CompressionLevel Optimal
