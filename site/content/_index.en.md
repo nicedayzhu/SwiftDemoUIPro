@@ -23,7 +23,7 @@ sections:
         style: text
       media:
         type: image
-        src: demo-voice-hero.webp
+        src: demo-voice-hero.png
         alt: Swift DemoUI Pro voice panel alongside CS2 demo playback
     design:
       layout: split-left

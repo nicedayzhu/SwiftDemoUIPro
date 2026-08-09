@@ -3,15 +3,15 @@
     {
       className: 'swift-focus--voice-avatars',
       centerX: 0.105,
-      centerY: 0.775,
-      zoom: 2.25,
+      centerY: 0.8,
+      zoom: 1.75,
       labels: { zh: '语音头像', en: 'Voice indicators' },
     },
     {
       className: 'swift-focus--menu',
       centerX: 0.795,
-      centerY: 0.3,
-      zoom: 1.65,
+      centerY: 0.34,
+      zoom: 1.55,
       labels: { zh: 'Demo 语音菜单', en: 'Voice menu' },
     },
   ];
@@ -40,6 +40,9 @@
 
     const language = document.documentElement.lang.toLowerCase().startsWith('zh') ? 'zh' : 'en';
     const detailSource = largestSource(sourceImage);
+    sourceImage.srcset = '';
+    sourceImage.removeAttribute('sizes');
+    sourceImage.src = detailSource;
     const views = focusSpecs.map(spec => {
       const figure = document.createElement('figure');
       figure.className = `swift-focus ${spec.className}`;
@@ -51,11 +54,9 @@
       detailImage.alt = '';
       detailImage.setAttribute('aria-hidden', 'true');
       detailImage.decoding = 'async';
+      detailImage.loading = 'eager';
 
-      const caption = document.createElement('figcaption');
-      caption.textContent = spec.labels[language];
-
-      figure.append(detailImage, caption);
+      figure.append(detailImage);
       visual.append(figure);
       return { figure, detailImage, spec };
     });
@@ -90,9 +91,5 @@
     observer.observe(document.body, { childList: true, subtree: true });
   };
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initialize, { once: true });
-  } else {
-    initialize();
-  }
+  initialize();
 })();

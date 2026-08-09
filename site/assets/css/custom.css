@@ -132,35 +132,41 @@ body {
 }
 
 .swift-hero-visual {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
-  padding-inline: 1rem;
+  position: relative;
   isolation: isolate;
-  overflow: visible;
+  overflow: hidden;
+  border-radius: 0.2rem;
 }
 
 .swift-hero-visual > .swift-hero-main {
-  grid-column: 1 / -1;
-  width: calc(100% + 2rem);
+  display: block;
+  width: 100%;
   max-width: none;
-  margin-inline: -1rem;
+  margin: 0;
 }
 
 .swift-focus {
-  position: relative;
-  min-width: 0;
-  height: clamp(7rem, 10vw, 9rem);
-  margin-top: -3rem;
+  position: absolute;
+  z-index: 2;
+  width: clamp(6.5rem, 28%, 13rem);
+  aspect-ratio: 1;
+  margin: 0;
   overflow: hidden;
-  border: 1px solid rgb(231 228 219 / 28%);
-  border-radius: 0.2rem;
+  border: 2px solid rgb(212 174 105 / 88%);
+  border-radius: 50%;
+  outline: 1px solid rgb(12 14 13 / 68%);
   background: #111410;
-  box-shadow: 0 14px 32px rgb(0 0 0 / 42%);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 58%);
 }
 
-.swift-focus:nth-of-type(2) {
-  transform: translateY(1.4rem);
+.swift-focus--voice-avatars {
+  bottom: 3.5%;
+  left: 2.5%;
+}
+
+.swift-focus--menu {
+  top: 11%;
+  right: 3%;
 }
 
 .swift-focus img {
@@ -170,23 +176,9 @@ body {
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+  image-rendering: auto;
   pointer-events: none;
   user-select: none;
-}
-
-.swift-focus figcaption {
-  position: absolute;
-  right: 0.55rem;
-  bottom: 0.5rem;
-  padding: 0.28rem 0.45rem;
-  border-left: 2px solid var(--swift-accent);
-  background: rgb(12 14 13 / 88%);
-  color: #ddd9cf;
-  font-size: 0.64rem;
-  font-weight: 620;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  text-transform: uppercase;
 }
 
 .swift-showcase {
@@ -407,34 +399,19 @@ code {
     padding-block: 4.5rem;
   }
 
-  .swift-hero-visual {
-    gap: 0.55rem;
-    padding-inline: 0.45rem;
-  }
-
-  .swift-hero-visual > .swift-hero-main {
-    width: calc(100% + 0.9rem);
-    margin-inline: -0.45rem;
-  }
-
   .swift-focus {
-    height: 6.6rem;
-    margin-top: -1.8rem;
-    box-shadow: 0 10px 24px rgb(0 0 0 / 38%);
+    width: clamp(5.75rem, 29%, 7rem);
+    box-shadow: 0 8px 18px rgb(0 0 0 / 52%);
   }
 
-  .swift-focus:nth-of-type(2) {
-    transform: translateY(0.65rem);
+  .swift-focus--voice-avatars {
+    bottom: 2.5%;
+    left: 2%;
   }
 
-  .swift-focus figcaption {
-    right: 0.35rem;
-    bottom: 0.35rem;
-    max-width: calc(100% - 0.7rem);
-    overflow: hidden;
-    font-size: 0.56rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .swift-focus--menu {
+    top: 9%;
+    right: 2.5%;
   }
 
   .swift-capabilities .max-w-7xl > .grid > div,
