@@ -86,6 +86,10 @@ body {
   background: var(--swift-bg);
 }
 
+.swift-hero .max-w-7xl {
+  max-width: 90rem;
+}
+
 .swift-hero h1 {
   max-width: 12ch;
   color: var(--swift-text);
@@ -125,6 +129,64 @@ body {
   border-radius: 0.2rem;
   background: #111410;
   box-shadow: 0 18px 48px rgb(0 0 0 / 30%);
+}
+
+.swift-hero-visual {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  padding-inline: 1rem;
+  isolation: isolate;
+  overflow: visible;
+}
+
+.swift-hero-visual > .swift-hero-main {
+  grid-column: 1 / -1;
+  width: calc(100% + 2rem);
+  max-width: none;
+  margin-inline: -1rem;
+}
+
+.swift-focus {
+  position: relative;
+  min-width: 0;
+  height: clamp(7rem, 10vw, 9rem);
+  margin-top: -3rem;
+  overflow: hidden;
+  border: 1px solid rgb(231 228 219 / 28%);
+  border-radius: 0.2rem;
+  background: #111410;
+  box-shadow: 0 14px 32px rgb(0 0 0 / 42%);
+}
+
+.swift-focus:nth-of-type(2) {
+  transform: translateY(1.4rem);
+}
+
+.swift-focus img {
+  position: absolute;
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+.swift-focus figcaption {
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.5rem;
+  padding: 0.28rem 0.45rem;
+  border-left: 2px solid var(--swift-accent);
+  background: rgb(12 14 13 / 88%);
+  color: #ddd9cf;
+  font-size: 0.64rem;
+  font-weight: 620;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .swift-showcase {
@@ -307,6 +369,15 @@ code {
 }
 
 @media (min-width: 1024px) {
+  .swift-hero h1 {
+    font-size: clamp(3.1rem, 4.2vw, 3.65rem);
+  }
+
+  .swift-hero .grid {
+    grid-template-columns: minmax(25rem, 0.78fr) minmax(0, 1.42fr);
+    gap: clamp(3rem, 4vw, 5rem);
+  }
+
   .swift-capabilities .max-w-7xl > .grid > div,
   .swift-safety .max-w-7xl > .grid > div {
     min-height: 13rem;
@@ -334,6 +405,36 @@ code {
 
   .swift-showcase .max-w-screen-xl {
     padding-block: 4.5rem;
+  }
+
+  .swift-hero-visual {
+    gap: 0.55rem;
+    padding-inline: 0.45rem;
+  }
+
+  .swift-hero-visual > .swift-hero-main {
+    width: calc(100% + 0.9rem);
+    margin-inline: -0.45rem;
+  }
+
+  .swift-focus {
+    height: 6.6rem;
+    margin-top: -1.8rem;
+    box-shadow: 0 10px 24px rgb(0 0 0 / 38%);
+  }
+
+  .swift-focus:nth-of-type(2) {
+    transform: translateY(0.65rem);
+  }
+
+  .swift-focus figcaption {
+    right: 0.35rem;
+    bottom: 0.35rem;
+    max-width: calc(100% - 0.7rem);
+    overflow: hidden;
+    font-size: 0.56rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .swift-capabilities .max-w-7xl > .grid > div,

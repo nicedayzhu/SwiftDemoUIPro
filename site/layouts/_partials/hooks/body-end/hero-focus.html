@@ -1,0 +1,3 @@
+{{- with resources.Get "js/hero-focus.js" | minify | fingerprint -}}
+  <script src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}"></script>
+{{- end -}}
