@@ -116,13 +116,28 @@ if (nativeRootHash !== "cc5a10b29e1abdbd65b2a9260a6b0d55784aac87534629890bdc7607
 }
 
 var menuWidth = /\.swift-demo-voice\s*\{[^}]*\bwidth:\s*(\d+)px;/m.exec(style);
-if (!menuWidth || Number(menuWidth[1]) > 430) {
-    throw new Error("Demo Voice panel must stay narrow enough to preserve the right-side spectator HUD");
+var menuHeight = /\.swift-demo-voice\s*\{[^}]*\bheight:\s*(\d+)px;/m.exec(style);
+if (!menuWidth || Number(menuWidth[1]) > 360 || !menuHeight || Number(menuHeight[1]) > 650) {
+	throw new Error("Demo Voice panel must keep a compact right-side footprint");
 }
 
-var menuRightMargin = /\.swift-demo-voice\s*\{[^}]*\bmargin:\s*0px\s+(\d+)px\s+112px\s+0px;/m.exec(style);
-if (!menuRightMargin || Number(menuRightMargin[1]) < 120) {
-	throw new Error("Demo Voice panel must leave a clear lane for the right-side weapon slots");
+var menuMargins = /\.swift-demo-voice\s*\{[^}]*\bhorizontal-align:\s*right;[^}]*\bmargin:\s*0px\s+(\d+)px\s+(\d+)px\s+0px;/m.exec(style);
+if (!menuMargins || Number(menuMargins[1]) < 280 || Number(menuMargins[2]) < 212) {
+	throw new Error("Demo Voice panel must sit above the native bottom-right equipment strip");
+}
+
+if (!/\.swift-demo-voice\s*\{[^}]*\btransform-origin:\s*100%\s+50%;/m.test(style)
+	|| !/\.swift-demo-voice\.swift-aspect-4x3\s*\{[^}]*\bmargin-right:\s*210px;[^}]*\bscaleX\(0\.75\);/m.test(style)
+	|| !/\.swift-demo-voice\.swift-aspect-4x3\.demo-active\s*\{[^}]*\bscaleX\(0\.75\);/m.test(style)
+	|| !/_UpdateViewportClass\(\)/.test(source)
+	|| !/actuallayoutwidth/.test(source)
+	|| !/actualuiscale_x/.test(source)) {
+	throw new Error("4:3 Demo Voice layout must compensate for native horizontal stretching");
+}
+
+if (!/\.DemoControllerMinimal \.swift-demo-voice\s*\{[^}]*\bmargin-bottom:\s*166px;/m.test(style)
+	|| !/\.DemoControllerHidden \.swift-demo-voice\s*\{[^}]*\bmargin-bottom:\s*118px;/m.test(style)) {
+	throw new Error("every native Demo controller mode must preserve equipment-strip clearance");
 }
 
 if (!/id="SwiftDemoVoiceHeader"[^>]*hittestchildren="false"[^>]*onactivate="SwiftDemoVoice\.ToggleOpen\(\)"/.test(layout)
@@ -169,12 +184,37 @@ if (/RegisterKeyBind|bind\s+[\"']?space/i.test(source)) {
 	throw new Error("custom menu must not override the native Space camera control");
 }
 
-if (/bluedots_large_png\.vtex/.test(style) || !/from\(#0c0d0ff7\)/.test(style) || !/border-left:\s*3px solid #e4ae39/.test(style)) {
-	throw new Error("custom menu must use the neutral graphite native-inspired chrome");
+if (/bluedots_large_png\.vtex/.test(style)
+	|| !/\.swift-demo-voice\s*\{[^}]*\bbackground-color:\s*#0f1012f2;/m.test(style)
+	|| !/world-blur:\s*hudWorldBlur;/.test(style)
+	|| !/box-shadow:\s*black 0px 0px 2px 0px;/.test(style)
+	|| /\.swift-demo-voice\s*\{[^}]*\bborder-left:/m.test(style)) {
+	throw new Error("custom menu must use native Demo HUD chrome with an opaque reading surface");
+}
+
+var headerHoverStyle = /\.swift-demo-voice__header:hover\s*\{([^}]*)\}/m.exec(style);
+if (!headerHoverStyle
+	|| !/\bbrightness:\s*1;/.test(headerHoverStyle[1])
+	|| !/\bbackground-color:\s*#1b1c1ef7;/.test(headerHoverStyle[1])
+	|| /#ffffff/.test(headerHoverStyle[1])) {
+	throw new Error("collapsed menu hover must stay dark and must not flash white");
+}
+
+if (!/\.collapsed \.swift-demo-voice__header\s*\{[^}]*\bborder-bottom-color:\s*#00000000;/m.test(style)) {
+	throw new Error("collapsed menu must hide the header divider to avoid a doubled bottom edge");
 }
 
 if (/SwiftVoiceBlue|#82b9d6|#526d7c|#536b7a|#668aa3|#6c8fa2/.test(style)) {
 	throw new Error("legacy blue menu tint must not return outside subdued CT identity accents");
+}
+
+if (!/\.swift-demo-voice-player\.team-t\.observed\s*\{[^}]*#e4ae39/m.test(style)
+	|| !/\.swift-demo-voice-player\.team-ct\.observed\s*\{[^}]*#78b9dc/m.test(style)
+	|| !/\.team-t\.observed \.swift-demo-voice-player__name[^}]*\{[^}]*color:\s*color-T;/m.test(style)
+	|| !/\.team-ct\.observed \.swift-demo-voice-player__name[^}]*\{[^}]*color:\s*color-CT;/m.test(style)
+	|| !/\.team-t\.selected \.swift-demo-voice-player__toggle Image\s*\{[^}]*wash-color:\s*SwiftVoiceGold;/m.test(style)
+	|| !/\.team-ct\.selected \.swift-demo-voice-player__toggle Image\s*\{[^}]*wash-color:\s*SwiftVoiceAudio;/m.test(style)) {
+	throw new Error("selected and observed player accents must follow T and CT team identity colors");
 }
 
 if (!/icons\/ui\/unmuted\.vsvg/.test(layout) || !/SwiftDemoVoiceEnabledLabel/.test(layout) || /icons\/ui\/sound_3\.vsvg/.test(layout)) {
@@ -224,6 +264,13 @@ var context = {
 vm.createContext(context);
 vm.runInContext(dataSource, context, { filename: dataSourcePath });
 vm.runInContext(source, context, { filename: sourcePath });
+
+if (context.SwiftDemoVoice.ViewportProfileForTest(1440, 1080) !== "4x3"
+	|| context.SwiftDemoVoice.ViewportProfileForTest(1280, 1024) !== "4x3"
+	|| context.SwiftDemoVoice.ViewportProfileForTest(1920, 1080) !== "wide"
+	|| context.SwiftDemoVoice.ViewportProfileForTest(1680, 1050) !== "wide") {
+	throw new Error("viewport aspect profile detection failed");
+}
 
 function takeScheduledCallback(delay) {
 	for (var index = 0; index < scheduledCallbacks.length; index++) {

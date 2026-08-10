@@ -18,6 +18,7 @@ var SwiftDemoVoice = (function () {
 	var _lastVoiceStatusSignature = "";
 	var _voiceDataLogged = false;
 	var _nativeUnmuteSeenPlayers = {};
+	var _lastViewportProfile = "";
 
 	function _Context() {
 		return $.GetContextPanel();
@@ -99,6 +100,28 @@ var SwiftDemoVoice = (function () {
 			$.Msg("[SwiftDemoVoice] GetDemoControllerState failed: " + error);
 			return null;
 		}
+	}
+
+	function _ViewportProfile(width, height) {
+		var viewportWidth = Number(width);
+		var viewportHeight = Number(height);
+		if (!(viewportWidth > 0) || !(viewportHeight > 0)) return "";
+		return viewportWidth / viewportHeight <= 1.5 ? "4x3" : "wide";
+	}
+
+	function _UpdateViewportClass() {
+		var context = _Context();
+		var menu = _Panel("SwiftDemoVoiceMenu");
+		if (!context || !menu) return;
+		var scaleX = Number(context.actualuiscale_x) || 1;
+		var scaleY = Number(context.actualuiscale_y) || 1;
+		var profile = _ViewportProfile(
+			Number(context.actuallayoutwidth) / scaleX,
+			Number(context.actuallayoutheight) / scaleY
+		);
+		if (!profile || profile === _lastViewportProfile) return;
+		_lastViewportProfile = profile;
+		_SetClass(menu, "swift-aspect-4x3", profile === "4x3");
 	}
 
 	function _GetVoiceData() {
@@ -931,6 +954,7 @@ var SwiftDemoVoice = (function () {
 	function _Poll() {
 		var isDemo = _IsDemoPlayback();
 		var menu = _Panel("SwiftDemoVoiceMenu");
+		_UpdateViewportClass();
 		// CSGOHudDemoController itself is hidden by the engine outside demo playback.
 		// Keep this child visible and refresh data even if one demo-state API lags.
 		_SetClass(menu, "demo-active", true);
@@ -958,6 +982,7 @@ var SwiftDemoVoice = (function () {
 	function OnLoad() {
 		if (_started) return;
 		_started = true;
+		_UpdateViewportClass();
 		_SetClass(_Panel("SwiftDemoVoiceMenu"), "demo-active", true);
 		_SetOpen(true);
 		Refresh(true);
@@ -979,6 +1004,7 @@ var SwiftDemoVoice = (function () {
 		RoundNumberForTick: _RoundNumberForTick,
 		SpeakingSlotsForTick: _SpeakingSlotsForTick,
 		FilterSpeakingSlotsForSelection: _FilterSpeakingSlotsForSelection,
+		ViewportProfileForTest: _ViewportProfile,
 		JumpToRound: JumpToRound,
 		ToggleRoundPicker: ToggleRoundPicker,
 		Refresh: Refresh,
