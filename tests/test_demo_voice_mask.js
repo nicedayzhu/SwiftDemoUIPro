@@ -195,6 +195,7 @@ if (!/#SwiftDemoVoice_FooterHint/.test(layout) || !/SwiftVoiceAudio/.test(style)
 
 var commands = [];
 var gotoTicks = [];
+var scheduledCallbacks = [];
 var demoState = null;
 var startupClasses = {};
 var menuPanel = {
@@ -211,7 +212,10 @@ var context = {
 	isFinite: isFinite,
 	$: {
 		GetContextPanel: function () { return contextPanel; },
-		Schedule: function (delay, callback) { if (delay === 0 && callback) callback(); },
+		Schedule: function (delay, callback) {
+			if (delay === 0 && callback) callback();
+			else if (callback) scheduledCallbacks.push({ delay: delay, callback: callback });
+		},
 		Msg: function () {}
 	},
 	GameStateAPI: {},
@@ -221,8 +225,19 @@ vm.createContext(context);
 vm.runInContext(dataSource, context, { filename: dataSourcePath });
 vm.runInContext(source, context, { filename: sourcePath });
 
+function takeScheduledCallback(delay) {
+	for (var index = 0; index < scheduledCallbacks.length; index++) {
+		if (scheduledCallbacks[index].delay !== delay) continue;
+		return scheduledCallbacks.splice(index, 1)[0].callback;
+	}
+	return null;
+}
+
 if (startupClasses["demo-active"] !== true || startupClasses.collapsed !== false) {
 	throw new Error("self-start must make the menu visible and expanded");
+}
+if (commands[0] !== "tv_listen_voice_indices -1" || commands[1] !== "tv_listen_voice_indices_h -1") {
+	throw new Error("Demo voice must default both 32-bit slot masks to all enabled: " + JSON.stringify(commands));
 }
 
 function assertMasks(slots, expectedLow, expectedHigh) {
@@ -280,24 +295,48 @@ if (!context.SwiftDemoVoice.JumpToRound(2) || gotoTicks[0] !== 300 || context.Sw
 	throw new Error("direct round jump failed: " + JSON.stringify(gotoTicks));
 }
 
+var testPlayerSources = [
+	{ xuid: "101", team: 1 },
+	{ xuid: "202", team: 2, slot: 8, name: "Fallback Name" }
+];
 context.GameStateAPI.GetPlayerDataJSO = function () {
 	return {
 		teams: [{ name: "" }, { name: "TERRORIST" }, { name: "CT" }],
-		players: [
-			{ xuid: "101", team: 1 },
-			{ xuid: "202", team: 2, slot: 8, name: "Fallback Name" }
-		]
+		players: testPlayerSources
 	};
 };
 context.GameStateAPI.GetPlayerSlot = function (xuid) { return xuid === "101" ? 3 : -1; };
 context.GameStateAPI.GetPlayerName = function (xuid) { return xuid === "101" ? "Primary Name" : ""; };
 context.GameStateAPI.GetPlayerTeamName = function () { return ""; };
 context.GameStateAPI.GetPlayerStatsJSO = function (xuid) { return { status: xuid === "202" ? 1 : 0 }; };
+var nativeMutedPlayers = { "101": true, "202": true };
+var nativeMuteToggles = [];
+context.GameStateAPI.IsSelectedPlayerMuted = function (xuid) { return !!nativeMutedPlayers[xuid]; };
+context.GameStateAPI.ToggleMute = function (xuid) {
+	nativeMuteToggles.push(xuid);
+	nativeMutedPlayers[xuid] = !nativeMutedPlayers[xuid];
+};
 var players = context.SwiftDemoVoice.ReadPlayersForTest();
 if (players.length !== 2 || players[0].slot !== 3 || players[0].team !== "TERRORIST" || players[1].slot !== 8 || players[1].name !== "Fallback Name" || !players[0].canFocus || !players[1].isDead || players[1].canFocus) {
 	throw new Error("demo player discovery/fallback failed: " + JSON.stringify(players));
 }
-context.SwiftDemoVoice.Refresh(false);
+
+var initialDemoPoll = takeScheduledCallback(0.25);
+if (!initialDemoPoll) throw new Error("Demo voice startup poll was not scheduled");
+initialDemoPoll();
+if (JSON.stringify(nativeMuteToggles) !== JSON.stringify(["101", "202"])) {
+	throw new Error("Demo startup must clear native mutes through GameStateAPI: " + JSON.stringify(nativeMuteToggles));
+}
+
+nativeMutedPlayers["101"] = true;
+nativeMutedPlayers["303"] = true;
+testPlayerSources.push({ xuid: "303", team: 1, slot: 12, name: "Late Player" });
+var newPlayerPoll = takeScheduledCallback(0.75);
+if (!newPlayerPoll) throw new Error("new-player Demo poll was not scheduled");
+newPlayerPoll();
+if (!nativeMutedPlayers["101"] || nativeMutedPlayers["303"] || nativeMuteToggles[nativeMuteToggles.length - 1] !== "303") {
+	throw new Error("only newly discovered Demo XUIDs should be unmuted automatically");
+}
 
 function assertVisibleSpeakers(expected, label) {
 	var actual = context.SwiftDemoVoice.FilterSpeakingSlotsForSelection([3, 8, 40]);
@@ -307,6 +346,9 @@ function assertVisibleSpeakers(expected, label) {
 }
 
 context.SwiftDemoVoice.SelectAll();
+if (nativeMutedPlayers["101"] || nativeMuteToggles[nativeMuteToggles.length - 1] !== "101") {
+	throw new Error("Hear All must clear current native mutes through GameStateAPI");
+}
 assertVisibleSpeakers([3, 8, 40], "all voices");
 context.SwiftDemoVoice.SelectNone();
 assertVisibleSpeakers([], "muted voices");
@@ -314,8 +356,12 @@ context.SwiftDemoVoice.SelectTeam("TERRORIST");
 assertVisibleSpeakers([3], "T only");
 context.SwiftDemoVoice.SelectTeam("CT");
 assertVisibleSpeakers([8], "CT only");
+nativeMutedPlayers["202"] = true;
 context.SwiftDemoVoice.SelectNone();
-context.SwiftDemoVoice.TogglePlayer(8, "Fallback Name");
+context.SwiftDemoVoice.TogglePlayer(8, "Fallback Name", "202");
+if (nativeMutedPlayers["202"] || nativeMuteToggles[nativeMuteToggles.length - 1] !== "202") {
+	throw new Error("enabling one Demo player must clear that XUID's native mute through GameStateAPI");
+}
 assertVisibleSpeakers([8], "single player");
 context.SwiftDemoVoice.SelectAll();
 

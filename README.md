@@ -59,9 +59,10 @@ If the launcher was interrupted, reopen it to resume the pending cleanup.
 ## Using the In-Game Panel
 
 - Use CS2's native Demo mouse-mode hotkey to show the cursor.
+- When Demo playback starts, all 64 recorded-voice slots are enabled automatically. The panel also uses CS2's Panorama mute APIs to enable each discovered Demo XUID, without directly accessing profile data files.
 - Click a live player's name to switch to first-person POV; the current POV is highlighted in gold.
-- Click the audio button on a player row to toggle only that player's recorded voice.
-- Use **HEAR ALL**, **MUTE ALL**, **T ONLY**, or **CT ONLY** for quick voice filtering; these labels are shown in English or Chinese according to the CS2 language.
+- Click the audio button on a player row to toggle only that player's recorded Demo voice slot. Enabling it also clears that XUID's current native mute through `GameStateAPI`.
+- Use **HEAR ALL**, **MUTE ALL**, **T ONLY**, or **CT ONLY** for quick Demo voice filtering; **HEAR ALL** and the team filters clear current native mutes for their enabled XUIDs. These labels follow the CS2 language.
 - The lower-left speaker HUD follows seeking, pause, and playback speed because it is driven by the current Demo tick rather than a live microphone callback.
 - Expand **ROUND NAVIGATION** and select a round to jump to its starting tick.
 - The panel uses a fixed position that leaves a clear lane for the right-side weapon slots. Click anywhere on the title bar to expand or collapse it.
@@ -74,6 +75,7 @@ If the launcher was interrupted, reopen it to resume the pending cleanup.
 | Windows reports a missing `Qt6Gui.dll` | Run the EXE from the extracted release package, not from the raw `launcher\build\Release` directory. |
 | The launcher says cleanup is pending | Fully exit CS2, reopen the launcher if necessary, and select **Stop and restore**. |
 | Some or all player voices are unavailable | The launcher can only play voice packets stored in the Demo; missing recordings cannot be recovered. |
+| The speaker HUD shows a player but no voice is audible | Restart playback with the current package. Demo slots and discovered XUIDs are enabled automatically; **HEAR ALL** repeats both operations manually. |
 | Voice plays but the lower-left speaker HUD stays empty | Start playback through the complete launcher package. A standalone DemoUI VPK has only an empty fallback index, and older packages do not include `swift-demo-voice-indexer.exe`. |
 
 ## Compatibility and Safety

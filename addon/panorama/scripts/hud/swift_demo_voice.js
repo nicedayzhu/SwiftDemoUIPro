@@ -17,6 +17,7 @@ var SwiftDemoVoice = (function () {
 	var _lastSpeakingSignature = "";
 	var _lastVoiceStatusSignature = "";
 	var _voiceDataLogged = false;
+	var _nativeUnmuteSeenPlayers = {};
 
 	function _Context() {
 		return $.GetContextPanel();
@@ -658,7 +659,7 @@ var SwiftDemoVoice = (function () {
 				}
 				if (toggleButton) {
 					toggleButton.SetPanelEvent("onactivate", function () {
-						TogglePlayer(playerSlot, playerName);
+						TogglePlayer(playerSlot, playerName, playerXuid);
 					});
 				}
 			})(
@@ -698,6 +699,43 @@ var SwiftDemoVoice = (function () {
 		return slots;
 	}
 
+	function _UnmuteNativePlayer(player) {
+		if (!player || !player.xuid || !GameStateAPI.IsSelectedPlayerMuted || !GameStateAPI.ToggleMute) return false;
+		try {
+			if (!GameStateAPI.IsSelectedPlayerMuted(player.xuid)) return false;
+			GameStateAPI.ToggleMute(player.xuid);
+			var unmuted = !GameStateAPI.IsSelectedPlayerMuted(player.xuid);
+			$.Msg("[SwiftDemoVoice] native mute " + (unmuted ? "cleared" : "retained") +
+				" slot=" + (player.slot + 1) + " xuid=" + player.xuid);
+			return unmuted;
+		} catch (error) {
+			$.Msg("[SwiftDemoVoice] native unmute failed for " + player.xuid + ": " + error);
+			return false;
+		}
+	}
+
+	function _UnmuteSelectedPlayers() {
+		for (var i = 0; i < _players.length; i++) {
+			var player = _players[i];
+			if (!_selectedSlots[player.slot]) continue;
+			_nativeUnmuteSeenPlayers[player.xuid] = true;
+			_UnmuteNativePlayer(player);
+		}
+	}
+
+	function _UnmuteNewDemoPlayers(isDemo) {
+		if (!isDemo) {
+			_nativeUnmuteSeenPlayers = {};
+			return;
+		}
+		for (var i = 0; i < _players.length; i++) {
+			var player = _players[i];
+			if (!player.xuid || _nativeUnmuteSeenPlayers[player.xuid]) continue;
+			_nativeUnmuteSeenPlayers[player.xuid] = true;
+			_UnmuteNativePlayer(player);
+		}
+	}
+
 	function _ApplyCustomSelection(status) {
 		var masks = BuildMasksForSlots(_SelectedSlotArray());
 		_RunMaskCommands(masks.low, masks.high, status);
@@ -707,6 +745,7 @@ var SwiftDemoVoice = (function () {
 	function SelectAll() {
 		_selectionMode = "all";
 		_PopulateAllVisibleSelections();
+		_UnmuteSelectedPlayers();
 		_RunMaskCommands(-1, -1, _Localize("#SwiftDemoVoice_AllVoicesEnabled"));
 		_RenderSelection();
 	}
@@ -724,16 +763,26 @@ var SwiftDemoVoice = (function () {
 		for (var i = 0; i < _players.length; i++) {
 			if (_players[i].team === team) _selectedSlots[_players[i].slot] = true;
 		}
+		_UnmuteSelectedPlayers();
 		_ApplyCustomSelection(_Localize(team === "CT"
 			? "#SwiftDemoVoice_ListeningCounterTerrorists"
 			: "#SwiftDemoVoice_ListeningTerrorists"));
 	}
 
-	function TogglePlayer(slot, playerName) {
+	function TogglePlayer(slot, playerName, playerXuid) {
 		if (_selectionMode === "all") _PopulateAllVisibleSelections();
 		else if (_selectionMode === "none") _selectedSlots = {};
 		_selectionMode = "custom";
 		_selectedSlots[slot] = !_selectedSlots[slot];
+		if (_selectedSlots[slot]) {
+			for (var i = 0; i < _players.length; i++) {
+				if (_players[i].slot === slot || (playerXuid && _players[i].xuid === String(playerXuid))) {
+					_nativeUnmuteSeenPlayers[_players[i].xuid] = true;
+					_UnmuteNativePlayer(_players[i]);
+					break;
+				}
+			}
+		}
 		_ApplyCustomSelection(_Localize(
 			_selectedSlots[slot] ? "#SwiftDemoVoice_EnabledPlayer" : "#SwiftDemoVoice_MutedPlayer",
 			{ player: playerName }
@@ -891,14 +940,17 @@ var SwiftDemoVoice = (function () {
 
 		if (isDemo && !_wasDemo) {
 			_wasDemo = true;
+			_nativeUnmuteSeenPlayers = {};
 			_SetOpen(true);
 			Refresh(true);
 			SelectAll();
-			$.Msg("[SwiftDemoVoice] demo detected; voice slots enabled");
+			$.Msg("[SwiftDemoVoice] demo detected; all voice slots enabled");
 		} else if (!isDemo && _wasDemo) {
 			_wasDemo = false;
+			_nativeUnmuteSeenPlayers = {};
 			_lastPlayerSignature = "";
 		}
+		_UnmuteNewDemoPlayers(isDemo);
 
 		$.Schedule(0.75, _Poll);
 	}
