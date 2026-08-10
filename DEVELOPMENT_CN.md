@@ -124,7 +124,7 @@ launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
 | 翻译文本 | 更新 `.ts`，完成新增翻译，构建 `.qm` 并检查布局与占位符。 |
 | PowerShell/CMake 逻辑 | 完整运行受影响命令并检查实际产物。 |
 | 打包/许可证 | 打开 ZIP，核对运行库、说明和许可证文本。 |
-| Release 逻辑 | 不带 `-Publish` 生成对应的完整候选包或 `-MenuOnly` 候选包，核对所有 SHA-256 与 `update-manifest.json`。 |
+| Release 逻辑 | 不带 `-Publish` 生成完整候选包，核对两个压缩包、独立 VPK、所有 SHA-256 与 `update-manifest.json`。 |
 | 仅文档 | 检查相对链接和图片资源，然后运行 `git diff --check`。 |
 
 GitHub Actions 会在 Windows Server 2022 上运行可移植的 Panorama、Rust 与 Qt 测试。Panorama 测试已完全包含在仓库内，通过固定 SHA-256 保护导入的原生 DemoUI Root，不再读取相邻的 `res_panorama` 目录；Cargo 测试会完整覆盖运行时 VJS_C 与 session VPK 写入器。托管环境仍有意不重新构建静态 DemoUI VPK，因为 Valve `resourcecompiler.exe` 及其匹配的运行文件来自当前 CS2 安装。
@@ -158,12 +158,12 @@ GitHub Actions 会在 Windows Server 2022 上运行可移植的 Panorama、Rust 
 
 ## 版本与本地 Release
 
-仓库根目录有两个相互独立、格式均为 `MAJOR.MINOR.PATCH` 的版本文件：
+仓库根目录有两个格式均为 `MAJOR.MINOR.PATCH` 的版本文件；每次公开 Release 必须使用相同版本号：
 
 - [VERSION](VERSION) 是启动器/安装包版本，供 CMake、Windows 元数据和启动器资产名使用。
-- [MENU_VERSION](MENU_VERSION) 是 DemoUI VPK 版本，会嵌入启动器并用于独立 VPK 资产名。
+- [MENU_VERSION](MENU_VERSION) 是随启动器附带及独立下载的 DemoUI VPK 版本。
 
-启动器还会嵌入当前 Git 短哈希。更新器先读取 GitHub 最新正式 Release，再读取 `update-manifest.json`；即使只更新一个组件，清单也始终描述两个组件。
+启动器仍会分别比较和下载启动器与 DemoUI，但二者使用同一版本共同发布。这样 GitHub latest Release 始终可供首次用户完整安装，已安装用户仍可只下载 VPK。启动器还会嵌入当前 Git 短哈希，并从最新正式 Release 读取 `update-manifest.json`。
 
 Release 源码包从 `HEAD` 生成，因此创建候选版本前 Git 工作区必须干净：
 
@@ -179,7 +179,7 @@ Release 源码包从 `HEAD` 生成，因此创建候选版本前 Git 工作区�
 ```text
 release\v<版本号>\SwiftDemoUIPro-v<版本号>-win64.zip
 release\v<版本号>\SwiftDemoUIPro-v<版本号>-source.zip
-release\v<版本号>\swift_demo_menu_override-v<DemoUI版本号>.vpk
+release\v<版本号>\swift_demo_menu_override-v<版本号>.vpk
 release\v<版本号>\update-manifest.json
 release\v<版本号>\SHA256SUMS.txt
 ```
@@ -195,26 +195,17 @@ gh auth login
 gh repo create nicedayzhu/SwiftDemoUIPro --public --source . --remote origin --push
 ```
 
-发布完整启动器版本（可同时递增 DemoUI 版本）：
+发布完整版本：
 
 ```powershell
-.\release.ps1 -Version 0.2.0 -MenuVersion 0.1.1 `
+.\release.ps1 -Version 0.2.0 `
   -Cs2Root "<CS2 根目录>" `
   -VpkEditCli "<vpkeditcli.exe>" `
   -QtRoot "<Qt Desktop kit>" `
   -Publish
 ```
 
-只发布新的 DemoUI VPK、不重新构建或重复发布启动器：
-
-```powershell
-.\release.ps1 -MenuOnly -MenuVersion 0.1.2 `
-  -Cs2Root "<CS2 根目录>" `
-  -VpkEditCli "<vpkeditcli.exe>" `
-  -Publish
-```
-
-完整发布可更新两个版本文件，并创建 `v<启动器版本>`；`-MenuOnly` 只更新 `MENU_VERSION`、跳过 Qt 构建，并创建 `menu-v<DemoUI版本>`。两种模式都会构建和测试 VPK，生成带版本号的独立 VPK、`update-manifest.json` 与 `SHA256SUMS.txt`，先上传到 GitHub Release 草稿，再在全部成功后发布。仅 DemoUI Release 的清单会继续引用标准 `v<VERSION>` 启动器资产，因此 latest-release API 仍能同时描述两个独立组件。
+发布会同步更新两个版本文件并创建 `v<版本号>`，重新构建和测试启动器与 VPK，生成两个 ZIP、带版本号的独立 VPK、`update-manifest.json` 与 `SHA256SUMS.txt`，先上传到 GitHub Release 草稿，再在全部成功后发布。项目不再支持仅组件的公开 Release，因为 README 下载入口和更新器都读取 GitHub latest Release；latest 必须始终可以用于首次完整安装。
 
 下载后可这样核对文件：
 
@@ -237,7 +228,7 @@ Get-Content .\SHA256SUMS.txt
 | `release.ps1` | 带版本号的本地 Release 与可选 GitHub 发布入口。 |
 | `.github/workflows/ci.yml` | 可移植的 Windows CI。 |
 | `VERSION` | 启动器/安装包语义化版本。 |
-| `MENU_VERSION` | 独立的 DemoUI VPK 语义化版本。 |
+| `MENU_VERSION` | DemoUI VPK 语义化版本；公开 Release 时与 `VERSION` 保持一致。 |
 
 `dist/`、`release/`、`launcher/build/`、`launcher/package/`、`launcher/.qt/` 和 `launcher/.tools/` 等生成目录不得提交。
 

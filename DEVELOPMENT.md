@@ -124,7 +124,7 @@ See the [Launcher Guide](launcher/README.md) for its workflow, localization, ZIP
 | Translation strings | Update `.ts`, complete new translations, build `.qm`, and inspect layout/placeholders. |
 | PowerShell/CMake logic | Run the affected command end to end and inspect its artifact. |
 | Packaging/licenses | Open the ZIP and verify required runtime files, notices, and license texts. |
-| Release logic | Create the matching full or `-MenuOnly` local candidate without `-Publish`; verify every listed SHA-256 entry and `update-manifest.json`. |
+| Release logic | Create a complete local candidate without `-Publish`; verify both archives, the standalone VPK, every listed SHA-256 entry, and `update-manifest.json`. |
 | Documentation only | Validate relative links and assets, then run `git diff --check`. |
 
 GitHub Actions runs portable Panorama, Rust, and Qt tests on Windows Server 2022. The Panorama test is fully repository-contained and protects the imported native DemoUI root with a canonical SHA-256; it does not read a sibling `res_panorama` checkout. Cargo tests fully exercise the runtime VJS_C and session-VPK writers. The hosted workflow intentionally does not rebuild the static DemoUI VPK because Valve's `resourcecompiler.exe` and its matching runtime files come from a current CS2 installation.
@@ -158,12 +158,12 @@ GitHub Actions runs portable Panorama, Rust, and Qt tests on Windows Server 2022
 
 ## Versioning and Local Releases
 
-The two root version files use `MAJOR.MINOR.PATCH` independently:
+The two root version files use the same `MAJOR.MINOR.PATCH` value for every public Release:
 
 - [VERSION](VERSION) is the launcher/package version used by CMake, Windows metadata, and launcher asset names.
-- [MENU_VERSION](MENU_VERSION) is the DemoUI VPK version embedded in the launcher and used by standalone VPK assets.
+- [MENU_VERSION](MENU_VERSION) is the bundled and standalone DemoUI VPK version.
 
-The launcher also embeds the current short Git commit. Its updater reads GitHub's latest published Release and then `update-manifest.json`, which always describes both components even when only one changed.
+The launcher still compares and downloads the launcher and DemoUI as separate components, but they are published together under one version. This keeps GitHub's latest Release usable as a complete first-time download while allowing an installed launcher to download only the VPK. The launcher also embeds the current short Git commit and reads `update-manifest.json` from the latest published Release.
 
 The working tree must be clean before building a release candidate because the source archive is created from `HEAD`:
 
@@ -179,7 +179,7 @@ This runs both test suites, rebuilds the VPK, builds/tests/packages the launcher
 ```text
 release\v<version>\SwiftDemoUIPro-v<version>-win64.zip
 release\v<version>\SwiftDemoUIPro-v<version>-source.zip
-release\v<version>\swift_demo_menu_override-v<menu-version>.vpk
+release\v<version>\swift_demo_menu_override-v<version>.vpk
 release\v<version>\update-manifest.json
 release\v<version>\SHA256SUMS.txt
 ```
@@ -195,26 +195,17 @@ gh auth login
 gh repo create nicedayzhu/SwiftDemoUIPro --public --source . --remote origin --push
 ```
 
-To publish a full launcher release (optionally advancing the DemoUI version in the same release):
+To publish a complete release:
 
 ```powershell
-.\release.ps1 -Version 0.2.0 -MenuVersion 0.1.1 `
+.\release.ps1 -Version 0.2.0 `
   -Cs2Root "<CS2 root>" `
   -VpkEditCli "<vpkeditcli.exe>" `
   -QtRoot "<Qt Desktop kit>" `
   -Publish
 ```
 
-To publish only a new DemoUI VPK without rebuilding or republishing the launcher:
-
-```powershell
-.\release.ps1 -MenuOnly -MenuVersion 0.1.2 `
-  -Cs2Root "<CS2 root>" `
-  -VpkEditCli "<vpkeditcli.exe>" `
-  -Publish
-```
-
-Full publication may update both version files and creates `v<launcher-version>`. `-MenuOnly` updates only `MENU_VERSION`, skips the Qt build, and creates `menu-v<menu-version>`. Both modes build/test the VPK, create a standalone versioned VPK, generate `update-manifest.json` plus `SHA256SUMS.txt`, stage a draft GitHub Release, and publish only after all uploads succeed. The manifest carries forward the standard `v<VERSION>` launcher URL for a menu-only release, allowing the latest-release API to describe both independent components.
+Publication updates both version files, creates `v<version>`, rebuilds and tests the launcher and VPK, generates both ZIP archives, the standalone versioned VPK, `update-manifest.json`, and `SHA256SUMS.txt`, stages a draft GitHub Release, and publishes only after all uploads succeed. Component-only public Releases are intentionally unsupported because the project README and updater both use GitHub's latest Release, which must remain a complete first-time installation.
 
 Verify downloaded files with:
 
@@ -237,7 +228,7 @@ Do not manually edit generated archives or checksums.
 | `release.ps1` | Versioned local release and optional GitHub publication entry point. |
 | `.github/workflows/ci.yml` | Portable Windows CI. |
 | `VERSION` | Launcher/package semantic version. |
-| `MENU_VERSION` | Independent DemoUI VPK semantic version. |
+| `MENU_VERSION` | DemoUI VPK semantic version; kept equal to `VERSION` for public Releases. |
 
 Generated paths such as `dist/`, `release/`, `launcher/build/`, `launcher/package/`, `launcher/.qt/`, and `launcher/.tools/` must not be committed.
 

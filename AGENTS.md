@@ -44,8 +44,8 @@ The launcher must never imply that an `-insecure` session is suitable for matchm
 | `launcher/translations/` | Qt Linguist `.ts` translation sources. Generated `.qm` files are build outputs. |
 | `tests/test_demo_voice_mask.js` | Node-based Panorama logic and native-layout integration tests. |
 | `VERSION` | Launcher/package semantic version used by CMake, UI, Windows resources, and launcher asset names. |
-| `MENU_VERSION` | Independent DemoUI VPK semantic version used by the updater and standalone VPK assets. |
-| `release.ps1` | Full or `-MenuOnly` local release-candidate build and optional GitHub publication entry point. |
+| `MENU_VERSION` | DemoUI VPK semantic version, synchronized with `VERSION` for public Releases. |
+| `release.ps1` | Complete local release-candidate build and optional GitHub publication entry point. |
 | `.github/workflows/ci.yml` | Portable Windows CI for JavaScript and Qt tests; it intentionally does not build the VPK. |
 | `README.md`, `README_CN.md` | Concise player-facing English and Simplified Chinese documentation; keep them synchronized. |
 | `DEVELOPMENT.md`, `DEVELOPMENT_CN.md` | Developer-facing build, test, localization, versioning, release, and contribution documentation. |
@@ -75,7 +75,7 @@ The launcher must never imply that an `-insecure` session is suitable for matchm
 - The launcher defaults TrueView prediction off by writing `cl_demo_predict 0` to the session CFG. Keep this compatibility default unless the player explicitly enables TrueView for a supported recording.
 - The UI must remain readable under Windows light and dark system palettes. When changing QSS, explicitly style dialog child labels/buttons and visually check important states.
 - Existing QA options in `main.cpp` include `--ui-language`, `--preview-page`, `--preview-update-bubble`, `--no-update-check`, and `--render-preview`.
-- Update checks use the public GitHub latest-release API. `update-manifest.json` is authoritative for independent launcher/menu versions; legacy releases fall back to the versioned launcher asset name.
+- Update checks use the public GitHub latest-release API. `update-manifest.json` is authoritative for the separately downloadable launcher/menu components, whose public Release versions stay synchronized; legacy releases fall back to versioned asset names.
 
 ## Prerequisites
 
@@ -174,7 +174,7 @@ Choose tests in proportion to the change, but do not skip relevant coverage:
 | Translation strings | Update `.ts`, complete every new translation, build `.qm`, and visually inspect placeholders/layout. |
 | PowerShell/CMake/build logic | Parse scripts, run the affected command end to end, and inspect its produced artifact. |
 | Packaging/license changes | Open the ZIP and verify required files and license texts. |
-| Release changes | Run the matching full or `-MenuOnly` local candidate without `-Publish`; verify archives, standalone VPK, `update-manifest.json`, and every SHA256 entry. |
+| Release changes | Run a complete local candidate without `-Publish`; verify both archives, the standalone VPK, `update-manifest.json`, and every SHA256 entry. |
 | Documentation only | Validate relative links/assets and run `git diff --check`. |
 
 Useful direct CTest command for an existing build tree:
@@ -202,7 +202,7 @@ GitHub CI uses Windows Server 2022, Node 22, Qt 6.8.x/MSVC 2022, and `-SkipVpkCh
 
 ## Versioning and Release Process
 
-`VERSION` and `MENU_VERSION` are independent `MAJOR.MINOR.PATCH` sources. `VERSION` controls the launcher/package version; `MENU_VERSION` controls the DemoUI VPK version. CMake generates `AppVersion.h` with both versions plus the current short Git commit, and generates Windows metadata from the launcher version.
+`VERSION` and `MENU_VERSION` are `MAJOR.MINOR.PATCH` sources kept equal for every public Release. `VERSION` controls the launcher/package version; `MENU_VERSION` controls the DemoUI VPK version. The updater may still offer the two components as separate downloads, but GitHub's latest Release must always contain a complete first-time installation. CMake generates `AppVersion.h` with both versions plus the current short Git commit, and generates Windows metadata from the launcher version.
 
 ### Local release candidate
 
@@ -220,7 +220,7 @@ This runs both test suites, rebuilds the VPK, builds/tests/packages the launcher
 ```text
 release\v<version>\SwiftDemoUIPro-v<version>-win64.zip
 release\v<version>\SwiftDemoUIPro-v<version>-source.zip
-release\v<version>\swift_demo_menu_override-v<menu-version>.vpk
+release\v<version>\swift_demo_menu_override-v<version>.vpk
 release\v<version>\update-manifest.json
 release\v<version>\SHA256SUMS.txt
 ```
@@ -239,9 +239,7 @@ Only with explicit user authorization:
   -Publish
 ```
 
-Full publishing may update `VERSION` and `MENU_VERSION`, create `chore(release): v<version>`, build/test all artifacts, create an annotated `v<version>` tag, push the current branch and tag, create or update a draft GitHub Release, upload both ZIPs, the standalone VPK, `update-manifest.json`, and `SHA256SUMS.txt`, then publish the Release. It refuses to overwrite an already published Release.
-
-For a DemoUI-only release, use `release.ps1 -MenuOnly -MenuVersion <next-menu-version> ... -Publish`. This updates only `MENU_VERSION`, skips the Qt build, creates `menu-v<menu-version>`, and uploads the versioned VPK, `update-manifest.json`, and checksums. It still requires explicit publication authorization.
+Publishing updates `VERSION` and `MENU_VERSION` together, creates `chore(release): v<version>`, builds/tests all artifacts, creates an annotated `v<version>` tag, pushes the current branch and tag, creates or updates a draft GitHub Release, uploads both ZIPs, the standalone VPK, `update-manifest.json`, and `SHA256SUMS.txt`, then publishes the Release. Component-only public Releases are intentionally rejected so the latest Release remains a complete first-time download. The script refuses to overwrite an already published Release.
 
 Do not manually edit generated release archives or their checksums. Generate checksums after the final packaging step.
 

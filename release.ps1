@@ -52,20 +52,17 @@ $currentMenuVersion = (Get-Content -Raw -LiteralPath $menuVersionPath).Trim()
 if ($currentMenuVersion -notmatch '^\d+\.\d+\.\d+$') {
     throw "MENU_VERSION must contain a semantic version such as 1.2.3."
 }
-if ($MenuOnly -and $Version) {
-    throw "-Version cannot be used with -MenuOnly. Use -MenuVersion for a DemoUI-only release."
+if ($MenuOnly -or $MenuVersion) {
+    throw "Component-only releases are no longer supported. Use -Version; VERSION and MENU_VERSION are published together in a complete Release."
 }
 
 $targetVersion = if ($Version) { $Version.Trim() } else { $currentVersion }
-$targetMenuVersion = if ($MenuVersion) { $MenuVersion.Trim() } else { $currentMenuVersion }
+$targetMenuVersion = $targetVersion
 if ($targetVersion -notmatch '^\d+\.\d+\.\d+$') {
     throw "-Version must use MAJOR.MINOR.PATCH, for example 1.2.3."
 }
-if ($targetMenuVersion -notmatch '^\d+\.\d+\.\d+$') {
-    throw "-MenuVersion must use MAJOR.MINOR.PATCH, for example 1.2.3."
-}
 if (-not $Publish -and ($targetVersion -ne $currentVersion -or $targetMenuVersion -ne $currentMenuVersion)) {
-    throw "Changing VERSION or MENU_VERSION creates a release commit and therefore requires -Publish."
+    throw "VERSION and MENU_VERSION must match for a local candidate. Use -Version with -Publish to update both files."
 }
 
 if ($Publish) {
@@ -98,11 +95,7 @@ if ($Publish) {
     if ($versionFilesChanged.Count -gt 0) {
         Invoke-Native -Command "git" -Arguments (@("add", "--") + $versionFilesChanged) `
             -FailureMessage "Unable to stage release version files."
-        $releaseCommitMessage = if ($MenuOnly) {
-            "chore(release): menu v$targetMenuVersion"
-        } else {
-            "chore(release): v$targetVersion"
-        }
+        $releaseCommitMessage = "chore(release): v$targetVersion"
         Invoke-Native -Command "git" -Arguments @("commit", "-m", $releaseCommitMessage) `
             -FailureMessage "Unable to create the version commit."
     }
@@ -118,14 +111,12 @@ if ($Cs2Root) { $menuArguments.Cs2Root = $Cs2Root }
 if ($VpkEditCli) { $menuArguments.VpkEditCli = $VpkEditCli }
 & (Join-Path $projectRoot "demo-menu.ps1") @menuArguments
 
-if (-not $MenuOnly) {
-    Write-Host "Building, testing, and packaging the Qt launcher..."
-    $launcherArguments = @{ Package = $true }
-    if ($QtRoot) { $launcherArguments.QtRoot = $QtRoot }
-    & (Join-Path $projectRoot "launcher\build-launcher.ps1") @launcherArguments
-}
+Write-Host "Building, testing, and packaging the Qt launcher..."
+$launcherArguments = @{ Package = $true }
+if ($QtRoot) { $launcherArguments.QtRoot = $QtRoot }
+& (Join-Path $projectRoot "launcher\build-launcher.ps1") @launcherArguments
 
-$tag = if ($MenuOnly) { "menu-v$targetMenuVersion" } else { "v$targetVersion" }
+$tag = "v$targetVersion"
 $versionReleaseDir = Join-Path $releaseRoot $tag
 if (Test-Path -LiteralPath $versionReleaseDir) {
     Remove-Item -LiteralPath $versionReleaseDir -Recurse -Force
@@ -135,36 +126,30 @@ New-Item -ItemType Directory -Path $versionReleaseDir -Force | Out-Null
 $releaseAssets = @()
 $packageName = "SwiftDemoUIPro-v$targetVersion-win64.zip"
 $packageAsset = Join-Path $versionReleaseDir $packageName
-if (-not $MenuOnly) {
-    $packageSource = Join-Path $projectRoot "launcher\package\$packageName"
-    if (-not (Test-Path -LiteralPath $packageSource)) {
-        throw "Expected launcher package was not produced: $packageSource"
-    }
-    Copy-Item -LiteralPath $packageSource -Destination $packageAsset
-    $releaseAssets += $packageAsset
-
-    $sourceName = "SwiftDemoUIPro-v$targetVersion-source.zip"
-    $sourceAsset = Join-Path $versionReleaseDir $sourceName
-    Invoke-Native -Command "git" -Arguments @(
-        "archive",
-        "--format=zip",
-        "--prefix=SwiftDemoUIPro-v$targetVersion/",
-        "--output=$sourceAsset",
-        "HEAD"
-    ) -FailureMessage "Unable to create the source archive."
-    $releaseAssets += $sourceAsset
+$packageSource = Join-Path $projectRoot "launcher\package\$packageName"
+if (-not (Test-Path -LiteralPath $packageSource)) {
+    throw "Expected launcher package was not produced: $packageSource"
 }
+Copy-Item -LiteralPath $packageSource -Destination $packageAsset
+$releaseAssets += $packageAsset
+
+$sourceName = "SwiftDemoUIPro-v$targetVersion-source.zip"
+$sourceAsset = Join-Path $versionReleaseDir $sourceName
+Invoke-Native -Command "git" -Arguments @(
+    "archive",
+    "--format=zip",
+    "--prefix=SwiftDemoUIPro-v$targetVersion/",
+    "--output=$sourceAsset",
+    "HEAD"
+) -FailureMessage "Unable to create the source archive."
+$releaseAssets += $sourceAsset
 
 $menuName = "swift_demo_menu_override-v$targetMenuVersion.vpk"
 $menuAsset = Join-Path $versionReleaseDir $menuName
 Copy-Item -LiteralPath (Join-Path $projectRoot "dist\swift_demo_menu_override.vpk") -Destination $menuAsset
 $releaseAssets += $menuAsset
 
-$launcherHash = if (Test-Path -LiteralPath $packageAsset) {
-    (Get-FileHash -LiteralPath $packageAsset -Algorithm SHA256).Hash.ToLowerInvariant()
-} else {
-    ""
-}
+$launcherHash = (Get-FileHash -LiteralPath $packageAsset -Algorithm SHA256).Hash.ToLowerInvariant()
 $menuHash = (Get-FileHash -LiteralPath $menuAsset -Algorithm SHA256).Hash.ToLowerInvariant()
 $launcherUrl = "https://github.com/$githubRepository/releases/download/v$targetVersion/$packageName"
 $menuUrl = "https://github.com/$githubRepository/releases/download/$tag/$menuName"
@@ -252,7 +237,7 @@ if ($releaseExists) {
         "--draft",
         "--verify-tag",
         "--generate-notes",
-        "--title", $(if ($MenuOnly) { "Swift DemoUI Pro DemoUI $tag" } else { "Swift DemoUI Pro $tag" })
+        "--title", "Swift DemoUI Pro $tag"
     )) -FailureMessage "Unable to create draft release $tag."
 }
 
