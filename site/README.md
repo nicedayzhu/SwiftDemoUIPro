@@ -25,3 +25,8 @@ corepack pnpm run build
 
 Pushing a change under `site/` or to `.github/workflows/pages.yml` runs the
 Pages deployment workflow automatically.
+
+The download button starts with a language-specific “latest” label and then
+reads the current version from GitHub's public latest-release API in the
+browser. Keep the source label version-free so a failed API request never
+leaves a stale release number on the page.

@@ -1,3 +1,6 @@
 {{- with resources.Get "js/hero-focus.js" | minify | fingerprint -}}
   <script src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}"></script>
 {{- end -}}
+{{- with resources.Get "js/latest-release.js" | minify | fingerprint -}}
+  <script src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}"></script>
+{{- end -}}

@@ -12,7 +12,7 @@ sections:
         Keep the native DemoUI and add the controls it is missing: choose who you hear, identify the
         current speaker, switch POV, and move to a recorded round start.
       primary_action:
-        text: Download v0.1.2
+        text: Download latest
         url: https://github.com/nicedayzhu/SwiftDemoUIPro/releases/latest
         icon: arrow-down-tray
         style: solid

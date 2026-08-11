@@ -12,7 +12,7 @@ sections:
         保留原生 DemoUI，只在旁边增加语音与导航控制：选择收听对象、辨认当前说话者、
         切换 POV，并跳到指定回合。
       primary_action:
-        text: 下载 v0.1.2
+        text: 下载最新版
         url: https://github.com/nicedayzhu/SwiftDemoUIPro/releases/latest
         icon: arrow-down-tray
         style: solid

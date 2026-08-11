@@ -52,7 +52,7 @@ hugoblox:
     language_switcher: true
     cta:
       enable: false
-      text: 下载 v0.1.2
+      text: 下载最新版
       url: https://github.com/nicedayzhu/SwiftDemoUIPro/releases/latest
 
   footer:
