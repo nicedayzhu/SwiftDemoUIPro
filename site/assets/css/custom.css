@@ -123,6 +123,69 @@ body {
   box-shadow: none;
 }
 
+.swift-project-stats {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 1.35rem;
+  color: #8f918b;
+}
+
+.swift-project-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  color: inherit;
+  font-size: 0.78rem;
+  line-height: 1;
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.swift-project-stat:hover {
+  color: #d2d0c8;
+}
+
+.swift-project-stat:focus-visible {
+  border-radius: 0.15rem;
+  outline: 2px solid rgb(212 174 105 / 72%);
+  outline-offset: 0.28rem;
+}
+
+.swift-project-stat svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  overflow: visible;
+  fill: none;
+  stroke: var(--swift-accent);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.65;
+}
+
+.swift-project-stat:first-child svg {
+  fill: rgb(189 145 70 / 16%);
+}
+
+.swift-project-stat__value {
+  color: var(--swift-text);
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.swift-project-stat__label {
+  white-space: nowrap;
+}
+
+.swift-project-stats__separator {
+  width: 1px;
+  height: 0.9rem;
+  margin-inline: 0.85rem;
+  background: rgb(231 228 219 / 19%);
+}
+
 .swift-hero img,
 .swift-showcase img {
   border: 1px solid rgb(231 228 219 / 17%);
@@ -412,6 +475,18 @@ code {
   .swift-focus--menu {
     top: 9%;
     right: 2.5%;
+  }
+
+  .swift-project-stats {
+    margin-top: 1.15rem;
+  }
+
+  .swift-project-stat {
+    font-size: 0.74rem;
+  }
+
+  .swift-project-stats__separator {
+    margin-inline: 0.65rem;
   }
 
   .swift-capabilities .max-w-7xl > .grid > div,

@@ -27,6 +27,11 @@ Pushing a change under `site/` or to `.github/workflows/pages.yml` runs the
 Pages deployment workflow automatically.
 
 The download button starts with a language-specific “latest” label and then
-reads the current version from GitHub's public latest-release API in the
-browser. Keep the source label version-free so a failed API request never
-leaves a stale release number on the page.
+reads the current version from GitHub's public API in the browser. The same
+request adds a compact trust row below the hero actions with the repository's
+Star count and the cumulative download count for published
+`SwiftDemoUIPro-v*-win64.zip` assets. Update checks, source archives, standalone
+VPKs, manifests, and checksum files are deliberately excluded from the user
+download metric. Keep the source label version-free and the statistics
+progressively enhanced so a failed API request never leaves stale data or a
+broken placeholder on the page.
