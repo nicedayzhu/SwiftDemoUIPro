@@ -4,15 +4,54 @@
 @define SwiftVoiceCT: #718b99;
 @define SwiftVoiceT: #b79a56;
 
-.swift-demo-voice
+.swift-demo-voice-dock
 {
 	width: 360px;
 	height: 650px;
 	horizontal-align: right;
 	vertical-align: bottom;
-	transform-origin: 100% 50%;
 	/* Demo bar clearance + native 84px bottom-right equipment strip + 16px gap. */
 	margin: 0px 280px 212px 0px;
+	transition-property: width, height;
+	transition-duration: 0.16s;
+	transition-timing-function: ease-out;
+	z-index: 80;
+}
+
+.DemoControllerMinimal .swift-demo-voice-dock
+{
+	margin-bottom: 166px;
+}
+
+.DemoControllerHidden .swift-demo-voice-dock
+{
+	margin-bottom: 118px;
+}
+
+.AspectRatio4x3 .swift-demo-voice-dock,
+.swift-demo-voice-dock.swift-aspect-4x3
+{
+	margin-right: 210px;
+}
+
+.swift-demo-voice-dock.custom-position
+{
+	horizontal-align: left;
+	vertical-align: top;
+	margin: 0px;
+}
+
+.swift-demo-voice-dock.collapsed
+{
+	width: 360px;
+	height: 56px;
+}
+
+.swift-demo-voice
+{
+	width: 100%;
+	height: 100%;
+	transform-origin: 100% 50%;
 	flow-children: down;
 	background-color: #0f1012f2;
 	border: 1px solid #ffffff0d;
@@ -22,20 +61,9 @@
 	opacity: 0;
 	visibility: collapse;
 	transform: translateX(28px);
-	transition-property: opacity, transform, height;
+	transition-property: opacity, transform;
 	transition-duration: 0.16s;
 	transition-timing-function: ease-out;
-	z-index: 80;
-}
-
-.DemoControllerMinimal .swift-demo-voice
-{
-	margin-bottom: 166px;
-}
-
-.DemoControllerHidden .swift-demo-voice
-{
-	margin-bottom: 118px;
 }
 
 .swift-demo-voice.demo-active
@@ -49,7 +77,6 @@
 .AspectRatio4x3 .swift-demo-voice,
 .swift-demo-voice.swift-aspect-4x3
 {
-	margin-right: 210px;
 	transform: translateX(28px) scaleX(0.75);
 }
 
@@ -57,11 +84,6 @@
 .swift-demo-voice.swift-aspect-4x3.demo-active
 {
 	transform: translateX(0px) scaleX(0.75);
-}
-
-.swift-demo-voice.collapsed
-{
-	height: 56px;
 }
 
 .collapsed .swift-demo-voice__header
@@ -76,7 +98,6 @@
 	flow-children: right;
 	background-color: #17181af7;
 	border-bottom: 1px solid #ffffff0d;
-	padding-right: 12px;
 	brightness: 1;
 	transition-property: background-color;
 	transition-duration: 0.12s;
@@ -94,12 +115,21 @@
 	wash-color: SwiftVoiceGold;
 }
 
-.swift-demo-voice__brand
+.swift-demo-voice__drag-handle
 {
 	width: 52px;
 	height: 54px;
 	background-color: #ffffff05;
 	border-right: 1px solid #ffffff0d;
+	cursor: move;
+	transition-property: background-color, brightness;
+	transition-duration: 0.1s;
+}
+
+.swift-demo-voice__drag-handle:hover
+{
+	background-color: #e4ae3914;
+	brightness: 1.25;
 }
 
 .swift-demo-voice__brand-icon
@@ -110,6 +140,19 @@
 	vertical-align: center;
 	wash-color: SwiftVoiceGold;
 	img-shadow: #000000aa 0px 1px 2px 1.0;
+}
+
+.swift-demo-voice__header-toggle
+{
+	width: fill-parent-flow(1.0);
+	height: 100%;
+	flow-children: right;
+	padding-right: 12px;
+}
+
+.swift-demo-voice__header-toggle:hover
+{
+	background-color: #ffffff04;
 }
 
 .swift-demo-voice__title-block
@@ -171,6 +214,132 @@
 {
 	transform: rotateZ(0deg);
 	wash-color: SwiftVoiceGold;
+}
+
+.swift-demo-voice__reset-position
+{
+	width: 0px;
+	height: 54px;
+	visibility: collapse;
+	opacity: 0;
+	background-color: #00000000;
+	border: 0px solid #00000000;
+	transition-property: opacity, background-color;
+	transition-duration: 0.1s;
+}
+
+.swift-demo-voice.custom-position .swift-demo-voice__reset-position
+{
+	width: 34px;
+	visibility: visible;
+	opacity: 0.72;
+}
+
+.swift-demo-voice.collapsed .swift-demo-voice__reset-position
+{
+	width: 0px;
+	visibility: collapse;
+	opacity: 0;
+}
+
+.swift-demo-voice__reset-position:hover
+{
+	background-color: #e4ae3916;
+	opacity: 1;
+}
+
+.swift-demo-voice__reset-position Image
+{
+	width: 15px;
+	height: 15px;
+	horizontal-align: center;
+	vertical-align: center;
+	wash-color: #b8bbbd;
+}
+
+.swift-demo-voice-dock.dragging .swift-demo-voice.demo-active
+{
+	opacity: 0;
+	visibility: collapse;
+	transition-duration: 0.0s;
+}
+
+.swift-demo-voice-drag-ghost
+{
+	width: 360px;
+	height: 650px;
+	flow-children: down;
+	background-color: #0f1012bd;
+	border: 2px solid #e4ae39c8;
+	box-shadow: black 0px 4px 12px 2px;
+	world-blur: hudWorldBlur;
+	border-radius: 2px;
+	opacity: 0.86;
+	z-index: 1000;
+}
+
+.swift-demo-voice-drag-ghost.compact
+{
+	height: 56px;
+}
+
+.swift-demo-voice-drag-ghost__header
+{
+	width: 100%;
+	height: 54px;
+	flow-children: right;
+	background-color: #17181af2;
+	border-bottom: 1px solid #ffffff12;
+}
+
+.swift-demo-voice-drag-ghost__icon
+{
+	width: 52px;
+	height: 100%;
+	background-image: url("s2r://panorama/images/icons/ui/unmuted.vsvg");
+	background-repeat: no-repeat;
+	background-position: 50% 50%;
+	background-size: 21px 21px;
+	wash-color: SwiftVoiceGold;
+	border-right: 1px solid #ffffff0d;
+}
+
+.swift-demo-voice-drag-ghost__label
+{
+	width: fill-parent-flow(1.0);
+	vertical-align: center;
+	font-family: Stratum2, 'Arial Unicode MS';
+	font-size: 19px;
+	font-weight: bold;
+	letter-spacing: 0.8px;
+	color: #eef0f1;
+	margin-left: 13px;
+}
+
+.swift-demo-voice-drag-ghost__body
+{
+	width: 100%;
+	height: fill-parent-flow(1.0);
+	background-color: gradient(linear, 0% 0%, 0% 100%, from(#17181a6f), to(#090a0b98));
+}
+
+.compact .swift-demo-voice-drag-ghost__body
+{
+	visibility: collapse;
+}
+
+.swift-demo-voice-drag-ghost__target
+{
+	horizontal-align: center;
+	vertical-align: center;
+	font-family: Stratum2 Condensed, 'Arial Unicode MS';
+	font-size: 15px;
+	font-weight: bold;
+	letter-spacing: 0.8px;
+	color: #f0dfb8;
+	background-color: #17181ae8;
+	border: 1px solid #e4ae397f;
+	padding: 8px 13px 7px 13px;
 }
 
 .swift-demo-voice__body

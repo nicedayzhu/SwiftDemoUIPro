@@ -19,6 +19,20 @@ var SwiftDemoVoice = (function () {
 	var _voiceDataLogged = false;
 	var _nativeUnmuteSeenPlayers = {};
 	var _lastViewportProfile = "";
+	var _lastViewportWidth = 0;
+	var _lastViewportHeight = 0;
+	var _dragEventsRegistered = false;
+	var _customPosition = false;
+	var _customPositionX = 0;
+	var _customPositionY = 0;
+	var _customPositionRatioX = 0;
+	var _customPositionRatioY = 0;
+	var _panelWidth = 360;
+	var _panelHeight = 650;
+	var _compactWidth = 360;
+	var _compactHeight = 56;
+	var _screenPadding = 12;
+	var _snapDistance = 24;
 
 	function _Context() {
 		return $.GetContextPanel();
@@ -109,19 +123,206 @@ var SwiftDemoVoice = (function () {
 		return viewportWidth / viewportHeight <= 1.5 ? "4x3" : "wide";
 	}
 
-	function _UpdateViewportClass() {
+	function _ViewportMetrics() {
 		var context = _Context();
-		var menu = _Panel("SwiftDemoVoiceMenu");
-		if (!context || !menu) return;
+		if (!context) return null;
 		var scaleX = Number(context.actualuiscale_x) || 1;
 		var scaleY = Number(context.actualuiscale_y) || 1;
-		var profile = _ViewportProfile(
-			Number(context.actuallayoutwidth) / scaleX,
-			Number(context.actuallayoutheight) / scaleY
+		var width = Number(context.actuallayoutwidth) / scaleX;
+		var height = Number(context.actuallayoutheight) / scaleY;
+		if (!(width > 0) || !(height > 0)) return null;
+		return {
+			context: context,
+			scaleX: scaleX,
+			scaleY: scaleY,
+			width: width,
+			height: height
+		};
+	}
+
+	function _CurrentPanelSize() {
+		return {
+			width: _isOpen ? _panelWidth : _compactWidth,
+			height: _isOpen ? _panelHeight : _compactHeight
+		};
+	}
+
+	function _Clamp(value, minimum, maximum) {
+		return Math.max(minimum, Math.min(maximum, Number(value) || 0));
+	}
+
+	function _ResolvePosition(x, y, viewportWidth, viewportHeight, panelWidth, panelHeight, snap) {
+		var minimumX = _screenPadding;
+		var minimumY = _screenPadding;
+		var maximumX = Math.max(minimumX, Number(viewportWidth) - Number(panelWidth) - _screenPadding);
+		var maximumY = Math.max(minimumY, Number(viewportHeight) - Number(panelHeight) - _screenPadding);
+		var resolvedX = _Clamp(x, minimumX, maximumX);
+		var resolvedY = _Clamp(y, minimumY, maximumY);
+
+		if (snap) {
+			if (resolvedX - minimumX <= _snapDistance) resolvedX = minimumX;
+			else if (maximumX - resolvedX <= _snapDistance) resolvedX = maximumX;
+			if (resolvedY - minimumY <= _snapDistance) resolvedY = minimumY;
+			else if (maximumY - resolvedY <= _snapDistance) resolvedY = maximumY;
+		}
+
+		return { x: Math.round(resolvedX), y: Math.round(resolvedY) };
+	}
+
+	function _ApplyCustomPosition(x, y, snap) {
+		var dock = _Panel("SwiftDemoVoiceDock");
+		var menu = _Panel("SwiftDemoVoiceMenu");
+		var metrics = _ViewportMetrics();
+		if (!dock || !metrics) return false;
+		var size = _CurrentPanelSize();
+		var resolved = _ResolvePosition(x, y, metrics.width, metrics.height, size.width, size.height, snap);
+
+		_customPosition = true;
+		_customPositionX = resolved.x;
+		_customPositionY = resolved.y;
+		_customPositionRatioX = (resolved.x + size.width * 0.5) / metrics.width;
+		_customPositionRatioY = (resolved.y + size.height * 0.5) / metrics.height;
+		_SetClass(dock, "custom-position", true);
+		_SetClass(menu, "custom-position", true);
+		dock.style.position = resolved.x + "px " + resolved.y + "px 0px";
+		return true;
+	}
+
+	function _ClampCustomPosition() {
+		if (!_customPosition) return;
+		_ApplyCustomPosition(_customPositionX, _customPositionY, false);
+	}
+
+	function _ReflowCustomPosition() {
+		if (!_customPosition) return;
+		var metrics = _ViewportMetrics();
+		if (!metrics) return;
+		var size = _CurrentPanelSize();
+		_ApplyCustomPosition(
+			_customPositionRatioX * metrics.width - size.width * 0.5,
+			_customPositionRatioY * metrics.height - size.height * 0.5,
+			false
 		);
-		if (!profile || profile === _lastViewportProfile) return;
+	}
+
+	function _DeleteDragGhost(ghost) {
+		if (!ghost) return;
+		try {
+			// `visible` is a hard Panorama render gate. Use it before deferred
+			// deletion so no drag image can survive into the source reveal frame.
+			ghost.visible = false;
+			ghost.style.transitionDuration = "0.0s";
+			ghost.style.opacity = "0";
+			if (!ghost.IsValid || ghost.IsValid()) ghost.DeleteAsync(0);
+		} catch (error) {
+			$.Msg("[SwiftDemoVoice] drag ghost cleanup failed: " + error);
+		}
+	}
+
+	function _SetDragSourceVisible(visible) {
+		var menu = _Panel("SwiftDemoVoiceMenu");
+		if (!menu) return;
+		// Do not use opacity here. Native drag handling can retain an
+		// interpolated source frame; Panel.visible cannot be interpolated.
+		menu.visible = !!visible;
+	}
+
+	function _BeginDrag(targetId, drag) {
+		if (!drag || !$.CreatePanel) return false;
+		var context = _Context();
+		var dock = _Panel("SwiftDemoVoiceDock");
+		if (!context || !dock) return false;
+
+		// Hard-hide the source before the preview panel exists. This avoids
+		// Panorama's normal drag-source treatment, which intentionally leaves a
+		// dimmed copy behind for item drag-and-drop interactions.
+		_SetClass(dock, "dragging", true);
+		_SetDragSourceVisible(false);
+		_DeleteDragGhost(_Panel("SwiftDemoVoiceDragGhost"));
+		var ghost = $.CreatePanel("Panel", context, "SwiftDemoVoiceDragGhost");
+		ghost.AddClass("swift-demo-voice-drag-ghost");
+		if (!_isOpen) ghost.AddClass("compact");
+		var header = $.CreatePanel("Panel", ghost, "SwiftDemoVoiceDragGhostHeader");
+		header.AddClass("swift-demo-voice-drag-ghost__header");
+		var icon = $.CreatePanel("Panel", header, "SwiftDemoVoiceDragGhostIcon");
+		icon.AddClass("swift-demo-voice-drag-ghost__icon");
+		var label = $.CreatePanel("Label", header, "SwiftDemoVoiceDragGhostLabel");
+		label.AddClass("swift-demo-voice-drag-ghost__label");
+		label.text = _Localize("#SwiftDemoVoice_Title");
+		var body = $.CreatePanel("Panel", ghost, "SwiftDemoVoiceDragGhostBody");
+		body.AddClass("swift-demo-voice-drag-ghost__body");
+		var target = $.CreatePanel("Label", body, "SwiftDemoVoiceDragGhostTarget");
+		target.AddClass("swift-demo-voice-drag-ghost__target");
+		target.text = _Localize("#SwiftDemoVoice_DragPreview");
+
+		drag.displayPanel = ghost;
+		drag.offsetX = 26;
+		drag.offsetY = 27;
+		drag.removePositionBeforeDrop = false;
+		return true;
+	}
+
+	function _EndDrag(targetId, ghost) {
+		var dock = _Panel("SwiftDemoVoiceDock");
+		var metrics = _ViewportMetrics();
+		if (ghost && metrics) {
+			var contextX = Number(metrics.context.actualxoffset) || 0;
+			var contextY = Number(metrics.context.actualyoffset) || 0;
+			var x = (Number(ghost.actualxoffset) - contextX) / metrics.scaleX;
+			var y = (Number(ghost.actualyoffset) - contextY) / metrics.scaleY;
+			if (_ApplyCustomPosition(x, y, true)) {
+				$.Msg("[SwiftDemoVoice] panel moved x=" + _customPositionX + " y=" + _customPositionY);
+			}
+		}
+		// Hard-hide the preview before restoring the real panel at its resolved
+		// position. At no render point are both panels visible.
+		_DeleteDragGhost(ghost);
+		_SetClass(dock, "dragging", false);
+		_SetDragSourceVisible(true);
+	}
+
+	function _SetupDragging() {
+		if (_dragEventsRegistered || !$.RegisterEventHandler) return;
+		var handle = _Panel("SwiftDemoVoiceDragHandle");
+		if (!handle) return;
+		$.RegisterEventHandler("DragStart", handle, _BeginDrag);
+		$.RegisterEventHandler("DragEnd", handle, _EndDrag);
+		_dragEventsRegistered = true;
+	}
+
+	function ResetPosition() {
+		var dock = _Panel("SwiftDemoVoiceDock");
+		var menu = _Panel("SwiftDemoVoiceMenu");
+		_customPosition = false;
+		_customPositionX = 0;
+		_customPositionY = 0;
+		_customPositionRatioX = 0;
+		_customPositionRatioY = 0;
+		if (dock) {
+			dock.style.position = "0px 0px 0px";
+			_SetClass(dock, "custom-position", false);
+			_SetClass(dock, "dragging", false);
+		}
+		_SetClass(menu, "custom-position", false);
+		$.Msg("[SwiftDemoVoice] panel position reset");
+	}
+
+	function _UpdateViewportClass() {
+		var metrics = _ViewportMetrics();
+		var menu = _Panel("SwiftDemoVoiceMenu");
+		var dock = _Panel("SwiftDemoVoiceDock");
+		if (!metrics || !menu) return;
+		var profile = _ViewportProfile(metrics.width, metrics.height);
+		if (!profile) return;
+		var sizeChanged = Math.abs(metrics.width - _lastViewportWidth) > 1
+			|| Math.abs(metrics.height - _lastViewportHeight) > 1;
+		if (profile === _lastViewportProfile && !sizeChanged) return;
 		_lastViewportProfile = profile;
+		_lastViewportWidth = metrics.width;
+		_lastViewportHeight = metrics.height;
 		_SetClass(menu, "swift-aspect-4x3", profile === "4x3");
+		_SetClass(dock, "swift-aspect-4x3", profile === "4x3");
+		if (_customPosition && sizeChanged) $.Schedule(0.0, _ReflowCustomPosition);
 	}
 
 	function _GetVoiceData() {
@@ -943,8 +1144,11 @@ var SwiftDemoVoice = (function () {
 	function _SetOpen(open) {
 		_isOpen = !!open;
 		var menu = _Panel("SwiftDemoVoiceMenu");
+		var dock = _Panel("SwiftDemoVoiceDock");
 		_SetClass(menu, "collapsed", !_isOpen);
+		_SetClass(dock, "collapsed", !_isOpen);
 		if (!_isOpen) _SetRoundPickerOpen(false);
+		if (_customPosition) $.Schedule(0.0, _ClampCustomPosition);
 	}
 
 	function ToggleOpen() {
@@ -984,6 +1188,7 @@ var SwiftDemoVoice = (function () {
 		_started = true;
 		_UpdateViewportClass();
 		_SetClass(_Panel("SwiftDemoVoiceMenu"), "demo-active", true);
+		_SetupDragging();
 		_SetOpen(true);
 		Refresh(true);
 		_UpdateRoundPicker(true);
@@ -1005,10 +1210,12 @@ var SwiftDemoVoice = (function () {
 		SpeakingSlotsForTick: _SpeakingSlotsForTick,
 		FilterSpeakingSlotsForSelection: _FilterSpeakingSlotsForSelection,
 		ViewportProfileForTest: _ViewportProfile,
+		ResolvePositionForTest: _ResolvePosition,
 		JumpToRound: JumpToRound,
 		ToggleRoundPicker: ToggleRoundPicker,
 		Refresh: Refresh,
 		ToggleOpen: ToggleOpen,
+		ResetPosition: ResetPosition,
 		OnLoad: OnLoad
 	};
 })();

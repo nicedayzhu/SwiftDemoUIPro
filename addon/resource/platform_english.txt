@@ -64,4 +64,6 @@
 	"SwiftDemoVoice_PovUnavailableOffline" "POV unavailable: player is offline"
 	"SwiftDemoVoice_PovSwitchFailed" "POV switch failed: {s:player}"
 	"SwiftDemoVoice_SwitchingPov" "Switching POV: {s:player}..."
+	"SwiftDemoVoice_DragPreview" "RELEASE TO PLACE"
+	"SwiftDemoVoice_ResetPositionHint" "Restore the default panel position"
 }

@@ -115,19 +115,20 @@ if (nativeRootHash !== "cc5a10b29e1abdbd65b2a9260a6b0d55784aac87534629890bdc7607
     throw new Error("Valve's native DemoUI Root must remain byte-for-byte unchanged: " + nativeRootHash);
 }
 
-var menuWidth = /\.swift-demo-voice\s*\{[^}]*\bwidth:\s*(\d+)px;/m.exec(style);
-var menuHeight = /\.swift-demo-voice\s*\{[^}]*\bheight:\s*(\d+)px;/m.exec(style);
+var menuWidth = /\.swift-demo-voice-dock\s*\{[^}]*\bwidth:\s*(\d+)px;/m.exec(style);
+var menuHeight = /\.swift-demo-voice-dock\s*\{[^}]*\bheight:\s*(\d+)px;/m.exec(style);
 if (!menuWidth || Number(menuWidth[1]) > 360 || !menuHeight || Number(menuHeight[1]) > 650) {
 	throw new Error("Demo Voice panel must keep a compact right-side footprint");
 }
 
-var menuMargins = /\.swift-demo-voice\s*\{[^}]*\bhorizontal-align:\s*right;[^}]*\bmargin:\s*0px\s+(\d+)px\s+(\d+)px\s+0px;/m.exec(style);
+var menuMargins = /\.swift-demo-voice-dock\s*\{[^}]*\bhorizontal-align:\s*right;[^}]*\bmargin:\s*0px\s+(\d+)px\s+(\d+)px\s+0px;/m.exec(style);
 if (!menuMargins || Number(menuMargins[1]) < 280 || Number(menuMargins[2]) < 212) {
 	throw new Error("Demo Voice panel must sit above the native bottom-right equipment strip");
 }
 
 if (!/\.swift-demo-voice\s*\{[^}]*\btransform-origin:\s*100%\s+50%;/m.test(style)
-	|| !/\.swift-demo-voice\.swift-aspect-4x3\s*\{[^}]*\bmargin-right:\s*210px;[^}]*\bscaleX\(0\.75\);/m.test(style)
+	|| !/\.swift-demo-voice-dock\.swift-aspect-4x3\s*\{[^}]*\bmargin-right:\s*210px;/m.test(style)
+	|| !/\.swift-demo-voice\.swift-aspect-4x3\s*\{[^}]*\bscaleX\(0\.75\);/m.test(style)
 	|| !/\.swift-demo-voice\.swift-aspect-4x3\.demo-active\s*\{[^}]*\bscaleX\(0\.75\);/m.test(style)
 	|| !/_UpdateViewportClass\(\)/.test(source)
 	|| !/actuallayoutwidth/.test(source)
@@ -135,19 +136,59 @@ if (!/\.swift-demo-voice\s*\{[^}]*\btransform-origin:\s*100%\s+50%;/m.test(style
 	throw new Error("4:3 Demo Voice layout must compensate for native horizontal stretching");
 }
 
-if (!/\.DemoControllerMinimal \.swift-demo-voice\s*\{[^}]*\bmargin-bottom:\s*166px;/m.test(style)
-	|| !/\.DemoControllerHidden \.swift-demo-voice\s*\{[^}]*\bmargin-bottom:\s*118px;/m.test(style)) {
+if (!/\.DemoControllerMinimal \.swift-demo-voice-dock\s*\{[^}]*\bmargin-bottom:\s*166px;/m.test(style)
+	|| !/\.DemoControllerHidden \.swift-demo-voice-dock\s*\{[^}]*\bmargin-bottom:\s*118px;/m.test(style)) {
 	throw new Error("every native Demo controller mode must preserve equipment-strip clearance");
 }
 
-if (!/id="SwiftDemoVoiceHeader"[^>]*hittestchildren="false"[^>]*onactivate="SwiftDemoVoice\.ToggleOpen\(\)"/.test(layout)
-	|| /class="swift-demo-voice__toggle"/.test(layout)) {
-	throw new Error("the full Demo Voice title bar must be the single expand/collapse target");
+if (!/id="SwiftDemoVoiceDock"[^>]*class="swift-demo-voice-dock"/.test(layout)
+	|| !/id="SwiftDemoVoiceHeaderToggle"[^>]*onactivate="SwiftDemoVoice\.ToggleOpen\(\)"/.test(layout)
+	|| /id="SwiftDemoVoiceHeader"[^>]*onactivate=/.test(layout)) {
+	throw new Error("Demo Voice positioning, dragging, and expand/collapse targets must remain separate");
 }
 
-if (/draggable="true"|SwiftDemoVoiceDrag|SwiftDemoVoiceResetPosition/.test(layout)
-	|| /RegisterEventHandler\("Drag(?:Start|End)"|SetPositionInPixels|ResetPosition/.test(source)) {
-	throw new Error("Demo Voice panel must remain fixed and must not include drag or reset-position behavior");
+if (!/id="SwiftDemoVoiceDragHandle"[^>]*draggable="true"/.test(layout)
+	|| !/id="SwiftDemoVoiceResetPosition"[^>]*SwiftDemoVoice\.ResetPosition\(\)/.test(layout)
+	|| !/RegisterEventHandler\("DragStart"/.test(source)
+	|| !/RegisterEventHandler\("DragEnd"/.test(source)
+	|| !/function _ResolvePosition\(/.test(source)
+	|| !/dock\.style\.position/.test(source)
+	|| !/\.swift-demo-voice-dock\.custom-position\s*\{[^}]*horizontal-align:\s*left;[^}]*vertical-align:\s*top;[^}]*margin:\s*0px;/m.test(style)) {
+	throw new Error("Demo Voice panel must support bounded dragging, edge snapping, and default-position reset");
+}
+
+var compactWidth = /\.swift-demo-voice-dock\.collapsed\s*\{[^}]*\bwidth:\s*(\d+)px;[^}]*\bheight:\s*(\d+)px;/m.exec(style);
+if (!compactWidth || Number(compactWidth[1]) !== 360 || Number(compactWidth[2]) !== 56
+	|| /swift-demo-voice__drag-icon|icons\/ui\/drag\.vsvg/.test(layout)
+	|| /id="SwiftDemoVoiceDragHandle"[^>]*onmouseover=/.test(layout)
+	|| /SwiftDemoVoice_DragHint/.test(layout + englishLocalization + schineseLocalization)) {
+	throw new Error("collapsed Demo Voice panel must preserve readable width and use only the tooltip-free speaker as its drag handle");
+}
+
+var beginDragSource = /function _BeginDrag\([^]*?\n\t\}/m.exec(source);
+var endDragSource = /function _EndDrag\([^]*?\n\t\}/m.exec(source);
+var deleteDragGhostSource = /function _DeleteDragGhost\([^]*?\n\t\}/m.exec(source);
+var beginHideIndex = beginDragSource ? beginDragSource[0].indexOf("_SetDragSourceVisible(false)") : -1;
+var beginPreviewIndex = beginDragSource ? beginDragSource[0].indexOf('$.CreatePanel("Panel", context, "SwiftDemoVoiceDragGhost")') : -1;
+var endPreviewHideIndex = endDragSource ? endDragSource[0].indexOf("_DeleteDragGhost(ghost)") : -1;
+var endSourceShowIndex = endDragSource ? endDragSource[0].indexOf("_SetDragSourceVisible(true)") : -1;
+
+if (!/\.swift-demo-voice-dock\.dragging \.swift-demo-voice\.demo-active\s*\{[^}]*\bopacity:\s*0;[^}]*\bvisibility:\s*collapse;[^}]*\btransition-duration:\s*0(?:\.0)?s;/m.test(style)
+	|| !/\.swift-demo-voice-drag-ghost\s*\{[^}]*\bwidth:\s*360px;[^}]*\bheight:\s*650px;/m.test(style)
+	|| !/swift-demo-voice-drag-ghost__body/.test(source)
+	|| !/#SwiftDemoVoice_DragPreview/.test(source)
+	|| !/function _SetDragSourceVisible\([^]*?menu\.visible\s*=\s*!!visible;/m.test(source)
+	|| !beginDragSource
+	|| beginHideIndex < 0
+	|| beginPreviewIndex < 0
+	|| beginHideIndex > beginPreviewIndex
+	|| !deleteDragGhostSource
+	|| !/ghost\.visible\s*=\s*false;[^]*ghost\.style\.transitionDuration\s*=\s*"0\.0s";[^]*ghost\.style\.opacity\s*=\s*"0";[^]*ghost\.DeleteAsync\(0\)/m.test(deleteDragGhostSource[0])
+	|| !endDragSource
+	|| endPreviewHideIndex < 0
+	|| endSourceShowIndex < 0
+	|| endPreviewHideIndex > endSourceShowIndex) {
+	throw new Error("dragging must atomically swap the old panel and the full-footprint placement preview");
 }
 
 if (/swift-demo-playback|#(?:Contents|PlayButton|SliderRow|Slider|RoundMarkers|HighlightMarkers|HighlightIcons|ControlRow|TimeControls|RoundControls|RoundPrev|RoundRestart|RoundNumber|HotKeyLabels|Settings)\b/.test(style)) {
@@ -270,6 +311,15 @@ if (context.SwiftDemoVoice.ViewportProfileForTest(1440, 1080) !== "4x3"
 	|| context.SwiftDemoVoice.ViewportProfileForTest(1920, 1080) !== "wide"
 	|| context.SwiftDemoVoice.ViewportProfileForTest(1680, 1050) !== "wide") {
 	throw new Error("viewport aspect profile detection failed");
+}
+
+var clampedDrag = context.SwiftDemoVoice.ResolvePositionForTest(-200, 900, 1920, 1080, 360, 650, true);
+var snappedDrag = context.SwiftDemoVoice.ResolvePositionForTest(1532, 20, 1920, 1080, 360, 650, true);
+var freeDrag = context.SwiftDemoVoice.ResolvePositionForTest(700, 180, 1920, 1080, 360, 650, true);
+if (clampedDrag.x !== 12 || clampedDrag.y !== 418
+	|| snappedDrag.x !== 1548 || snappedDrag.y !== 12
+	|| freeDrag.x !== 700 || freeDrag.y !== 180) {
+	throw new Error("drag clamp and edge snapping failed: " + JSON.stringify([clampedDrag, snappedDrag, freeDrag]));
 }
 
 function takeScheduledCallback(delay) {

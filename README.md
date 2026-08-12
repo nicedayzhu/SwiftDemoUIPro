@@ -66,7 +66,7 @@ If the launcher was interrupted, reopen it to resume the pending cleanup.
 - Player selection follows native team identity: T players use gold/yellow accents and CT players use blue accents for the observed row and enabled voice state.
 - The lower-left speaker HUD follows seeking, pause, and playback speed because it is driven by the current Demo tick rather than a live microphone callback.
 - Expand **ROUND NAVIGATION** and select a round to jump to its starting tick.
-- The compact panel stays in the same lower-right area, anchored above the native bottom equipment strip. It measures the Panorama canvas using the same scaled layout dimensions as native CS2 scripts and cancels horizontal stretching in narrow modes, while its vertical clearance follows the Demo bar mode. Its chrome keeps the native HUD blur, shadow, and control sizing but uses a high-opacity reading surface for clear voice and player details; title-bar hover remains dark. Click anywhere on the title bar to expand or collapse it.
+- The panel starts in the lower-right area above the native bottom equipment strip. In Demo mouse mode, drag the gold speaker control to move it; the cursor changes to the move shape and a translucent full-size placement outline follows the pointer while the old panel disappears. The preview snaps near screen edges and the panel is clamped so it cannot be lost off-screen. The reset icon restores the responsive default position, and the remaining title area expands or collapses the panel without changing its readable width. Position is remembered for the current Panorama session and is re-clamped when the viewport changes.
 
 ## Common Problems
 

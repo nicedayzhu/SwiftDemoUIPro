@@ -126,18 +126,24 @@
 		<Panel id="SwiftDemoVoiceStatusOverlay" class="swift-demo-speaking" hittest="false">
 			<Panel id="SwiftDemoVoiceNoticeList" class="swift-demo-speaking__list" hittest="false" />
 		</Panel>
-		<Panel id="SwiftDemoVoiceMenu" class="swift-demo-voice demo-active" hittest="true" hittestchildren="true" onload="SwiftDemoVoice.OnLoad()">
-			<Panel id="SwiftDemoVoiceHeader" class="swift-demo-voice__header" hittest="true" hittestchildren="false" onactivate="SwiftDemoVoice.ToggleOpen()">
-				<Panel id="SwiftDemoVoiceBrand" class="swift-demo-voice__brand" hittest="false">
-					<Image class="swift-demo-voice__brand-icon" src="s2r://panorama/images/icons/ui/unmuted.vsvg" />
+		<Panel id="SwiftDemoVoiceDock" class="swift-demo-voice-dock" hittest="false" hittestchildren="true">
+			<Panel id="SwiftDemoVoiceMenu" class="swift-demo-voice demo-active" hittest="true" hittestchildren="true" onload="SwiftDemoVoice.OnLoad()">
+				<Panel id="SwiftDemoVoiceHeader" class="swift-demo-voice__header" hittest="true" hittestchildren="true">
+					<Panel id="SwiftDemoVoiceDragHandle" class="swift-demo-voice__drag-handle" draggable="true" hittest="true" hittestchildren="false">
+						<Image class="swift-demo-voice__brand-icon" src="s2r://panorama/images/icons/ui/unmuted.vsvg" />
+					</Panel>
+					<Panel id="SwiftDemoVoiceHeaderToggle" class="swift-demo-voice__header-toggle" hittest="true" hittestchildren="false" onactivate="SwiftDemoVoice.ToggleOpen()">
+						<Panel class="swift-demo-voice__title-block" hittest="false">
+							<Label class="swift-demo-voice__title" text="#SwiftDemoVoice_Title" />
+							<Label class="swift-demo-voice__subtitle" text="#SwiftDemoVoice_Subtitle" />
+						</Panel>
+						<Label id="SwiftDemoVoiceCount" class="swift-demo-voice__count" text="#SwiftDemoVoice_PlayersZero" />
+						<Image id="SwiftDemoVoiceChevron" class="swift-demo-voice__chevron" src="s2r://panorama/images/icons/ui/expand.vsvg" />
+					</Panel>
+					<Button id="SwiftDemoVoiceResetPosition" class="swift-demo-voice__reset-position" onactivate="SwiftDemoVoice.ResetPosition()" onmouseover="UiToolkitAPI.ShowTextTooltip( &apos;SwiftDemoVoiceResetPosition&apos;, &apos;#SwiftDemoVoice_ResetPositionHint&apos; );" onmouseout="UiToolkitAPI.HideTextTooltip();">
+						<Image src="s2r://panorama/images/icons/ui/popout_reset.vsvg" />
+					</Button>
 				</Panel>
-				<Panel class="swift-demo-voice__title-block" hittest="false">
-					<Label class="swift-demo-voice__title" text="#SwiftDemoVoice_Title" />
-					<Label class="swift-demo-voice__subtitle" text="#SwiftDemoVoice_Subtitle" />
-				</Panel>
-				<Label id="SwiftDemoVoiceCount" class="swift-demo-voice__count" text="#SwiftDemoVoice_PlayersZero" />
-				<Image id="SwiftDemoVoiceChevron" class="swift-demo-voice__chevron" src="s2r://panorama/images/icons/ui/expand.vsvg" />
-			</Panel>
 			<Panel id="SwiftDemoVoiceBody" class="swift-demo-voice__body" hittest="true" hittestchildren="true">
 				<Panel class="swift-demo-voice__notice">
 					<Panel class="swift-demo-voice__live-dot" />
@@ -176,6 +182,7 @@
 					<Label id="SwiftDemoVoiceMask" class="swift-demo-voice__mask" text="#SwiftDemoVoice_VoiceMaskInitial" />
 					<Label class="swift-demo-voice__hint" text="#SwiftDemoVoice_FooterHint" />
 					<Label id="SwiftDemoVoiceIndexStatus" class="swift-demo-voice__index-status" text="#SwiftDemoVoice_IndexFallback" />
+				</Panel>
 				</Panel>
 			</Panel>
 		</Panel>
