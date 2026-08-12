@@ -193,17 +193,9 @@
         <translation>ZIP 压缩包已准备完成。</translation>
     </message>
     <message>
-        <source>Select a valid .dem or .zip file.</source>
-        <translation type="vanished">请选择有效的 .dem 或 .zip 文件。</translation>
-    </message>
-    <message>
         <location line="+18"/>
         <source>Choose a Demo from the ZIP archive first.</source>
         <translation>请先从 ZIP 压缩包中选择一个 Demo。</translation>
-    </message>
-    <message>
-        <source>Select a valid .dem file.</source>
-        <translation type="vanished">请选择有效的 .dem 文件。</translation>
     </message>
     <message>
         <location line="+26"/>
@@ -291,10 +283,6 @@
         <translation>无法启动 %1：%2</translation>
     </message>
     <message>
-        <source>%1 timed out while preparing parsed voice status data.</source>
-        <translation type="vanished">%1 在准备已解析的语音状态数据时超时。</translation>
-    </message>
-    <message>
         <location line="+13"/>
         <source>%1 failed with exit code %2.
 %3</source>
@@ -328,34 +316,14 @@
         <translation>找不到 Demo 语音索引器。请重新构建或重新安装 Swift DemoUI Pro。</translation>
     </message>
     <message>
-        <source>CS2 resourcecompiler.exe was not found, so parsed voice status data cannot be prepared.</source>
-        <translation type="vanished">找不到 CS2 resourcecompiler.exe，无法准备已解析的语音状态数据。</translation>
-    </message>
-    <message>
         <location line="+5"/>
         <source>The staged Demo is missing, so parsed voice status data cannot be prepared.</source>
         <translation>找不到已暂存的 Demo，无法准备已解析的语音状态数据。</translation>
     </message>
     <message>
-        <source>Unable to create the temporary voice-index workspace.</source>
-        <translation type="vanished">无法创建临时语音索引工作目录。</translation>
-    </message>
-    <message>
         <location line="+13"/>
         <source>Demo voice indexer</source>
         <translation>Demo 语音索引器</translation>
-    </message>
-    <message>
-        <source>CS2 ResourceCompiler</source>
-        <translation type="vanished">CS2 ResourceCompiler</translation>
-    </message>
-    <message>
-        <source>CS2 ResourceCompiler did not create the parsed voice status resource.</source>
-        <translation type="vanished">CS2 ResourceCompiler 未生成已解析的语音状态资源。</translation>
-    </message>
-    <message>
-        <source>Demo voice VPK packer</source>
-        <translation type="vanished">Demo 语音 VPK 打包器</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -376,7 +344,7 @@
 <context>
     <name>LauncherWindow</name>
     <message>
-        <location filename="../src/LauncherWindow.cpp" line="+235"/>
+        <location filename="../src/LauncherWindow.cpp" line="+313"/>
         <source>CS2 Demo Tool</source>
         <translation>CS2 回放工具</translation>
     </message>
@@ -404,12 +372,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+291"/>
+        <location line="+293"/>
         <source>About</source>
         <translation>关于</translation>
     </message>
     <message>
-        <location line="-287"/>
+        <location line="-289"/>
         <source>Interface language</source>
         <translation>界面语言</translation>
     </message>
@@ -419,36 +387,20 @@
         <translation>跟随系统</translation>
     </message>
     <message>
-        <source>Swift DemoUI Pro  ·  0.1.0</source>
-        <translation type="vanished">Swift DemoUI Pro  ·  0.1.0</translation>
-    </message>
-    <message>
-        <source>Choose a Demo and start CS2 with a safe, reversible setup</source>
-        <translation type="vanished">选择录像，并以安全可恢复的方式启动 CS2</translation>
-    </message>
-    <message>
         <location line="+54"/>
         <source>Checking</source>
         <translation>正在检查</translation>
     </message>
     <message>
         <location line="+15"/>
-        <location line="+1267"/>
+        <location line="+1546"/>
         <source>✓</source>
         <translation>✓</translation>
     </message>
     <message>
-        <location line="-1237"/>
+        <location line="-1516"/>
         <source>Choose Demo</source>
         <translation>选择录像</translation>
-    </message>
-    <message>
-        <source>Drop a Demo here</source>
-        <translation type="vanished">拖放 Demo 到这里</translation>
-    </message>
-    <message>
-        <source>Supports CS2 .dem files, or browse from your computer</source>
-        <translation type="vanished">支持 CS2 .dem 文件，也可以点击右侧浏览</translation>
     </message>
     <message>
         <location line="+8"/>
@@ -479,12 +431,12 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+1200"/>
+        <location line="+1479"/>
         <source>Start playback</source>
         <translation>开始观看</translation>
     </message>
     <message>
-        <location line="-1193"/>
+        <location line="-1472"/>
         <source>Stop and restore</source>
         <translation>停止观看并恢复</translation>
     </message>
@@ -525,12 +477,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+770"/>
+        <location line="+1045"/>
         <source>Checking...</source>
         <translation>正在检查...</translation>
     </message>
     <message>
-        <location line="-766"/>
+        <location line="-1041"/>
         <source>Install / Repair</source>
         <translation>安装 / 修复</translation>
     </message>
@@ -560,51 +512,12 @@
         <translation>•  %1</translation>
     </message>
     <message>
-        <location line="+16"/>
-        <source>Project details, author profiles, and ways to support</source>
-        <translation>项目信息、作者主页与支持方式</translation>
-    </message>
-    <message>
-        <location line="+19"/>
-        <source>A lightweight, native DemoUI enhancement and playback tool for Counter-Strike 2</source>
-        <translation>轻量、原生的 Counter-Strike 2 DemoUI 增强与回放工具</translation>
-    </message>
-    <message>
-        <source>Version 0.1.0  ·  Qt 6 Widgets</source>
-        <translation type="vanished">版本 0.1.0  ·  Qt 6 Widgets</translation>
-    </message>
-    <message>
-        <location line="+55"/>
-        <source>Find me</source>
-        <translation>找到我</translation>
-    </message>
-    <message>
-        <location line="+17"/>
-        <source>Support me</source>
-        <translation>支持我</translation>
-    </message>
-    <message>
-        <location line="+0"/>
-        <source>Open</source>
-        <translation>打开</translation>
-    </message>
-    <message>
-        <location line="+12"/>
+        <location line="+220"/>
         <source>Bilibili</source>
         <translation>哔哩哔哩</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>If this tool helps you, you can buy me a coffee</source>
-        <translation>如果这个工具对你有帮助，可以请我喝杯咖啡</translation>
-    </message>
-    <message>
-        <location line="+4"/>
-        <source>Made for the CS2 Demo community</source>
-        <translation>为 CS2 Demo 社区而制作</translation>
-    </message>
-    <message>
-        <location line="+521"/>
+        <location line="+692"/>
         <source>Unable to switch language</source>
         <translation>无法切换语言</translation>
     </message>
@@ -615,7 +528,7 @@
     </message>
     <message>
         <location line="+21"/>
-        <location line="+223"/>
+        <location line="+235"/>
         <source>Demo selected. Start playback to install DemoUI automatically and launch CS2.</source>
         <translation>Demo 已选择。点击“开始观看”会自动安装 DemoUI 并启动 CS2。</translation>
     </message>
@@ -646,25 +559,9 @@
         <translation>无法使用该文件</translation>
     </message>
     <message>
-        <source>Select a valid CS2 .dem file.</source>
-        <translation type="vanished">请选择有效的 CS2 .dem 文件。</translation>
-    </message>
-    <message>
-        <location line="-1084"/>
+        <location line="-1363"/>
         <source>Swift DemoUI Pro · %1</source>
         <translation>Swift DemoUI Pro · %1</translation>
-    </message>
-    <message>
-        <source>Choose a Demo or ZIP archive and start CS2 with a safe, reversible setup</source>
-        <translation type="vanished">选择 Demo 或 ZIP 压缩包，并通过安全、可恢复的方式启动 CS2</translation>
-    </message>
-    <message>
-        <source>Drop a Demo or ZIP here</source>
-        <translation type="vanished">将 Demo 或 ZIP 拖放到这里</translation>
-    </message>
-    <message>
-        <source>Supports CS2 .dem files and ZIP archives</source>
-        <translation type="vanished">支持 CS2 .dem 文件和 ZIP 压缩包</translation>
     </message>
     <message>
         <location line="+116"/>
@@ -675,10 +572,6 @@
         <location line="+2"/>
         <source>Off by default to prevent flicker in Demos without TrueView command data</source>
         <translation>默认关闭，避免缺少 TrueView 指令数据的 Demo 画面闪烁</translation>
-    </message>
-    <message>
-        <source>Version %1 (%2) · Qt 6 Widgets</source>
-        <translation type="vanished">版本 %1（%2）· Qt 6 Widgets</translation>
     </message>
     <message>
         <location line="-244"/>
@@ -701,23 +594,18 @@
         <translation>支持 CS2 .dem、.zip 和 .dem.zst 文件</translation>
     </message>
     <message>
-        <location line="+203"/>
-        <source>Launcher %1 (%2) · DemoUI %3 · Qt 6 Widgets</source>
-        <translation>启动器 %1（%2）· DemoUI %3 · Qt 6 Widgets</translation>
-    </message>
-    <message>
-        <location line="+18"/>
-        <source>Updates</source>
-        <translation>更新</translation>
-    </message>
-    <message>
-        <location line="+7"/>
-        <location line="+698"/>
+        <location line="+282"/>
+        <location line="+903"/>
         <source>Check for updates</source>
         <translation>检查更新</translation>
     </message>
     <message>
-        <location line="-616"/>
+        <location line="-814"/>
+        <source>Official website</source>
+        <translation>官方网站</translation>
+    </message>
+    <message>
+        <location line="+80"/>
         <source>View</source>
         <translation>查看</translation>
     </message>
@@ -727,7 +615,7 @@
         <translation>关闭提示</translation>
     </message>
     <message>
-        <location line="+536"/>
+        <location line="+662"/>
         <source>Downloading DemoUI update...</source>
         <translation>正在下载 DemoUI 更新……</translation>
     </message>
@@ -757,27 +645,62 @@
         <translation>无法更新 DemoUI</translation>
     </message>
     <message>
-        <location line="+10"/>
-        <source>Check again</source>
-        <translation>重新检查</translation>
-    </message>
-    <message>
-        <location line="+5"/>
+        <location line="+23"/>
         <source>Checking the latest GitHub Release...</source>
         <translation>正在检查最新的 GitHub Release……</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
         <source>Unable to check for updates: %1</source>
         <translation>无法检查更新：%1</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="-976"/>
         <source>Launcher %1 · DemoUI %2</source>
         <translation>启动器 %1 · DemoUI %2</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="-26"/>
+        <source>Build %1 · Qt %2</source>
+        <translation>构建 %1 · Qt %2</translation>
+    </message>
+    <message>
+        <location line="+60"/>
+        <source>CREATOR</source>
+        <translation>创作者</translation>
+    </message>
+    <message>
+        <location line="-71"/>
+        <source>Project overview, release status, official channels, and ways to support</source>
+        <translation>项目概览、版本状态、官方渠道与支持方式</translation>
+    </message>
+    <message>
+        <location line="+121"/>
+        <source>Official links</source>
+        <translation>官方入口</translation>
+    </message>
+    <message>
+        <location line="+67"/>
+        <source>Downloads, guides, and updates</source>
+        <translation>下载、指南与动态</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Source code and issues</source>
+        <translation>源码与问题反馈</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Videos and tutorials</source>
+        <translation>视频与教程</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Like this tool? Buy me a coffee.</source>
+        <translation>喜欢这个工具？请我喝杯咖啡。</translation>
+    </message>
+    <message>
+        <location line="+799"/>
         <source>Download launcher %1</source>
         <translation>下载启动器 %1</translation>
     </message>
@@ -792,27 +715,34 @@
         <translation>启动器 %1 和 DemoUI %2 已发布。</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+5"/>
         <source>Launcher %1 is available.</source>
         <translation>启动器 %1 已发布。</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+4"/>
         <source>DemoUI %1 is available independently.</source>
         <translation>DemoUI %1 已作为独立更新发布。</translation>
     </message>
     <message>
-        <location line="+3"/>
-        <source>Up to date · Launcher %1 · DemoUI %2</source>
-        <translation>已是最新版本 · 启动器 %1 · DemoUI %2</translation>
+        <location line="-24"/>
+        <source>Update status not checked</source>
+        <translation>尚未检查更新</translation>
     </message>
     <message>
-        <source>CS2 Demo files (*.dem *.zip);;Demo files (*.dem);;ZIP archives (*.zip)</source>
-        <translation type="vanished">CS2 Demo 文件 (*.dem *.zip);;Demo 文件 (*.dem);;ZIP 压缩包 (*.zip)</translation>
+        <location line="-984"/>
+        <source>Counter-Strike 2 DemoUI and playback tool</source>
+        <translation>Counter-Strike 2 DemoUI 与回放工具</translation>
     </message>
     <message>
-        <source>Select a valid CS2 .dem or .zip file.</source>
-        <translation type="vanished">请选择有效的 CS2 .dem 或 .zip 文件。</translation>
+        <location line="+7"/>
+        <source>Launcher %1 (%2) · DemoUI %3</source>
+        <translation>启动器 %1（%2）· DemoUI %3</translation>
+    </message>
+    <message>
+        <location line="+1005"/>
+        <source>You&apos;re up to date</source>
+        <translation>当前已是最新版本</translation>
     </message>
     <message>
         <location line="+49"/>

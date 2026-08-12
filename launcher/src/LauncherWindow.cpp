@@ -12,22 +12,26 @@
 #include <QDropEvent>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFocusEvent>
 #include <QFrame>
 #include <QFutureWatcher>
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QInputDialog>
 #include <QLabel>
+#include <QLinearGradient>
 #include <QLocale>
 #include <QMessageBox>
 #include <QMimeData>
 #include <QPainter>
+#include <QPainterPath>
 #include <QPolygonF>
 #include <QPointer>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QSettings>
+#include <QSizePolicy>
 #include <QStackedWidget>
 #include <QStyle>
 #include <QTimer>
@@ -65,6 +69,60 @@ QPixmap makeLogo()
     return pixmap;
 }
 
+QPixmap makeCircularPixmap(const QPixmap &source, int side)
+{
+    QPixmap result(side, side);
+    result.fill(Qt::transparent);
+
+    const int inset = 2;
+    const QRectF avatarRect(inset, inset, side - inset * 2, side - inset * 2);
+    const QPixmap scaled = source.scaled(
+        avatarRect.size().toSize(),
+        Qt::KeepAspectRatioByExpanding,
+        Qt::SmoothTransformation);
+    const QRect sourceRect(
+        qMax(0, (scaled.width() - static_cast<int>(avatarRect.width())) / 2),
+        qMax(0, (scaled.height() - static_cast<int>(avatarRect.height())) / 2),
+        static_cast<int>(avatarRect.width()),
+        static_cast<int>(avatarRect.height()));
+
+    QPainter painter(&result);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPainterPath clip;
+    clip.addEllipse(avatarRect);
+    painter.setClipPath(clip);
+    painter.drawPixmap(avatarRect, scaled, sourceRect);
+    painter.setClipping(false);
+    painter.setPen(QPen(QColor(QStringLiteral("#ffffff")), 3));
+    painter.setBrush(Qt::NoBrush);
+    painter.drawEllipse(avatarRect);
+    painter.setPen(QPen(QColor(QStringLiteral("#d9e2ee")), 1));
+    painter.drawEllipse(QRectF(0.5, 0.5, side - 1.0, side - 1.0));
+    return result;
+}
+
+QPixmap makeAuthorFallback(int side)
+{
+    QPixmap result(side, side);
+    result.fill(Qt::transparent);
+
+    QPainter painter(&result);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QLinearGradient gradient(0, 0, side, side);
+    gradient.setColorAt(0.0, QColor(QStringLiteral("#56b4ff")));
+    gradient.setColorAt(1.0, QColor(QStringLiteral("#2563d9")));
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(gradient);
+    painter.drawEllipse(QRectF(1, 1, side - 2, side - 2));
+    painter.setPen(QColor(QStringLiteral("#ffffff")));
+    QFont font = painter.font();
+    font.setPixelSize(qRound(side * 0.31));
+    font.setWeight(QFont::DemiBold);
+    painter.setFont(font);
+    painter.drawText(QRectF(0, 0, side, side), Qt::AlignCenter, QStringLiteral("NZ"));
+    return result;
+}
+
 enum class Glyph
 {
     Demo,
@@ -73,6 +131,9 @@ enum class Glyph
     Stop,
     Menu,
     About,
+    Website,
+    Code,
+    Video,
     External,
     Coffee
 };
@@ -121,6 +182,24 @@ QPixmap makeGlyph(Glyph glyph, int side, const QColor &color)
         painter.drawEllipse(QRectF(side * 0.16, side * 0.16, side * 0.68, side * 0.68));
         painter.drawPoint(QPointF(side * 0.50, side * 0.34));
         painter.drawLine(QPointF(side * 0.50, side * 0.47), QPointF(side * 0.50, side * 0.68));
+    } else if (glyph == Glyph::Website) {
+        painter.drawEllipse(QRectF(side * 0.14, side * 0.14, side * 0.72, side * 0.72));
+        painter.drawEllipse(QRectF(side * 0.34, side * 0.14, side * 0.32, side * 0.72));
+        painter.drawLine(QPointF(side * 0.16, side * 0.50), QPointF(side * 0.84, side * 0.50));
+    } else if (glyph == Glyph::Code) {
+        painter.drawLine(QPointF(side * 0.38, side * 0.25), QPointF(side * 0.17, side * 0.50));
+        painter.drawLine(QPointF(side * 0.17, side * 0.50), QPointF(side * 0.38, side * 0.75));
+        painter.drawLine(QPointF(side * 0.62, side * 0.25), QPointF(side * 0.83, side * 0.50));
+        painter.drawLine(QPointF(side * 0.83, side * 0.50), QPointF(side * 0.62, side * 0.75));
+    } else if (glyph == Glyph::Video) {
+        painter.drawRoundedRect(QRectF(side * 0.12, side * 0.22, side * 0.76, side * 0.56), side * 0.10, side * 0.10);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(color);
+        QPolygonF triangle;
+        triangle << QPointF(side * 0.43, side * 0.36)
+                 << QPointF(side * 0.43, side * 0.64)
+                 << QPointF(side * 0.65, side * 0.50);
+        painter.drawPolygon(triangle);
     } else if (glyph == Glyph::External) {
         painter.drawRoundedRect(QRectF(side * 0.14, side * 0.30, side * 0.56, side * 0.56), side * 0.08, side * 0.08);
         painter.drawLine(QPointF(side * 0.46, side * 0.54), QPointF(side * 0.84, side * 0.16));
@@ -145,6 +224,43 @@ QLabel *sectionEyebrow(const QString &text, QWidget *parent)
     label->setObjectName(QStringLiteral("SectionEyebrow"));
     return label;
 }
+
+class LinkButton final : public QPushButton
+{
+public:
+    explicit LinkButton(QWidget *parent = nullptr)
+        : QPushButton(parent)
+    {
+        setProperty("keyboardFocus", false);
+    }
+
+protected:
+    void focusInEvent(QFocusEvent *event) override
+    {
+        QPushButton::focusInEvent(event);
+        const bool keyboardFocus = event->reason() == Qt::TabFocusReason
+            || event->reason() == Qt::BacktabFocusReason
+            || event->reason() == Qt::ShortcutFocusReason;
+        setKeyboardFocus(keyboardFocus);
+    }
+
+    void focusOutEvent(QFocusEvent *event) override
+    {
+        QPushButton::focusOutEvent(event);
+        setKeyboardFocus(false);
+    }
+
+private:
+    void setKeyboardFocus(bool enabled)
+    {
+        if (property("keyboardFocus").toBool() == enabled)
+            return;
+        setProperty("keyboardFocus", enabled);
+        style()->unpolish(this);
+        style()->polish(this);
+        update();
+    }
+};
 
 }
 
@@ -554,64 +670,118 @@ void LauncherWindow::buildInterface()
     auto *aboutPage = new QWidget(pages_);
     aboutPage->setObjectName(QStringLiteral("Page"));
     auto *about = new QVBoxLayout(aboutPage);
-    about->setContentsMargins(36, 30, 36, 24);
-    about->setSpacing(18);
+    about->setContentsMargins(36, 28, 36, 22);
+    about->setSpacing(14);
 
+    auto *aboutHeader = new QVBoxLayout;
+    aboutHeader->setSpacing(3);
     auto *aboutTitle = new QLabel(tr("About"), aboutPage);
     aboutTitle->setObjectName(QStringLiteral("PageTitle"));
-    auto *aboutSubtitle = new QLabel(tr("Project details, author profiles, and ways to support"), aboutPage);
+    auto *aboutSubtitle = new QLabel(
+        tr("Project overview, release status, official channels, and ways to support"),
+        aboutPage);
     aboutSubtitle->setObjectName(QStringLiteral("PageSubtitle"));
-    about->addWidget(aboutTitle);
-    about->addWidget(aboutSubtitle);
-    about->addSpacing(4);
+    aboutHeader->addWidget(aboutTitle);
+    aboutHeader->addWidget(aboutSubtitle);
+    about->addLayout(aboutHeader);
 
-    auto *aboutHero = new QFrame(aboutPage);
-    aboutHero->setObjectName(QStringLiteral("AboutHero"));
-    auto *heroLayout = new QHBoxLayout(aboutHero);
-    heroLayout->setContentsMargins(22, 20, 22, 20);
-    heroLayout->setSpacing(16);
-    auto *heroLogo = new QLabel(aboutHero);
-    heroLogo->setPixmap(makeLogo());
-    heroLogo->setFixedSize(48, 48);
-    heroLayout->addWidget(heroLogo);
-    auto *heroCopy = new QVBoxLayout;
-    heroCopy->setSpacing(3);
-    auto *heroTitle = new QLabel(QStringLiteral("Swift DemoUI Pro"), aboutHero);
-    heroTitle->setObjectName(QStringLiteral("AboutTitle"));
-    auto *heroDescription = new QLabel(tr("A lightweight, native DemoUI enhancement and playback tool for Counter-Strike 2"), aboutHero);
-    heroDescription->setObjectName(QStringLiteral("AboutDescription"));
-    auto *heroVersion = new QLabel(
-        tr("Launcher %1 (%2) · DemoUI %3 · Qt 6 Widgets")
-            .arg(
-                qApp->applicationVersion(),
-                qApp->property("gitCommit").toString(),
-                UpdateService::currentMenuVersion()),
-        aboutHero);
-    heroVersion->setObjectName(QStringLiteral("AboutVersion"));
-    heroCopy->addWidget(heroTitle);
-    heroCopy->addWidget(heroDescription);
-    heroCopy->addWidget(heroVersion);
-    heroLayout->addLayout(heroCopy, 1);
-    about->addWidget(aboutHero);
+    auto *aboutStage = new QFrame(aboutPage);
+    aboutStage->setObjectName(QStringLiteral("AboutStage"));
+    aboutStage->setMinimumHeight(176);
+    aboutStage->setToolTip(
+        tr("Build %1 · Qt %2")
+            .arg(qApp->property("gitCommit").toString(), QString::fromLatin1(qVersion())));
+    auto *stage = new QVBoxLayout(aboutStage);
+    stage->setContentsMargins(22, 17, 22, 15);
+    stage->setSpacing(10);
 
-    auto *updateCard = new QFrame(aboutPage);
-    updateCard->setObjectName(QStringLiteral("Card"));
-    auto *updates = new QVBoxLayout(updateCard);
-    updates->setContentsMargins(18, 14, 18, 15);
-    updates->setSpacing(9);
-    updates->addWidget(sectionEyebrow(tr("Updates"), updateCard));
+    auto *stageTop = new QHBoxLayout;
+    stageTop->setSpacing(24);
+    auto *story = new QVBoxLayout;
+    story->setSpacing(0);
+    story->addStretch(1);
+    auto *brandRow = new QHBoxLayout;
+    brandRow->setSpacing(13);
+    auto *stageLogo = new QLabel(aboutStage);
+    stageLogo->setPixmap(makeLogo().scaled(52, 52, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    stageLogo->setFixedSize(52, 52);
+    brandRow->addWidget(stageLogo);
+    auto *stageBrandCopy = new QVBoxLayout;
+    stageBrandCopy->setSpacing(4);
+    auto *stageProduct = new QLabel(QStringLiteral("Swift DemoUI Pro"), aboutStage);
+    stageProduct->setObjectName(QStringLiteral("StageProduct"));
+    auto *stageDescription = new QLabel(tr("Counter-Strike 2 DemoUI and playback tool"), aboutStage);
+    stageDescription->setObjectName(QStringLiteral("StageDescription"));
+    const QString gitCommit = qApp->property("gitCommit").toString();
+    auto *stageVersion = new QLabel(
+        (gitCommit.isEmpty() || gitCommit == QStringLiteral("unknown"))
+            ? tr("Launcher %1 · DemoUI %2")
+                  .arg(qApp->applicationVersion(), UpdateService::currentMenuVersion())
+            : tr("Launcher %1 (%2) · DemoUI %3")
+                  .arg(qApp->applicationVersion(), gitCommit, UpdateService::currentMenuVersion()),
+        aboutStage);
+    stageVersion->setObjectName(QStringLiteral("StageVersion"));
+    stageBrandCopy->addWidget(stageProduct);
+    stageBrandCopy->addWidget(stageDescription);
+    stageBrandCopy->addWidget(stageVersion);
+    brandRow->addLayout(stageBrandCopy);
+    brandRow->addStretch(1);
+    story->addLayout(brandRow);
+    story->addStretch(1);
+    stageTop->addLayout(story, 1);
+
+    auto *creatorPanel = new QFrame(aboutStage);
+    creatorPanel->setObjectName(QStringLiteral("CreatorIdentity"));
+    creatorPanel->setMinimumWidth(238);
+    creatorPanel->setMaximumWidth(260);
+    auto *creator = new QHBoxLayout(creatorPanel);
+    creator->setContentsMargins(22, 0, 0, 0);
+    creator->setSpacing(12);
+    auto *creatorIdentity = new QHBoxLayout;
+    creatorIdentity->setSpacing(12);
+    auto *avatar = new QLabel(creatorPanel);
+    const QPixmap avatarSource(QStringLiteral(":/images/author_avatar.bmp"));
+    avatar->setPixmap(avatarSource.isNull()
+            ? makeAuthorFallback(58)
+            : makeCircularPixmap(avatarSource, 58));
+    avatar->setFixedSize(58, 58);
+    creatorIdentity->addWidget(avatar, 0, Qt::AlignVCenter);
+    auto *identityCopy = new QVBoxLayout;
+    identityCopy->setSpacing(4);
+    identityCopy->addStretch(1);
+    auto *creatorCaption = new QLabel(tr("CREATOR"), creatorPanel);
+    creatorCaption->setObjectName(QStringLiteral("CreatorCaption"));
+    identityCopy->addWidget(creatorCaption);
+    auto *creatorName = new QLabel(QStringLiteral("nicedayzhu"), creatorPanel);
+    creatorName->setObjectName(QStringLiteral("CreatorName"));
+    identityCopy->addWidget(creatorName);
+    identityCopy->addStretch(1);
+    creatorIdentity->addLayout(identityCopy, 1);
+    creator->addLayout(creatorIdentity, 1);
+    stageTop->addWidget(creatorPanel);
+    stage->addLayout(stageTop, 1);
+
+    auto *stageDivider = new QFrame(aboutStage);
+    stageDivider->setObjectName(QStringLiteral("StageDivider"));
+    stageDivider->setFrameShape(QFrame::HLine);
+    stage->addWidget(stageDivider);
     auto *updateRow = new QHBoxLayout;
-    updateRow->setSpacing(9);
-    updateStatus_ = new QLabel(updateCard);
-    updateStatus_->setObjectName(QStringLiteral("UpdateStatus"));
-    updateStatus_->setWordWrap(true);
-    updateRow->addWidget(updateStatus_, 1);
-    checkUpdateButton_ = new QPushButton(tr("Check for updates"), updateCard);
-    checkUpdateButton_->setObjectName(QStringLiteral("SecondaryButton"));
+    updateRow->setSpacing(8);
+    updateStatus_ = new QLabel(aboutStage);
+    updateStatus_->setObjectName(QStringLiteral("StageUpdateStatus"));
+    updateStatus_->setProperty("state", QStringLiteral("neutral"));
+    updateStatus_->setWordWrap(false);
+    updateStatus_->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
+    updateStatus_->setMaximumWidth(460);
+    updateStatus_->setFixedHeight(28);
+    updateRow->addWidget(updateStatus_, 0, Qt::AlignVCenter);
+    updateRow->addStretch(1);
+    checkUpdateButton_ = new QPushButton(tr("Check for updates"), aboutStage);
+    checkUpdateButton_->setObjectName(QStringLiteral("StageUpdateButton"));
     connect(checkUpdateButton_, &QPushButton::clicked, this, &LauncherWindow::checkForUpdates);
     updateRow->addWidget(checkUpdateButton_);
-    launcherUpdateButton_ = new QPushButton(updateCard);
-    launcherUpdateButton_->setObjectName(QStringLiteral("SecondaryButton"));
+    launcherUpdateButton_ = new QPushButton(aboutStage);
+    launcherUpdateButton_->setObjectName(QStringLiteral("StageUpdateButton"));
     connect(launcherUpdateButton_, &QPushButton::clicked, this, [this]() {
         const QString url = updateInfo_.launcher.url.isEmpty()
             ? updateInfo_.releasePageUrl
@@ -620,57 +790,144 @@ void LauncherWindow::buildInterface()
             QDesktopServices::openUrl(QUrl(url));
     });
     updateRow->addWidget(launcherUpdateButton_);
-    menuUpdateButton_ = new QPushButton(updateCard);
-    menuUpdateButton_->setObjectName(QStringLiteral("SecondaryButton"));
+    menuUpdateButton_ = new QPushButton(aboutStage);
+    menuUpdateButton_->setObjectName(QStringLiteral("StageUpdateButton"));
     connect(menuUpdateButton_, &QPushButton::clicked, this, &LauncherWindow::downloadMenuUpdate);
     updateRow->addWidget(menuUpdateButton_);
-    updates->addLayout(updateRow);
-    about->addWidget(updateCard);
+    stage->addLayout(updateRow);
+    about->addWidget(aboutStage);
     refreshUpdateUi();
 
-    auto *socialCard = new QFrame(aboutPage);
-    socialCard->setObjectName(QStringLiteral("Card"));
-    auto *socials = new QVBoxLayout(socialCard);
-    socials->setContentsMargins(18, 17, 18, 18);
-    socials->setSpacing(10);
-    socials->addWidget(sectionEyebrow(tr("Find me"), socialCard));
+    auto *linksHeader = new QHBoxLayout;
+    auto *linksTitle = new QLabel(tr("Official links"), aboutPage);
+    linksTitle->setObjectName(QStringLiteral("LinksTitle"));
+    linksHeader->addWidget(linksTitle);
+    linksHeader->addStretch(1);
+    about->addLayout(linksHeader);
 
-    const auto addSocial = [this, socials, socialCard](const QString &name, const QString &detail, const QString &url, bool support) {
-        auto *row = new QFrame(socialCard);
-        row->setObjectName(QStringLiteral("SocialRow"));
-        auto *rowLayout = new QHBoxLayout(row);
-        rowLayout->setContentsMargins(14, 10, 10, 10);
-        rowLayout->setSpacing(12);
+    const auto makeLinkButton = [aboutPage](
+                                    const QString &title,
+                                    const QString &detail,
+                                    const QString &url,
+                                    Glyph glyph,
+                                    const QString &accent,
+                                    const QColor &iconColor) {
+        auto *button = new LinkButton(aboutPage);
+        button->setObjectName(QStringLiteral("LinkButton"));
+        button->setProperty("accent", accent);
+        button->setCursor(Qt::PointingHandCursor);
+        button->setFocusPolicy(Qt::StrongFocus);
+        button->setAccessibleName(title);
+        button->setAccessibleDescription(detail);
+        button->setToolTip(url);
+        button->setFixedHeight(88);
+
+        auto *content = new QHBoxLayout(button);
+        content->setContentsMargins(14, 12, 12, 12);
+        content->setSpacing(10);
+        auto *icon = new QLabel(button);
+        icon->setObjectName(QStringLiteral("LinkIcon"));
+        icon->setProperty("accent", accent);
+        icon->setPixmap(makeGlyph(glyph, 20, iconColor));
+        icon->setAlignment(Qt::AlignCenter);
+        icon->setFixedSize(36, 36);
+        icon->setAttribute(Qt::WA_TransparentForMouseEvents);
+        content->addWidget(icon, 0, Qt::AlignTop);
+
         auto *copy = new QVBoxLayout;
-        copy->setSpacing(2);
-        auto *title = new QLabel(name, row);
-        title->setObjectName(QStringLiteral("SocialTitle"));
-        auto *description = new QLabel(detail, row);
-        description->setObjectName(QStringLiteral("SocialDescription"));
-        copy->addWidget(title);
-        copy->addWidget(description);
-        rowLayout->addLayout(copy, 1);
-        auto *openButton = new QPushButton(support ? tr("Support me") : tr("Open"), row);
-        openButton->setObjectName(support ? QStringLiteral("SupportButton") : QStringLiteral("SocialButton"));
-        openButton->setIcon(makeGlyphIcon(support ? Glyph::Coffee : Glyph::External, QColor(support ? QStringLiteral("#ffffff") : QStringLiteral("#5d6775"))));
-        openButton->setIconSize(QSize(17, 17));
-        connect(openButton, &QPushButton::clicked, this, [url]() {
+        copy->setSpacing(3);
+        auto *linkTitle = new QLabel(title, button);
+        linkTitle->setObjectName(QStringLiteral("LinkTitle"));
+        linkTitle->setAttribute(Qt::WA_TransparentForMouseEvents);
+        auto *linkDetail = new QLabel(detail, button);
+        linkDetail->setObjectName(QStringLiteral("LinkDescription"));
+        linkDetail->setWordWrap(true);
+        linkDetail->setAttribute(Qt::WA_TransparentForMouseEvents);
+        copy->addWidget(linkTitle);
+        copy->addWidget(linkDetail);
+        copy->addStretch(1);
+        content->addLayout(copy, 1);
+
+        auto *external = new QLabel(button);
+        external->setPixmap(makeGlyph(
+            Glyph::External,
+            15,
+            QColor(QStringLiteral("#8b95a3"))));
+        external->setFixedSize(18, 18);
+        external->setAttribute(Qt::WA_TransparentForMouseEvents);
+        content->addWidget(external, 0, Qt::AlignTop);
+        QObject::connect(button, &QPushButton::clicked, button, [url]() {
             QDesktopServices::openUrl(QUrl(url));
         });
-        rowLayout->addWidget(openButton);
-        socials->addWidget(row);
+        return button;
     };
 
-    addSocial(QStringLiteral("GitHub"), QStringLiteral("github.com/nicedayzhu"), QStringLiteral("https://github.com/nicedayzhu"), false);
-    addSocial(tr("Bilibili"), QStringLiteral("space.bilibili.com/1405728"), QStringLiteral("https://space.bilibili.com/1405728"), false);
-    addSocial(QStringLiteral("Ko-fi"), tr("If this tool helps you, you can buy me a coffee"), QStringLiteral("https://ko-fi.com/K6C623WHCQ"), true);
-    about->addWidget(socialCard);
-    about->addStretch(1);
+    auto *linkCards = new QHBoxLayout;
+    linkCards->setSpacing(10);
+    linkCards->addWidget(makeLinkButton(
+        tr("Official website"),
+        tr("Downloads, guides, and updates"),
+        QStringLiteral("https://nicedayzhu.github.io/SwiftDemoUIPro/"),
+        Glyph::Website,
+        QStringLiteral("website"),
+        QColor(QStringLiteral("#347fd8"))), 1);
+    linkCards->addWidget(makeLinkButton(
+        QStringLiteral("GitHub"),
+        tr("Source code and issues"),
+        QStringLiteral("https://github.com/nicedayzhu/SwiftDemoUIPro"),
+        Glyph::Code,
+        QStringLiteral("github"),
+        QColor(QStringLiteral("#31363d"))), 1);
+    linkCards->addWidget(makeLinkButton(
+        tr("Bilibili"),
+        tr("Videos and tutorials"),
+        QStringLiteral("https://space.bilibili.com/1405728"),
+        Glyph::Video,
+        QStringLiteral("bilibili"),
+        QColor(QStringLiteral("#e85b87"))), 1);
+    about->addLayout(linkCards);
 
-    auto *aboutFooter = new QLabel(tr("Made for the CS2 Demo community"), aboutPage);
-    aboutFooter->setObjectName(QStringLiteral("FooterText"));
-    aboutFooter->setAlignment(Qt::AlignCenter);
-    about->addWidget(aboutFooter);
+    auto *supportCard = new QFrame(aboutPage);
+    supportCard->setObjectName(QStringLiteral("SupportCard"));
+    supportCard->setMinimumHeight(72);
+    auto *support = new QHBoxLayout(supportCard);
+    support->setContentsMargins(14, 10, 14, 10);
+    support->setSpacing(12);
+    auto *supportIcon = new QLabel(supportCard);
+    supportIcon->setObjectName(QStringLiteral("SupportIcon"));
+    const QPixmap kofiIcon(QStringLiteral(":/images/kofi_icon.png"));
+    supportIcon->setPixmap(kofiIcon.isNull()
+            ? makeGlyph(Glyph::Coffee, 21, QColor(QStringLiteral("#ff5e3a")))
+            : kofiIcon.scaled(40, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    supportIcon->setAlignment(Qt::AlignCenter);
+    supportIcon->setFixedSize(40, 40);
+    support->addWidget(supportIcon);
+
+    auto *supportTitle = new QLabel(tr("Like this tool? Buy me a coffee."), supportCard);
+    supportTitle->setObjectName(QStringLiteral("SupportTitle"));
+    support->addWidget(supportTitle, 1);
+
+    auto *supportButton = new QPushButton(supportCard);
+    supportButton->setObjectName(QStringLiteral("KofiButton"));
+    supportButton->setAccessibleName(QStringLiteral("Buy me a coffee on Ko-fi"));
+    supportButton->setToolTip(QStringLiteral("Ko-fi · ko-fi.com/K6C623WHCQ"));
+    const QPixmap kofiButtonImage(QStringLiteral(":/images/kofi_button.png"));
+    if (kofiButtonImage.isNull()) {
+        supportButton->setText(QStringLiteral("Buy me a coffee"));
+        supportButton->setIcon(makeGlyphIcon(Glyph::Coffee, QColor(QStringLiteral("#ffffff"))));
+        supportButton->setIconSize(QSize(18, 18));
+    } else {
+        supportButton->setIcon(QIcon(kofiButtonImage));
+        supportButton->setIconSize(QSize(143, 36));
+    }
+    supportButton->setFixedSize(160, 46);
+    supportButton->setCursor(Qt::PointingHandCursor);
+    connect(supportButton, &QPushButton::clicked, this, []() {
+        QDesktopServices::openUrl(QUrl(QStringLiteral("https://ko-fi.com/K6C623WHCQ")));
+    });
+    support->addWidget(supportButton, 0, Qt::AlignVCenter);
+    about->addWidget(supportCard);
+    about->addStretch(1);
     pages_->addWidget(aboutPage);
 
     connect(navReplayButton_, &QPushButton::clicked, this, [this]() { selectPage(0); });
@@ -710,7 +967,7 @@ void LauncherWindow::buildInterface()
 }
 void LauncherWindow::applyStyle()
 {
-    qApp->setStyleSheet(QStringLiteral(R"CSS(
+    const QString baseStyle = QStringLiteral(R"CSS(
         QWidget#Root {
             background: #f5f7fa;
             color: #1a1d23;
@@ -969,28 +1226,169 @@ void LauncherWindow::applyStyle()
             color: #68727f;
             font-size: 13px;
         }
-        QFrame#AboutHero {
-            border: 1px solid #dce8f8;
-            border-radius: 12px;
-            background: #f3f8ff;
+    )CSS");
+
+    const QString aboutStyle = QStringLiteral(R"CSS(
+        QFrame#AboutStage {
+            border: 1px solid #d9e6f3;
+            border-radius: 18px;
+            background: qlineargradient(
+                x1: 0, y1: 0, x2: 1, y2: 1,
+                stop: 0 #edf5fd,
+                stop: 0.58 #f3f8fd,
+                stop: 1 #f8fbff
+            );
         }
-        QLabel#AboutTitle {
-            color: #1c2027;
-            font-size: 18px;
-            font-weight: 650;
+        QLabel#StageProduct {
+            color: #20252d;
+            font-size: 23px;
+            font-weight: 700;
         }
-        QLabel#AboutDescription {
-            color: #5f6976;
-            font-size: 13px;
-        }
-        QLabel#AboutVersion {
-            color: #929aa5;
-            font-size: 11px;
-        }
-        QLabel#UpdateStatus {
-            color: #66707c;
+        QLabel#StageDescription {
+            color: #69727e;
             font-size: 12px;
         }
+        QLabel#StageVersion {
+            color: #64778a;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        QFrame#CreatorIdentity {
+            border: none;
+            border-left: 1px solid #d5e3f1;
+            background: transparent;
+        }
+        QLabel#CreatorCaption {
+            color: #3a7ec5;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        QLabel#CreatorName {
+            color: #20252d;
+            font-size: 19px;
+            font-weight: 700;
+        }
+        QFrame#StageDivider {
+            border: none;
+            border-top: 1px solid #d9e6f2;
+            max-height: 1px;
+        }
+        QLabel#StageUpdateStatus {
+            min-height: 28px;
+            max-height: 28px;
+            border: none;
+            background: transparent;
+            color: #6a7888;
+            padding: 0;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        QLabel#StageUpdateStatus[state="success"] {
+            color: #526f89;
+        }
+        QLabel#StageUpdateStatus[state="attention"] {
+            color: #89601d;
+        }
+        QLabel#StageUpdateStatus[state="error"] {
+            color: #a34848;
+        }
+        QPushButton#StageUpdateButton {
+            min-height: 32px;
+            border: 1px solid #cbdbea;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #394552;
+            padding: 0 13px;
+            font-size: 11px;
+            font-weight: 650;
+        }
+        QPushButton#StageUpdateButton:hover {
+            border-color: #9fbedc;
+            background: #edf6ff;
+            color: #2869aa;
+        }
+        QPushButton#StageUpdateButton:pressed { background: #dfedfa; }
+        QPushButton#StageUpdateButton:disabled {
+            border-color: #d9e4ee;
+            background: #eaf1f7;
+            color: #9aa9b8;
+        }
+        QLabel#LinksTitle {
+            color: #1b2028;
+            font-size: 16px;
+            font-weight: 650;
+        }
+        QPushButton#LinkButton {
+            border: 1px solid #e5e9ef;
+            border-radius: 14px;
+            background: #f7f8fa;
+            padding: 0;
+            text-align: left;
+        }
+        QPushButton#LinkButton:hover {
+            border-color: #c8d0db;
+            background: #ffffff;
+        }
+        QPushButton#LinkButton[accent="website"]:hover {
+            border-color: #b9d5f5;
+            background: #f8fbff;
+        }
+        QPushButton#LinkButton[accent="github"]:hover {
+            border-color: #c7ccd2;
+            background: #fafbfc;
+        }
+        QPushButton#LinkButton[accent="bilibili"]:hover {
+            border-color: #f1c5d4;
+            background: #fff9fb;
+        }
+        QPushButton#LinkButton:pressed { background: #f0f3f6; }
+        QPushButton#LinkButton[keyboardFocus="true"] {
+            border: 2px solid #75abe2;
+        }
+        QLabel#LinkIcon {
+            border: none;
+            border-radius: 10px;
+            background: #eaf3ff;
+        }
+        QLabel#LinkIcon[accent="github"] { background: #eceff2; }
+        QLabel#LinkIcon[accent="bilibili"] { background: #fff0f5; }
+        QLabel#LinkTitle {
+            color: #242a33;
+            font-size: 14px;
+            font-weight: 650;
+        }
+        QLabel#LinkDescription {
+            color: #7e8793;
+            font-size: 11px;
+        }
+        QFrame#SupportCard {
+            border: 1px solid #ffe0d4;
+            border-radius: 14px;
+            background: #fff8f4;
+        }
+        QLabel#SupportIcon {
+            border: none;
+            background: transparent;
+        }
+        QLabel#SupportTitle {
+            color: #2d2524;
+            font-size: 14px;
+            font-weight: 650;
+        }
+        QPushButton#KofiButton {
+            border: 1px solid transparent;
+            border-radius: 12px;
+            background: transparent;
+            color: #ffffff;
+            padding: 4px 7px;
+            font-size: 13px;
+            font-weight: 650;
+        }
+        QPushButton#KofiButton:hover {
+            border-color: #ffc1b1;
+            background: #fff0ea;
+        }
+        QPushButton#KofiButton:pressed { background: #ffe3da; }
         QFrame#UpdateBubble {
             border: 1px solid #cfd9e7;
             border-radius: 11px;
@@ -1025,20 +1423,6 @@ void LauncherWindow::applyStyle()
             font-size: 17px;
         }
         QPushButton#BubbleClose:hover { background: #e7edf5; color: #35404e; }
-        QFrame#SocialRow {
-            border: none;
-            border-radius: 9px;
-            background: #f6f8fa;
-        }
-        QLabel#SocialTitle {
-            color: #242831;
-            font-size: 14px;
-            font-weight: 650;
-        }
-        QLabel#SocialDescription {
-            color: #7b8490;
-            font-size: 12px;
-        }
         QPushButton {
             min-height: 36px;
             border-radius: 8px;
@@ -1056,29 +1440,27 @@ void LauncherWindow::applyStyle()
         QPushButton#PrimaryButton:pressed { background: #286fca; }
         QPushButton#StopButton,
         QPushButton#SecondaryButton,
-        QPushButton#GhostButton,
-        QPushButton#SocialButton {
+        QPushButton#GhostButton {
             border: 1px solid #d5dae1;
             background: #ffffff;
             color: #48515e;
         }
         QPushButton#StopButton:hover,
         QPushButton#SecondaryButton:hover,
-        QPushButton#GhostButton:hover,
-        QPushButton#SocialButton:hover {
+        QPushButton#GhostButton:hover {
             border-color: #aeb7c3;
             background: #f7f9fb;
             color: #242a32;
         }
         QPushButton#GhostButton { min-width: 58px; padding: 0 10px; }
-        QPushButton#SocialButton { min-width: 74px; }
         QPushButton#SupportButton {
-            min-width: 94px;
+            min-width: 116px;
             border: none;
-            background: #ff5f5f;
+            background: #347fd8;
             color: #ffffff;
         }
-        QPushButton#SupportButton:hover { background: #ef4e4e; }
+        QPushButton#SupportButton:hover { background: #438ee6; }
+        QPushButton#SupportButton:pressed { background: #286fca; }
         QPushButton:disabled,
         QPushButton#PrimaryButton:disabled,
         QPushButton#StopButton:disabled,
@@ -1143,7 +1525,8 @@ void LauncherWindow::applyStyle()
             color: #282d35;
             padding: 5px;
         }
-    )CSS"));
+    )CSS");
+    qApp->setStyleSheet(baseStyle + aboutStyle);
 }
 
 bool LauncherWindow::loadLanguage(const QString &language)
@@ -1287,24 +1670,31 @@ void LauncherWindow::refreshUpdateUi()
     if (!updateStatus_ || !checkUpdateButton_ || !launcherUpdateButton_ || !menuUpdateButton_)
         return;
 
+    const auto setUpdateStatus = [this](const QString &text, const QString &state) {
+        updateStatus_->setProperty("state", state);
+        updateStatus_->setText(text);
+        updateStatus_->style()->unpolish(updateStatus_);
+        updateStatus_->style()->polish(updateStatus_);
+        updateStatus_->updateGeometry();
+    };
+
     checkUpdateButton_->setEnabled(!updateCheckInProgress_);
-    checkUpdateButton_->setText(updateCheckInProgress_ ? tr("Checking...") : tr("Check again"));
+    checkUpdateButton_->setText(updateCheckInProgress_ ? tr("Checking...") : tr("Check for updates"));
     launcherUpdateButton_->setVisible(false);
     menuUpdateButton_->setVisible(false);
 
     if (updateCheckInProgress_) {
-        updateStatus_->setText(tr("Checking the latest GitHub Release..."));
+        setUpdateStatus(tr("Checking the latest GitHub Release..."), QStringLiteral("neutral"));
         return;
     }
 
     if (!updateInfo_.valid) {
         if (!updateInfo_.error.isEmpty()) {
-            updateStatus_->setText(tr("Unable to check for updates: %1").arg(updateInfo_.error));
+            setUpdateStatus(
+                tr("Unable to check for updates: %1").arg(updateInfo_.error),
+                QStringLiteral("error"));
         } else {
-            updateStatus_->setText(
-                tr("Launcher %1 · DemoUI %2")
-                    .arg(qApp->applicationVersion(), UpdateService::currentMenuVersion()));
-            checkUpdateButton_->setText(tr("Check for updates"));
+            setUpdateStatus(tr("Update status not checked"), QStringLiteral("neutral"));
         }
         return;
     }
@@ -1318,17 +1708,22 @@ void LauncherWindow::refreshUpdateUi()
     menuUpdateButton_->setText(tr("Update DemoUI to %1").arg(updateInfo_.menu.version));
 
     if (launcherAvailable && menuAvailable) {
-        updateStatus_->setText(
+        setUpdateStatus(
             tr("Launcher %1 and DemoUI %2 are available.")
-                .arg(updateInfo_.launcher.version, updateInfo_.menu.version));
+                .arg(updateInfo_.launcher.version, updateInfo_.menu.version),
+            QStringLiteral("attention"));
     } else if (launcherAvailable) {
-        updateStatus_->setText(tr("Launcher %1 is available.").arg(updateInfo_.launcher.version));
+        setUpdateStatus(
+            tr("Launcher %1 is available.").arg(updateInfo_.launcher.version),
+            QStringLiteral("attention"));
     } else if (menuAvailable) {
-        updateStatus_->setText(tr("DemoUI %1 is available independently.").arg(updateInfo_.menu.version));
+        setUpdateStatus(
+            tr("DemoUI %1 is available independently.").arg(updateInfo_.menu.version),
+            QStringLiteral("attention"));
     } else {
-        updateStatus_->setText(
-            tr("Up to date · Launcher %1 · DemoUI %2")
-                .arg(qApp->applicationVersion(), UpdateService::currentMenuVersion()));
+        setUpdateStatus(
+            tr("You're up to date"),
+            QStringLiteral("success"));
     }
 }
 

@@ -70,6 +70,7 @@ qt_add_executable(SwiftDemoLauncher WIN32
     src/main.cpp
     src/LauncherWindow.cpp
     src/LauncherWindow.h
+    assets/launcher_assets.qrc
 )
 if(WIN32)
     configure_file(
@@ -92,7 +93,6 @@ qt_add_resources(SwiftDemoLauncher "embedded_fonts"
     BASE "${CMAKE_CURRENT_SOURCE_DIR}/assets/fonts"
     FILES assets/fonts/NotoSansSC-VF.ttf
 )
-
 set(VOICE_INDEXER_EXE "${CMAKE_CURRENT_SOURCE_DIR}/../tools/voice-indexer/target/release/swift-demo-voice-indexer.exe")
 if(EXISTS "${VOICE_INDEXER_EXE}")
     add_custom_command(TARGET SwiftDemoLauncher POST_BUILD
@@ -121,7 +121,7 @@ qt_add_translations(SwiftDemoLauncher
         src/UpdateService.cpp
         src/UpdateService.h
     QM_FILES_OUTPUT_VARIABLE APP_QM_FILES
-    LUPDATE_OPTIONS -source-language en
+    LUPDATE_OPTIONS -source-language en -no-obsolete
 )
 add_custom_command(TARGET SwiftDemoLauncher POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:SwiftDemoLauncher>/translations"
