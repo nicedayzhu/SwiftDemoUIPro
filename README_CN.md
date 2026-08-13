@@ -59,6 +59,7 @@ Swift DemoUI Pro 是一款非官方的 Counter-Strike 2 Demo 与 HLTV 回放客�
 ## 使用游戏内面板
 
 - 使用 CS2 原生 Demo 鼠标模式热键显示光标。
+- 在 CS2 原生完整 Demo 控制条中，点击倍速功能右侧醒目的带勾调节图标，可完整隐藏 Swift Demo 工具面板，再点一次即可重新呼出。面板也会跟随原生 **Shift+F2** DemoUI 状态，并且不会安装自定义键盘绑定。
 - Demo 开始播放后会自动启用全部 64 个已录制语音槽位，并通过 CS2 的 Panorama 静音接口启用每个已识别的 Demo XUID，不直接访问玩家资料文件。
 - 点击存活玩家的名称切换第一人称 POV；当前 POV 会以金色高亮。
 - 点击玩家行右侧的音频按钮，只切换该玩家的 Demo 已录制语音槽位；启用时还会通过 `GameStateAPI` 解除该 XUID 当前的原生静音。

@@ -16,6 +16,19 @@
 	transition-duration: 0.16s;
 	transition-timing-function: ease-out;
 	z-index: 80;
+	visibility: collapse;
+}
+
+.DemoControllerFull .swift-demo-voice-dock,
+.DemoControllerMinimal .swift-demo-voice-dock
+{
+	visibility: visible;
+}
+
+.DemoControllerFull .swift-demo-voice-dock.menu-hidden,
+.DemoControllerMinimal .swift-demo-voice-dock.menu-hidden
+{
+	visibility: collapse;
 }
 
 .DemoControllerMinimal .swift-demo-voice-dock
@@ -45,6 +58,79 @@
 {
 	width: 360px;
 	height: 56px;
+}
+
+#SwiftDemoVoiceMenuToggle
+{
+	width: 104px;
+	height: 36px;
+	margin-left: 12px;
+	margin-right: 0px;
+	border-radius: 2px;
+	background-color: #00000000;
+	flow-children: right;
+	visibility: collapse;
+}
+
+.DemoControllerFull #SwiftDemoVoiceMenuToggle.native-mounted
+{
+	visibility: visible;
+}
+
+#SwiftDemoVoiceMenuToggle:hover
+{
+	background-color: #ffffff28;
+}
+
+#SwiftDemoVoiceMenuToggle .swift-demo-voice-native-toggle__icon
+{
+	width: 30px;
+	height: 36px;
+	padding: 6px;
+	vertical-align: center;
+	wash-color: #ffffff;
+}
+
+.swift-demo-voice-native-toggle__label
+{
+	width: 48px;
+	height: 36px;
+	vertical-align: center;
+	text-align: center;
+	text-overflow: shrink;
+}
+
+.swift-demo-voice-native-toggle__check
+{
+	width: 18px;
+	height: 18px;
+	vertical-align: center;
+	margin: 0px 6px 0px 2px;
+	border: 1px solid #ffffff80;
+	border-radius: 2px;
+	background-color: #111111c0;
+}
+
+#SwiftDemoVoiceMenuToggle.selected .swift-demo-voice-native-toggle__check
+{
+	border-color: SwiftVoiceGold;
+	background-color: SwiftVoiceGold;
+}
+
+#SwiftDemoVoiceMenuToggle .swift-demo-voice-native-toggle__check Image
+{
+	width: 16px;
+	height: 16px;
+	padding: 2px;
+	horizontal-align: center;
+	vertical-align: center;
+	wash-color: #111111;
+	opacity: 0;
+}
+
+#SwiftDemoVoiceMenuToggle.selected .swift-demo-voice-native-toggle__check Image
+{
+	opacity: 1;
 }
 
 .swift-demo-voice

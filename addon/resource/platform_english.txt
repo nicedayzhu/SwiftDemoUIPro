@@ -66,4 +66,5 @@
 	"SwiftDemoVoice_SwitchingPov" "Switching POV: {s:player}..."
 	"SwiftDemoVoice_DragPreview" "RELEASE TO PLACE"
 	"SwiftDemoVoice_ResetPositionHint" "Restore the default panel position"
+	"SwiftDemoVoice_MenuToggleLabel" "TOOLS"
 }

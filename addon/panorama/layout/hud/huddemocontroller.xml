@@ -123,6 +123,13 @@
 				</Panel>
 			</Panel>
 		</Panel>
+		<Panel id="SwiftDemoVoiceMenuToggle" class="interactive swift-demo-voice-native-toggle selected" hittest="true" onactivate="SwiftDemoVoice.ToggleMenuVisible()">
+			<Image class="swift-demo-voice-native-toggle__icon" src="s2r://panorama/images/icons/ui/tune.vsvg" hittest="false" />
+			<Label class="swift-demo-voice-native-toggle__label" text="#SwiftDemoVoice_MenuToggleLabel" hittest="false" />
+			<Panel class="swift-demo-voice-native-toggle__check" hittest="false">
+				<Image src="s2r://panorama/images/icons/ui/check.vsvg" hittest="false" />
+			</Panel>
+		</Panel>
 		<Panel id="SwiftDemoVoiceStatusOverlay" class="swift-demo-speaking" hittest="false">
 			<Panel id="SwiftDemoVoiceNoticeList" class="swift-demo-speaking__list" hittest="false" />
 		</Panel>

@@ -59,6 +59,7 @@ If the launcher was interrupted, reopen it to resume the pending cleanup.
 ## Using the In-Game Panel
 
 - Use CS2's native Demo mouse-mode hotkey to show the cursor.
+- Use the prominent checked tune icon immediately to the right of the playback-speed control in CS2's full native Demo bar to hide the complete Swift Demo tools panel or bring it back. The panel also follows the native **Shift+F2** DemoUI states and does not install a custom keyboard binding.
 - When Demo playback starts, all 64 recorded-voice slots are enabled automatically. The panel also uses CS2's Panorama mute APIs to enable each discovered Demo XUID, without directly accessing profile data files.
 - Click a live player's name to switch to first-person POV; the current POV is highlighted in gold.
 - Click the audio button on a player row to toggle only that player's recorded Demo voice slot. Enabling it also clears that XUID's current native mute through `GameStateAPI`.

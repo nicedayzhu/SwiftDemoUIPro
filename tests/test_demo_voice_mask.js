@@ -141,10 +141,41 @@ if (!/\.DemoControllerMinimal \.swift-demo-voice-dock\s*\{[^}]*\bmargin-bottom:\
 	throw new Error("every native Demo controller mode must preserve equipment-strip clearance");
 }
 
+if (!/\.swift-demo-voice-dock\s*\{[^}]*\bvisibility:\s*collapse;/m.test(style)
+	|| !/\.DemoControllerFull \.swift-demo-voice-dock,\s*\.DemoControllerMinimal \.swift-demo-voice-dock\s*\{[^}]*\bvisibility:\s*visible;/m.test(style)
+	|| !/\.DemoControllerFull \.swift-demo-voice-dock\.menu-hidden,\s*\.DemoControllerMinimal \.swift-demo-voice-dock\.menu-hidden\s*\{[^}]*\bvisibility:\s*collapse;/m.test(style)) {
+	throw new Error("Demo Voice visibility must follow the native Shift+F2 DemoUI states");
+}
+
 if (!/id="SwiftDemoVoiceDock"[^>]*class="swift-demo-voice-dock"/.test(layout)
 	|| !/id="SwiftDemoVoiceHeaderToggle"[^>]*onactivate="SwiftDemoVoice\.ToggleOpen\(\)"/.test(layout)
 	|| /id="SwiftDemoVoiceHeader"[^>]*onactivate=/.test(layout)) {
 	throw new Error("Demo Voice positioning, dragging, and expand/collapse targets must remain separate");
+}
+
+if (!/<Panel id="SwiftDemoVoiceMenuToggle"[^>]*class="[^"]*selected[^"]*"[^>]*onactivate="SwiftDemoVoice\.ToggleMenuVisible\(\)"/.test(layout)
+	|| /<(?:Button|ToggleButton) id="SwiftDemoVoiceMenuToggle"/.test(layout)
+	|| !/swift-demo-voice-native-toggle__icon/.test(layout)
+	|| !/icons\/ui\/tune\.vsvg/.test(layout)
+	|| !/<Label class="swift-demo-voice-native-toggle__label"[^>]*text="#SwiftDemoVoice_MenuToggleLabel"/.test(layout)
+	|| !/swift-demo-voice-native-toggle__check/.test(layout)
+	|| /MenuToggleTooltip|MenuToggleHint|ShowMenuToggleTooltip|HideMenuToggleTooltip|native-toggle__tooltip/.test(layout + source + style + englishLocalization + schineseLocalization)
+	|| !/function _MountNativeMenuToggle\([^]*?toggle\.SetParent\(controlRow\)/m.test(source)
+	|| !/controlRow\.MoveChildAfter\(toggle, speedControls\)/.test(source)
+	|| !/\.DemoControllerFull #SwiftDemoVoiceMenuToggle\.native-mounted\s*\{[^}]*\bvisibility:\s*visible;/m.test(style)
+	|| !/#SwiftDemoVoiceMenuToggle\s*\{[^}]*\bwidth:\s*104px;[^}]*\bmargin-left:\s*12px;[^}]*\bbackground-color:\s*#00000000;[^}]*\bflow-children:\s*right;/m.test(style)
+	|| !/#SwiftDemoVoiceMenuToggle:hover\s*\{[^}]*\bbackground-color:\s*#ffffff28;/m.test(style)
+	|| /#SwiftDemoVoiceMenuToggle\.selected\s*\{[^}]*\bbackground-color:/m.test(style)
+	|| !/#SwiftDemoVoiceMenuToggle \.swift-demo-voice-native-toggle__icon\s*\{[^}]*\bwidth:\s*30px;[^}]*\bpadding:\s*6px;[^}]*\bwash-color:\s*#ffffff;/m.test(style)
+	|| /#SwiftDemoVoiceMenuToggle\.selected \.swift-demo-voice-native-toggle__icon\s*\{/m.test(style)
+	|| !/\.swift-demo-voice-native-toggle__label\s*\{[^}]*\bwidth:\s*48px;[^}]*\bheight:\s*36px;[^}]*\bvertical-align:\s*center;[^}]*\btext-align:\s*center;/m.test(style)
+	|| /^\.swift-demo-voice-native-toggle__label\s*\{[^}]*(?:font-family|font-size|font-weight|letter-spacing|color):/m.test(style)
+	|| /#SwiftDemoVoiceMenuToggle\.selected \.swift-demo-voice-native-toggle__label\s*\{/m.test(style)
+	|| !/\.swift-demo-voice-native-toggle__check\s*\{[^}]*\bwidth:\s*18px;[^}]*\bmargin:\s*0px\s+6px\s+0px\s+2px;[^}]*\bborder:\s*1px solid #ffffff80;/m.test(style)
+	|| !/#SwiftDemoVoiceMenuToggle\.selected \.swift-demo-voice-native-toggle__check Image\s*\{[^}]*\bopacity:\s*1;/m.test(style)
+	|| !/SwiftDemoVoice_MenuToggleLabel[^\n]*TOOLS/.test(englishLocalization)
+	|| !/SwiftDemoVoice_MenuToggleLabel[^\n]*工具/.test(schineseLocalization)) {
+	throw new Error("the native full Demo control bar must expose a labeled checked tools-panel toggle after playback speed");
 }
 
 if (!/id="SwiftDemoVoiceDragHandle"[^>]*draggable="true"/.test(layout)
@@ -221,8 +252,8 @@ if (!/spec_mode 2/.test(source) || /spec_mode 4/.test(source)) {
 	throw new Error("player focus must use CS2 OBS_MODE_IN_EYE (spec_mode 2)");
 }
 
-if (/RegisterKeyBind|bind\s+[\"']?space/i.test(source)) {
-	throw new Error("custom menu must not override the native Space camera control");
+if (/RegisterKeyBind|key_b|bind\s+[\"']?(?:b|space)/i.test(source)) {
+	throw new Error("custom menu visibility must use the native DemoUI control without installing keyboard bindings");
 }
 
 if (/bluedots_large_png\.vtex/.test(style)
@@ -279,11 +310,33 @@ var gotoTicks = [];
 var scheduledCallbacks = [];
 var demoState = null;
 var startupClasses = {};
+var dockClasses = {};
+var menuToggleParent = null;
+var menuToggleClasses = {};
+var menuToggleOrder = null;
+var dockPanel = {
+	SetHasClass: function (name, enabled) { dockClasses[name] = enabled; }
+};
 var menuPanel = {
 	SetHasClass: function (name, enabled) { startupClasses[name] = enabled; }
 };
+var speedControlsPanel = {};
+var controlRowPanel = {
+	MoveChildAfter: function (child, sibling) { menuToggleOrder = { child: child, sibling: sibling }; }
+};
+var menuTogglePanel = {
+	SetParent: function (parent) { menuToggleParent = parent; },
+	SetHasClass: function (name, enabled) { menuToggleClasses[name] = enabled; }
+};
 var contextPanel = {
-	FindChildTraverse: function (id) { return id === "SwiftDemoVoiceMenu" ? menuPanel : null; },
+	FindChildTraverse: function (id) {
+		if (id === "SwiftDemoVoiceMenu") return menuPanel;
+		if (id === "SwiftDemoVoiceDock") return dockPanel;
+		if (id === "SwiftDemoVoiceMenuToggle") return menuTogglePanel;
+		if (id === "ControlRow") return controlRowPanel;
+		if (id === "SpeedControls") return speedControlsPanel;
+		return null;
+	},
 	IsPlayingDemo: function () { return true; },
 	GetDemoControllerState: function () { return demoState; },
 	GotoTick: function (tick) { gotoTicks.push(tick); }
@@ -330,8 +383,19 @@ function takeScheduledCallback(delay) {
 	return null;
 }
 
-if (startupClasses["demo-active"] !== true || startupClasses.collapsed !== false) {
+if (startupClasses["demo-active"] !== true || startupClasses.collapsed !== false
+	|| dockClasses["menu-hidden"] !== false || menuToggleClasses.selected !== true
+	|| menuToggleParent !== controlRowPanel || menuToggleClasses["native-mounted"] !== true
+	|| !menuToggleOrder || menuToggleOrder.child !== menuTogglePanel || menuToggleOrder.sibling !== speedControlsPanel) {
 	throw new Error("self-start must make the menu visible and expanded");
+}
+if (context.SwiftDemoVoice.ToggleMenuVisible() !== true) throw new Error("the native DemoUI control must handle the menu toggle");
+if (dockClasses["menu-hidden"] !== true || menuToggleClasses.selected !== false) {
+	throw new Error("the native DemoUI control must hide the complete Demo Voice menu and clear its check");
+}
+if (context.SwiftDemoVoice.ToggleMenuVisible() !== true) throw new Error("the native DemoUI control must handle the menu toggle");
+if (dockClasses["menu-hidden"] !== false || menuToggleClasses.selected !== true) {
+	throw new Error("the native DemoUI control must show the complete Demo Voice menu and restore its check");
 }
 if (commands[0] !== "tv_listen_voice_indices -1" || commands[1] !== "tv_listen_voice_indices_h -1") {
 	throw new Error("Demo voice must default both 32-bit slot masks to all enabled: " + JSON.stringify(commands));

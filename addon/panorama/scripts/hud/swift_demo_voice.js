@@ -14,6 +14,8 @@ var SwiftDemoVoice = (function () {
 	var _lastRoundSignature = "";
 	var _currentRound = 0;
 	var _started = false;
+	var _isMenuVisible = true;
+	var _nativeMenuToggleMounted = false;
 	var _lastSpeakingSignature = "";
 	var _lastVoiceStatusSignature = "";
 	var _voiceDataLogged = false;
@@ -1155,9 +1157,39 @@ var SwiftDemoVoice = (function () {
 		_SetOpen(!_isOpen);
 	}
 
+	function _MountNativeMenuToggle() {
+		if (_nativeMenuToggleMounted) return true;
+		var toggle = _Panel("SwiftDemoVoiceMenuToggle");
+		var controlRow = _Panel("ControlRow");
+		var speedControls = _Panel("SpeedControls");
+		if (!toggle || !controlRow || !speedControls || !toggle.SetParent || !controlRow.MoveChildAfter) return false;
+		toggle.SetParent(controlRow);
+		controlRow.MoveChildAfter(toggle, speedControls);
+		_SetClass(toggle, "native-mounted", true);
+		_nativeMenuToggleMounted = true;
+		return true;
+	}
+
+	function _SetMenuVisible(visible) {
+		_isMenuVisible = !!visible;
+		var dock = _Panel("SwiftDemoVoiceDock");
+		var toggle = _Panel("SwiftDemoVoiceMenuToggle");
+		_SetClass(dock, "menu-hidden", !_isMenuVisible);
+		_SetClass(toggle, "selected", _isMenuVisible);
+		if (_isMenuVisible && _customPosition) $.Schedule(0.0, _ClampCustomPosition);
+	}
+
+	function ToggleMenuVisible() {
+		if (!_wasDemo && !_IsDemoPlayback()) return false;
+		_SetMenuVisible(!_isMenuVisible);
+		$.Msg("[SwiftDemoVoice] menu " + (_isMenuVisible ? "shown" : "hidden") + " by native DemoUI control");
+		return true;
+	}
+
 	function _Poll() {
 		var isDemo = _IsDemoPlayback();
 		var menu = _Panel("SwiftDemoVoiceMenu");
+		if (!_nativeMenuToggleMounted) _MountNativeMenuToggle();
 		_UpdateViewportClass();
 		// CSGOHudDemoController itself is hidden by the engine outside demo playback.
 		// Keep this child visible and refresh data even if one demo-state API lags.
@@ -1169,6 +1201,7 @@ var SwiftDemoVoice = (function () {
 		if (isDemo && !_wasDemo) {
 			_wasDemo = true;
 			_nativeUnmuteSeenPlayers = {};
+			_SetMenuVisible(true);
 			_SetOpen(true);
 			Refresh(true);
 			SelectAll();
@@ -1189,6 +1222,8 @@ var SwiftDemoVoice = (function () {
 		_UpdateViewportClass();
 		_SetClass(_Panel("SwiftDemoVoiceMenu"), "demo-active", true);
 		_SetupDragging();
+		_MountNativeMenuToggle();
+		_SetMenuVisible(true);
 		_SetOpen(true);
 		Refresh(true);
 		_UpdateRoundPicker(true);
@@ -1215,6 +1250,7 @@ var SwiftDemoVoice = (function () {
 		ToggleRoundPicker: ToggleRoundPicker,
 		Refresh: Refresh,
 		ToggleOpen: ToggleOpen,
+		ToggleMenuVisible: ToggleMenuVisible,
 		ResetPosition: ResetPosition,
 		OnLoad: OnLoad
 	};

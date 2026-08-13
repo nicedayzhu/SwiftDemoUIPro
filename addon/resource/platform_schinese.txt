@@ -66,4 +66,5 @@
 	"SwiftDemoVoice_SwitchingPov" "正在切换到 {s:player} 的视角..."
 	"SwiftDemoVoice_DragPreview" "松开以放置"
 	"SwiftDemoVoice_ResetPositionHint" "恢复面板默认位置"
+	"SwiftDemoVoice_MenuToggleLabel" "工具"
 }
