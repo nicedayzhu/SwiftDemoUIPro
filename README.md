@@ -61,7 +61,7 @@ If the launcher was interrupted, reopen it to resume the pending cleanup.
 - Use CS2's native Demo mouse-mode hotkey to show the cursor.
 - Use the prominent checked tune icon immediately to the right of the playback-speed control in CS2's full native Demo bar to hide the complete Swift Demo tools panel or bring it back. The panel also follows the native **Shift+F2** DemoUI states and does not install a custom keyboard binding.
 - When Demo playback starts, all 64 recorded-voice slots are enabled automatically. The panel also uses CS2's Panorama mute APIs to enable each discovered Demo XUID, without directly accessing profile data files.
-- Click a live player's name to switch to first-person POV; the current POV is highlighted in gold.
+- Click a live player to switch to first-person POV; the current POV is highlighted and labeled **CURRENT**. Check **SHOW AVATAR** above the list to show each Steam avatar beside the player's name and team/slot metadata for quicker visual identification.
 - Click the audio button on a player row to toggle only that player's recorded Demo voice slot. Enabling it also clears that XUID's current native mute through `GameStateAPI`.
 - Use **HEAR ALL**, **MUTE ALL**, **T ONLY**, or **CT ONLY** for quick Demo voice filtering; **HEAR ALL** and the team filters clear current native mutes for their enabled XUIDs. These labels follow the CS2 language.
 - Player selection follows native team identity: T players use gold/yellow accents and CT players use blue accents for the observed row and enabled voice state.

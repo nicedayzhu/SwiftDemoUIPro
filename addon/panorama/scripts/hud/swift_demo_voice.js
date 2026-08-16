@@ -4,6 +4,7 @@ var SwiftDemoVoice = (function () {
 	var _players = [];
 	var _selectedSlots = {};
 	var _selectionMode = "all";
+	var _showPlayerAvatars = false;
 	var _isOpen = true;
 	var _wasDemo = false;
 	var _lastPlayerSignature = "";
@@ -809,12 +810,24 @@ var SwiftDemoVoice = (function () {
 		}
 	}
 
+	function _SetRowPovState(row, player, observed) {
+		var povLabel = row ? row.FindChildTraverse("SwiftDemoVoicePovLabel") : null;
+		if (!povLabel || !player) return;
+		povLabel.text = _Localize(observed && player.canFocus
+			? "#SwiftDemoVoice_Current"
+			: (player.canFocus
+				? "#SwiftDemoVoice_View"
+				: (player.isDead ? "#SwiftDemoVoice_Dead" : "#SwiftDemoVoice_NotAvailable")));
+	}
+
 	function _RenderObservedState() {
 		for (var i = 0; i < _players.length; i++) {
 			var player = _players[i];
 			var row = _Panel("SwiftDemoVoicePlayer_" + player.slot);
 			if (!row) continue;
-			_SetClass(row, "observed", !!_lastHudPlayerXuid && player.xuid === _lastHudPlayerXuid);
+			var observed = !!_lastHudPlayerXuid && player.xuid === _lastHudPlayerXuid;
+			_SetClass(row, "observed", observed);
+			_SetRowPovState(row, player, observed);
 		}
 	}
 
@@ -856,6 +869,14 @@ var SwiftDemoVoice = (function () {
 			_SetClass(row, "pov-unavailable", !player.canFocus);
 			row.FindChildTraverse("SwiftDemoVoiceSlot").text = String(player.slot + 1);
 			row.FindChildTraverse("SwiftDemoVoicePlayerName").text = player.name;
+			var playerAvatar = row.FindChildTraverse("SwiftDemoVoicePlayerAvatar");
+			if (player.xuid && playerAvatar && playerAvatar.PopulateFromSteamID) {
+				try {
+					playerAvatar.PopulateFromSteamID(player.xuid);
+				} catch (error) {
+					$.Msg("[SwiftDemoVoice] unable to populate player avatar: " + error);
+				}
+			}
 			var playerStatus = player.isDead
 				? _Localize("#SwiftDemoVoice_Dead")
 				: (player.isDisconnected ? _Localize("#SwiftDemoVoice_Offline") : "");
@@ -866,13 +887,10 @@ var SwiftDemoVoice = (function () {
 			row.FindChildTraverse("SwiftDemoVoicePlayerMeta").text = meta;
 
 			var povIcon = row.FindChildTraverse("SwiftDemoVoicePovIcon");
-			var povLabel = row.FindChildTraverse("SwiftDemoVoicePovLabel");
 			if (povIcon) povIcon.SetImage(player.canFocus
 				? "s2r://panorama/images/icons/ui/watch.vsvg"
 				: "s2r://panorama/images/icons/ui/elimination.vsvg");
-			if (povLabel) povLabel.text = _Localize(player.canFocus
-				? "#SwiftDemoVoice_View"
-				: (player.isDead ? "#SwiftDemoVoice_Dead" : "#SwiftDemoVoice_NotAvailable"));
+			_SetRowPovState(row, player, false);
 
 			var focusButton = row.FindChildTraverse("SwiftDemoVoiceFocus");
 			if (focusButton) focusButton.enabled = player.canFocus;
@@ -908,6 +926,21 @@ var SwiftDemoVoice = (function () {
 			{ count: _players.length }
 		));
 		_RenderObservedState();
+	}
+
+	function _SetPlayerAvatarMode(showAvatars) {
+		_showPlayerAvatars = !!showAvatars;
+		var menu = _Panel("SwiftDemoVoiceMenu");
+		var control = _Panel("SwiftDemoVoiceAvatarMode");
+		var toggle = _Panel("SwiftDemoVoiceAvatarToggle");
+		_SetClass(menu, "avatar-mode", _showPlayerAvatars);
+		_SetClass(control, "selected", _showPlayerAvatars);
+		if (toggle) toggle.selected = _showPlayerAvatars;
+		return _showPlayerAvatars;
+	}
+
+	function TogglePlayerAvatarMode() {
+		return _SetPlayerAvatarMode(!_showPlayerAvatars);
 	}
 
 	function _PopulateAllVisibleSelections() {
@@ -1225,6 +1258,7 @@ var SwiftDemoVoice = (function () {
 		_MountNativeMenuToggle();
 		_SetMenuVisible(true);
 		_SetOpen(true);
+		_SetPlayerAvatarMode(false);
 		Refresh(true);
 		_UpdateRoundPicker(true);
 		_RunMaskCommands(-1, -1, _Localize("#SwiftDemoVoice_LoadingPlayers"));
@@ -1240,6 +1274,7 @@ var SwiftDemoVoice = (function () {
 		SelectNone: SelectNone,
 		SelectTeam: SelectTeam,
 		TogglePlayer: TogglePlayer,
+		TogglePlayerAvatarMode: TogglePlayerAvatarMode,
 		FocusPlayer: FocusPlayer,
 		RoundNumberForTick: _RoundNumberForTick,
 		SpeakingSlotsForTick: _SpeakingSlotsForTick,

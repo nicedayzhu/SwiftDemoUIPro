@@ -15,6 +15,9 @@
 				<Panel id="SwiftDemoVoiceTeamStripe" class="swift-demo-voice-player__stripe" hittest="false" />
 				<Button id="SwiftDemoVoiceFocus" class="swift-demo-voice-player__focus" hittest="true">
 					<Label id="SwiftDemoVoiceSlot" class="swift-demo-voice-player__slot" text="00" />
+					<Panel id="SwiftDemoVoicePlayerAvatarWrap" class="swift-demo-voice-player__avatar-wrap" hittest="false">
+						<CSGOAvatarImage id="SwiftDemoVoicePlayerAvatar" class="swift-demo-voice-player__avatar" defaultsrc="s2r://panorama/images/icons/ui/player.vsvg" />
+					</Panel>
 					<Panel class="swift-demo-voice-player__copy" hittest="false">
 						<Label id="SwiftDemoVoicePlayerName" class="swift-demo-voice-player__name" text="#SwiftDemoVoice_PlayerPlaceholder" />
 						<Label id="SwiftDemoVoicePlayerMeta" class="swift-demo-voice-player__meta" text="#SwiftDemoVoice_TeamPlaceholder" />
@@ -182,6 +185,13 @@
 				</Panel>
 				<Panel class="swift-demo-voice__section-header">
 					<Label text="#SwiftDemoVoice_PlayersHeader" />
+					<Panel id="SwiftDemoVoiceAvatarMode" class="swift-demo-voice__avatar-mode" hittest="true" hittestchildren="false" onactivate="SwiftDemoVoice.TogglePlayerAvatarMode()">
+						<ToggleButton id="SwiftDemoVoiceAvatarToggle" class="swift-demo-voice__avatar-state" hittest="false" />
+						<Panel class="swift-demo-voice__avatar-check" hittest="false">
+							<Image src="s2r://panorama/images/icons/ui/check.vsvg" hittest="false" />
+						</Panel>
+						<Label text="#SwiftDemoVoice_ShowAvatars" hittest="false" />
+					</Panel>
 					<Button class="swift-demo-voice__refresh" onactivate="SwiftDemoVoice.Refresh(true)"><Image src="s2r://panorama/images/icons/ui/refresh.vsvg" /><Label text="#SwiftDemoVoice_Refresh" /></Button>
 				</Panel>
 				<Panel id="SwiftDemoVoicePlayerList" class="swift-demo-voice__players" hittest="true" hittestchildren="true" />

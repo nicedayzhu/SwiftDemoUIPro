@@ -293,6 +293,31 @@ if (!/icons\/ui\/unmuted\.vsvg/.test(layout) || !/SwiftDemoVoiceEnabledLabel/.te
 	throw new Error("voice controls must use explicit unmuted/muted UI with a text state");
 }
 
+if (!/id="SwiftDemoVoiceAvatarMode"[^>]*onactivate="SwiftDemoVoice\.TogglePlayerAvatarMode\(\)"/.test(layout)
+	|| !/<ToggleButton id="SwiftDemoVoiceAvatarToggle"[^>]*class="swift-demo-voice__avatar-state"[^>]*\/>/.test(layout)
+	|| !/<Panel class="swift-demo-voice__avatar-check"[^>]*>[\s\S]*?icons\/ui\/check\.vsvg[\s\S]*?<\/Panel>/.test(layout)
+	|| !/<CSGOAvatarImage id="SwiftDemoVoicePlayerAvatar"[^>]*defaultsrc="s2r:\/\/panorama\/images\/icons\/ui\/player\.vsvg"/.test(layout)
+	|| !/playerAvatar\.PopulateFromSteamID\(player\.xuid\)/.test(source)
+	|| !/function _SetPlayerAvatarMode\(/.test(source)
+	|| !/function TogglePlayerAvatarMode\(/.test(source)
+	|| !/\.avatar-mode \.swift-demo-voice-player__avatar-wrap\s*\{[^}]*\bwidth:\s*46px;[^}]*\bvisibility:\s*visible;/m.test(style)
+	|| !/\.avatar-mode \.swift-demo-voice-player__copy\s*\{[^}]*\bwidth:\s*fill-parent-flow\(1\.0\);[^}]*\bvisibility:\s*visible;/m.test(style)
+	|| !/\.swift-demo-voice__avatar-mode\.selected \.swift-demo-voice__avatar-check\s*\{[^}]*\bbackground-color:\s*SwiftVoiceGold;/m.test(style)
+	|| !/\.swift-demo-voice__avatar-mode\.selected \.swift-demo-voice__avatar-check Image\s*\{[^}]*\bopacity:\s*1;/m.test(style)
+	|| /ShowTextTooltip\(playerRowId/.test(source)
+	|| /\bplayerRowId\b/.test(source)
+	|| !/SwiftDemoVoice_ShowAvatars[^\n]*SHOW AVATAR/.test(englishLocalization)
+	|| !/SwiftDemoVoice_ShowAvatars[^\n]*显示头像/.test(schineseLocalization)) {
+	throw new Error("player POV rows must use a reliable checked avatar control, keep names visible, and avoid duplicate name tooltips");
+}
+
+if (!/SwiftDemoVoice_Current[^\n]*CURRENT/.test(englishLocalization)
+	|| !/SwiftDemoVoice_Current[^\n]*当前/.test(schineseLocalization)
+	|| !/function _SetRowPovState\(/.test(source)
+	|| !/observed && player\.canFocus[\s\S]*?#SwiftDemoVoice_Current/.test(source)) {
+	throw new Error("the observed player row must expose an explicit localized current-POV label");
+}
+
 if (!/id="SwiftDemoRoundPicker"/.test(layout) || !/SwiftDemoVoice\.ToggleRoundPicker\(\)/.test(layout) || !/#SwiftDemoVoice_Subtitle/.test(layout)) {
 	throw new Error("custom menu must expose the compact round navigation component");
 }
@@ -314,6 +339,8 @@ var dockClasses = {};
 var menuToggleParent = null;
 var menuToggleClasses = {};
 var menuToggleOrder = null;
+var avatarModeClasses = {};
+var avatarTogglePanel = { selected: true };
 var dockPanel = {
 	SetHasClass: function (name, enabled) { dockClasses[name] = enabled; }
 };
@@ -328,11 +355,16 @@ var menuTogglePanel = {
 	SetParent: function (parent) { menuToggleParent = parent; },
 	SetHasClass: function (name, enabled) { menuToggleClasses[name] = enabled; }
 };
+var avatarModePanel = {
+	SetHasClass: function (name, enabled) { avatarModeClasses[name] = enabled; }
+};
 var contextPanel = {
 	FindChildTraverse: function (id) {
 		if (id === "SwiftDemoVoiceMenu") return menuPanel;
 		if (id === "SwiftDemoVoiceDock") return dockPanel;
 		if (id === "SwiftDemoVoiceMenuToggle") return menuTogglePanel;
+		if (id === "SwiftDemoVoiceAvatarMode") return avatarModePanel;
+		if (id === "SwiftDemoVoiceAvatarToggle") return avatarTogglePanel;
 		if (id === "ControlRow") return controlRowPanel;
 		if (id === "SpeedControls") return speedControlsPanel;
 		return null;
@@ -385,9 +417,18 @@ function takeScheduledCallback(delay) {
 
 if (startupClasses["demo-active"] !== true || startupClasses.collapsed !== false
 	|| dockClasses["menu-hidden"] !== false || menuToggleClasses.selected !== true
+	|| startupClasses["avatar-mode"] !== false || avatarModeClasses.selected !== false || avatarTogglePanel.selected !== false
 	|| menuToggleParent !== controlRowPanel || menuToggleClasses["native-mounted"] !== true
 	|| !menuToggleOrder || menuToggleOrder.child !== menuTogglePanel || menuToggleOrder.sibling !== speedControlsPanel) {
 	throw new Error("self-start must make the menu visible and expanded");
+}
+if (context.SwiftDemoVoice.TogglePlayerAvatarMode() !== true
+	|| startupClasses["avatar-mode"] !== true || avatarModeClasses.selected !== true || avatarTogglePanel.selected !== true) {
+	throw new Error("avatar checkbox must show Steam avatars beside player names");
+}
+if (context.SwiftDemoVoice.TogglePlayerAvatarMode() !== false
+	|| startupClasses["avatar-mode"] !== false || avatarModeClasses.selected !== false || avatarTogglePanel.selected !== false) {
+	throw new Error("avatar checkbox must restore the default name-only view");
 }
 if (context.SwiftDemoVoice.ToggleMenuVisible() !== true) throw new Error("the native DemoUI control must handle the menu toggle");
 if (dockClasses["menu-hidden"] !== true || menuToggleClasses.selected !== false) {
