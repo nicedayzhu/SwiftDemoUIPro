@@ -100,6 +100,36 @@ The launcher must never imply that an `-insecure` session is suitable for matchm
 
 The default CS2 and VPKEdit paths in `demo-menu.ps1` are developer-machine conveniences, not portable project assumptions. In documentation, automation, and reproducible commands, pass `-Cs2Root`, `-VpkEditCli`, and `-QtRoot` explicitly.
 
+### Local release toolchain in this workspace
+
+Before searching for or downloading release dependencies, check the project-provided ignored tool directories. They are intentionally absent from Git but are already available in this working copy:
+
+| Purpose | Existing path | Usage |
+| --- | --- | --- |
+| Qt 6 MSVC Desktop kit | `launcher/.qt/6.10.3/msvc2022_64` | Pass its resolved absolute path to `-QtRoot`. Confirm `lib/cmake/Qt6/Qt6Config.cmake` and `bin/windeployqt.exe` exist before building. |
+| Portable GitHub CLI | `launcher/.tools/gh-portable/bin/gh.exe` | Prepend `launcher/.tools/gh-portable/bin` to the process `PATH` before running `release.ps1 -Publish`; verify authentication with `gh auth status`. |
+| aqtinstall fallback | `launcher/.tools/aqt` | Use only when the existing Qt kit is missing or incompatible. The private install can be invoked from this directory with `py -3.14 -m aqt`; do not redownload Qt merely because `bin/aqt.exe` cannot locate its private modules. |
+| miniz release source/archive | `launcher/.tools/miniz-3.1.2` and `launcher/.tools/miniz-3.1.2.zip` | Local dependency material; the launcher itself builds against the vendored source under `launcher/third_party/miniz/`. |
+| VPKEdit CLI | `F:/cs2dev/SkinTools/VPKEdit-Windows-Standalone-msvc-Release/vpkeditcli.exe` | Current developer-machine path and `demo-menu.ps1` default for static VPK packing/inspection. |
+| CS2 ResourceCompiler | `F:/Program Files (x86)/Steam/steamapps/common/Counter-Strike Global Offensive/game/bin/win64/resourcecompiler.exe` | Current developer-machine compiler used by `demo-menu.ps1`; the CS2 root is the parent `Counter-Strike Global Offensive` directory. |
+
+`launcher/.qt/` and `launcher/.tools/` are ignored local tool caches. Never add their contents to Git or release archives. CI currently tests Qt 6.8.x/MSVC 2022, while the existing local Qt 6.10.3 kit is valid for release builds as long as configuration, CTest, `windeployqt`, and packaged-launcher checks pass.
+
+For this workspace, a complete authorized publication can be started with:
+
+```powershell
+$env:PATH = (Resolve-Path .\launcher\.tools\gh-portable\bin).Path + `
+    [IO.Path]::PathSeparator + $env:PATH
+
+.\release.ps1 -Version <next-version> `
+  -QtRoot (Resolve-Path .\launcher\.qt\6.10.3\msvc2022_64).Path `
+  -Cs2Root "F:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive" `
+  -VpkEditCli "F:\cs2dev\SkinTools\VPKEdit-Windows-Standalone-msvc-Release\vpkeditcli.exe" `
+  -Publish
+```
+
+Still require explicit user authorization for `-Publish`; the presence of authenticated local tooling does not grant permission to push or publish.
+
 ## Build Commands
 
 Run commands from the repository root unless stated otherwise.
@@ -240,6 +270,17 @@ Only with explicit user authorization:
 ```
 
 Publishing updates `VERSION` and `MENU_VERSION` together, creates `chore(release): v<version>`, builds/tests all artifacts, creates an annotated `v<version>` tag, pushes the current branch and tag, creates or updates a draft GitHub Release, uploads both ZIPs, the standalone VPK, `update-manifest.json`, and `SHA256SUMS.txt`, then publishes the Release. Component-only public Releases are intentionally rejected so the latest Release remains a complete first-time download. The script refuses to overwrite an already published Release.
+
+The generated changelog alone is not a complete public Release description. Before drafting notes, inspect the previous published Release with `gh release view v<previous-version> --json body` and preserve its established style. Unless the user requests otherwise, Release notes must be concise and English-only:
+
+- `## Highlights` with a short list of user-visible changes;
+- `## Download` naming the recommended Windows ZIP and the existing-user update path;
+- one sentence pointing to `SHA256SUMS.txt`;
+- the full changelog comparison link.
+
+Do not add duplicated Chinese/English sections, full installation tutorials, asset tables, or inline hash lists when the established compact format is sufficient.
+
+After editing the body, verify with `gh release view v<version> --json body,isDraft,isPrerelease,assets,url` that the Release is public, the notes are present, and all five assets are uploaded.
 
 Do not manually edit generated release archives or their checksums. Generate checksums after the final packaging step.
 
