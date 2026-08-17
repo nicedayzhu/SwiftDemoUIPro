@@ -121,7 +121,7 @@ if ($Package) {
 
     $deploy = Join-Path $qt "bin\windeployqt.exe"
     if (-not (Test-Path -LiteralPath $deploy)) { throw "windeployqt.exe was not found in $qt\bin" }
-    & $deploy --release --compiler-runtime --no-translations --no-opengl-sw --no-system-dxc-compiler `
+    & $deploy --release --no-compiler-runtime --no-translations --no-opengl-sw --no-system-dxc-compiler `
         --skip-plugin-types generic,imageformats,networkinformation,styles `
         (Join-Path $packageDir "SwiftDemoUIPro.exe")
     if ($LASTEXITCODE -ne 0) { throw "windeployqt failed." }

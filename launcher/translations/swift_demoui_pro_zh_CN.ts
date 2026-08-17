@@ -223,7 +223,27 @@
         <translation>Demo 与启动配置已准备完成。</translation>
     </message>
     <message>
-        <location line="+84"/>
+        <location line="+61"/>
+        <source>The advanced launch options could not be processed.</source>
+        <translation>无法处理高级启动选项。</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Advanced launch options cannot exceed 2048 characters.</source>
+        <translation>高级启动选项不能超过 2048 个字符。</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Advanced launch options cannot contain more than 128 arguments.</source>
+        <translation>高级启动选项不能包含超过 128 个参数。</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>The option %1 is managed by the launcher and cannot be overridden.</source>
+        <translation>选项 %1 由启动器管理，不能被覆盖。</translation>
+    </message>
+    <message>
+        <location line="+39"/>
         <source>Unable to start Steam/CS2. Make sure Steam is installed and try running the launcher as administrator.</source>
         <translation>无法启动 Steam/CS2。请确认 Steam 已安装并尝试以管理员身份运行启动器。</translation>
     </message>
@@ -268,7 +288,7 @@
         <translation>Demo 模式已停止。VPK 与临时文件均已移除，现在可以从 Steam 正常启动 CS2。</translation>
     </message>
     <message>
-        <location line="-820"/>
+        <location line="-859"/>
         <source>Refusing to remove an unexpected voice-session directory: %1</source>
         <translation>拒绝删除非预期的语音会话目录：%1</translation>
     </message>
@@ -331,12 +351,12 @@
         <translation>Demo 语音打包器未生成会话 VPK。</translation>
     </message>
     <message>
-        <location line="+91"/>
+        <location line="+130"/>
         <source>Unable to remove the Demo voice session VPK.</source>
         <translation>无法删除 Demo 语音会话 VPK。</translation>
     </message>
     <message>
-        <location line="-86"/>
+        <location line="-125"/>
         <source>Parsed Demo voice status data is ready.</source>
         <translation>已解析的 Demo 语音状态数据已准备完成。</translation>
     </message>
@@ -344,7 +364,7 @@
 <context>
     <name>LauncherWindow</name>
     <message>
-        <location filename="../src/LauncherWindow.cpp" line="+313"/>
+        <location filename="../src/LauncherWindow.cpp" line="+405"/>
         <source>CS2 Demo Tool</source>
         <translation>CS2 回放工具</translation>
     </message>
@@ -361,23 +381,23 @@
     </message>
     <message>
         <location line="-66"/>
-        <location line="+214"/>
+        <location line="+253"/>
         <source>DemoUI Management</source>
         <translation>DemoUI 管理</translation>
     </message>
     <message>
-        <location line="-207"/>
+        <location line="-246"/>
         <source>More</source>
         <translation>其他</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+293"/>
+        <location line="+332"/>
         <source>About</source>
         <translation>关于</translation>
     </message>
     <message>
-        <location line="-289"/>
+        <location line="-328"/>
         <source>Interface language</source>
         <translation>界面语言</translation>
     </message>
@@ -387,18 +407,18 @@
         <translation>跟随系统</translation>
     </message>
     <message>
-        <location line="+54"/>
+        <location line="+57"/>
         <source>Checking</source>
         <translation>正在检查</translation>
     </message>
     <message>
         <location line="+15"/>
-        <location line="+1546"/>
+        <location line="+1826"/>
         <source>✓</source>
         <translation>✓</translation>
     </message>
     <message>
-        <location line="-1516"/>
+        <location line="-1796"/>
         <source>Choose Demo</source>
         <translation>选择录像</translation>
     </message>
@@ -430,13 +450,13 @@
         <translation>已关闭</translation>
     </message>
     <message>
-        <location line="+9"/>
-        <location line="+1479"/>
+        <location line="+45"/>
+        <location line="+1723"/>
         <source>Start playback</source>
         <translation>开始观看</translation>
     </message>
     <message>
-        <location line="-1472"/>
+        <location line="-1716"/>
         <source>Stop and restore</source>
         <translation>停止观看并恢复</translation>
     </message>
@@ -477,12 +497,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1045"/>
+        <location line="+1157"/>
         <source>Checking...</source>
         <translation>正在检查...</translation>
     </message>
     <message>
-        <location line="-1041"/>
+        <location line="-1153"/>
         <source>Install / Repair</source>
         <translation>安装 / 修复</translation>
     </message>
@@ -517,7 +537,7 @@
         <translation>哔哩哔哩</translation>
     </message>
     <message>
-        <location line="+692"/>
+        <location line="+804"/>
         <source>Unable to switch language</source>
         <translation>无法切换语言</translation>
     </message>
@@ -559,12 +579,12 @@
         <translation>无法使用该文件</translation>
     </message>
     <message>
-        <location line="-1363"/>
+        <location line="-1514"/>
         <source>Swift DemoUI Pro · %1</source>
         <translation>Swift DemoUI Pro · %1</translation>
     </message>
     <message>
-        <location line="+116"/>
+        <location line="+119"/>
         <source>TrueView prediction</source>
         <translation>TrueView 预测</translation>
     </message>
@@ -574,17 +594,17 @@
         <translation>默认关闭，避免缺少 TrueView 指令数据的 Demo 画面闪烁</translation>
     </message>
     <message>
-        <location line="-244"/>
+        <location line="-249"/>
         <source>Downloading DemoUI update... %1%</source>
         <translation>正在下载 DemoUI 更新……%1%</translation>
     </message>
     <message>
-        <location line="+148"/>
+        <location line="+150"/>
         <source>Choose a Demo, ZIP, or Zstandard file and start CS2 with a safe, reversible setup</source>
         <translation>选择 Demo、ZIP 或 Zstandard 文件，以安全且可恢复的方式启动 CS2</translation>
     </message>
     <message>
-        <location line="+52"/>
+        <location line="+55"/>
         <source>Drop a Demo, ZIP, or Zstandard file here</source>
         <translation>将 Demo、ZIP 或 Zstandard 文件拖到这里</translation>
     </message>
@@ -594,13 +614,13 @@
         <translation>支持 CS2 .dem、.zip 和 .dem.zst 文件</translation>
     </message>
     <message>
-        <location line="+282"/>
-        <location line="+903"/>
+        <location line="+318"/>
+        <location line="+1015"/>
         <source>Check for updates</source>
         <translation>检查更新</translation>
     </message>
     <message>
-        <location line="-814"/>
+        <location line="-926"/>
         <source>Official website</source>
         <translation>官方网站</translation>
     </message>
@@ -615,7 +635,7 @@
         <translation>关闭提示</translation>
     </message>
     <message>
-        <location line="+662"/>
+        <location line="+774"/>
         <source>Downloading DemoUI update...</source>
         <translation>正在下载 DemoUI 更新……</translation>
     </message>
@@ -655,7 +675,7 @@
         <translation>无法检查更新：%1</translation>
     </message>
     <message>
-        <location line="-976"/>
+        <location line="-1088"/>
         <source>Launcher %1 · DemoUI %2</source>
         <translation>启动器 %1 · DemoUI %2</translation>
     </message>
@@ -700,7 +720,7 @@
         <translation>喜欢这个工具？请我喝杯咖啡。</translation>
     </message>
     <message>
-        <location line="+799"/>
+        <location line="+911"/>
         <source>Download launcher %1</source>
         <translation>下载启动器 %1</translation>
     </message>
@@ -730,7 +750,25 @@
         <translation>尚未检查更新</translation>
     </message>
     <message>
-        <location line="-984"/>
+        <location line="-1265"/>
+        <location line="+1593"/>
+        <location line="+8"/>
+        <source>Advanced launch options</source>
+        <translation>高级启动选项</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Example: -fullscreen -w 1920 -h 1080 +fps_max 0</source>
+        <translation>示例：-fullscreen -w 1920 -h 1080 +fps_max 0</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <location line="+4"/>
+        <source>Spaces separate arguments. Put values containing spaces in double quotes.</source>
+        <translation>使用空格分隔参数；包含空格的值请用英文双引号括起。</translation>
+    </message>
+    <message>
+        <location line="-1457"/>
         <source>Counter-Strike 2 DemoUI and playback tool</source>
         <translation>Counter-Strike 2 DemoUI 与回放工具</translation>
     </message>
@@ -740,7 +778,7 @@
         <translation>启动器 %1（%2）· DemoUI %3</translation>
     </message>
     <message>
-        <location line="+1005"/>
+        <location line="+1117"/>
         <source>You&apos;re up to date</source>
         <translation>当前已是最新版本</translation>
     </message>
@@ -833,7 +871,12 @@ Demo：%2</translation>
         <translation>要启用 -insecure，必须完全退出当前 CS2，再由启动器重新打开。</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+9"/>
+        <source>Invalid launch options</source>
+        <translation>无效的启动选项</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>Start Demo playback mode</source>
         <translation>启动 Demo 观看模式</translation>
     </message>
@@ -852,18 +895,28 @@ The launcher does not change permanent Steam launch options.</source>
 启动器不会修改 Steam 的永久启动参数。</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
+        <source>
+
+Additional launch options: %1</source>
+        <translation>
+
+附加启动选项：%1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Continue</source>
         <translation>继续启动</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+232"/>
+        <location line="+161"/>
+        <location line="+189"/>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
     <message>
-        <location line="-222"/>
+        <location line="-340"/>
         <source>Preparing the DemoUI component...</source>
         <translation>正在准备 DemoUI 组件...</translation>
     </message>
@@ -883,7 +936,7 @@ The launcher does not change permanent Steam launch options.</source>
         <translation>语音数据已准备完成，正在启动 CS2...</translation>
     </message>
     <message>
-        <location line="+65"/>
+        <location line="+66"/>
         <source>Demo session is still active</source>
         <translation>仍处于 Demo 会话</translation>
     </message>
@@ -898,7 +951,48 @@ The launcher does not change permanent Steam launch options.</source>
         <translation>操作未完成</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+20"/>
+        <source>For advanced users. Settings are saved locally and used only when this launcher starts CS2.</source>
+        <translation>仅供高级用户使用。设置保存在本机，仅在此启动器启动 CS2 时使用。</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Launch options</source>
+        <translation>启动项</translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <source>The launcher already manages -insecure and other session-critical options.</source>
+        <translation>启动器已自动管理 -insecure 等会话关键参数。</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Save</source>
+        <translation>保存</translation>
+    </message>
+    <message>
+        <location line="+43"/>
+        <source>Configured</source>
+        <translation>已设置</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+6"/>
+        <source>Advanced users only</source>
+        <translation>仅供高级用户使用</translation>
+    </message>
+    <message>
+        <location line="-4"/>
+        <source>Open advanced launch options</source>
+        <translation>打开高级启动项</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Launch options are configured</source>
+        <translation>已配置启动项</translation>
+    </message>
+    <message>
+        <location line="+29"/>
         <source>Waiting for the CS2 path</source>
         <translation>等待设置 CS2 路径</translation>
     </message>
@@ -918,7 +1012,7 @@ The launcher does not change permanent Steam launch options.</source>
         <translation>正在准备...</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+9"/>
         <source>Preparing Demo</source>
         <translation>正在准备 Demo</translation>
     </message>

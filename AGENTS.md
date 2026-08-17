@@ -74,7 +74,7 @@ The launcher must never imply that an `-insecure` session is suitable for matchm
 - A ZIP with one Demo is selected automatically; multiple Demos require explicit selection.
 - The launcher defaults TrueView prediction off by writing `cl_demo_predict 0` to the session CFG. Keep this compatibility default unless the player explicitly enables TrueView for a supported recording.
 - The UI must remain readable under Windows light and dark system palettes. When changing QSS, explicitly style dialog child labels/buttons and visually check important states.
-- Existing QA options in `main.cpp` include `--ui-language`, `--preview-page`, `--preview-update-bubble`, `--no-update-check`, and `--render-preview`.
+- Existing QA options in `main.cpp` include `--ui-language`, `--preview-page`, `--preview-advanced-options`, `--preview-update-bubble`, `--no-update-check`, and `--render-preview`.
 - Update checks use the public GitHub latest-release API. `update-manifest.json` is authoritative for the separately downloadable launcher/menu components, whose public Release versions stay synchronized; legacy releases fall back to versioned asset names.
 
 ## Prerequisites

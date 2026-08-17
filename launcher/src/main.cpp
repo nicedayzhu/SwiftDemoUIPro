@@ -35,6 +35,9 @@ int main(int argc, char *argv[])
     application.setProperty(
         "previewUpdateBubble",
         arguments.contains(QStringLiteral("--preview-update-bubble")));
+    application.setProperty(
+        "previewAdvancedOptionsDialog",
+        arguments.contains(QStringLiteral("--preview-advanced-options")));
     const int languageIndex = arguments.indexOf(QStringLiteral("--ui-language"));
     if (languageIndex >= 0 && languageIndex + 1 < arguments.size())
         application.setProperty("uiLanguageOverride", arguments[languageIndex + 1]);
@@ -58,7 +61,10 @@ int main(int argc, char *argv[])
         const QString outputPath = QDir::cleanPath(arguments[previewIndex + 1]);
         const int previewDelay = liveUpdatePreview ? 5000 : 350;
         QTimer::singleShot(previewDelay, &window, [&window, outputPath, &application]() {
-            const bool saved = window.grab().save(outputPath, "PNG");
+            QWidget *previewTarget = QApplication::activeModalWidget();
+            if (!previewTarget)
+                previewTarget = &window;
+            const bool saved = previewTarget->grab().save(outputPath, "PNG");
             application.exit(saved ? 0 : 2);
         });
     }

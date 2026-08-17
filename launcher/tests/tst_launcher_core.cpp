@@ -177,6 +177,36 @@ void LauncherCoreTest::buildsTemporaryInsecureLaunch()
     QVERIFY(arguments.contains(QStringLiteral("+exec")));
     QVERIFY(!arguments.join(QLatin1Char(' ')).contains(QStringLiteral("-launchoption"), Qt::CaseInsensitive));
 
+    QStringList advancedArguments;
+    LauncherResult parsed = Cs2Manager::parseAdvancedLaunchOptions(
+        QStringLiteral("-fullscreen -w 1920 +fps_max 0 -language \"Simplified Chinese\""),
+        &advancedArguments);
+    QVERIFY2(parsed.ok, qPrintable(parsed.message));
+    QCOMPARE(advancedArguments, QStringList({
+        QStringLiteral("-fullscreen"),
+        QStringLiteral("-w"),
+        QStringLiteral("1920"),
+        QStringLiteral("+fps_max"),
+        QStringLiteral("0"),
+        QStringLiteral("-language"),
+        QStringLiteral("Simplified Chinese")
+    }));
+
+    const QStringList customized = Cs2Manager::buildSteamLaunchArguments(advancedArguments);
+    QCOMPARE(customized.mid(0, arguments.size()), arguments);
+    QCOMPARE(customized.mid(arguments.size()), advancedArguments);
+
+    for (const QString &managedOption : {
+             QStringLiteral("-secure"),
+             QStringLiteral("-INSECURE"),
+             QStringLiteral("-applaunch 570"),
+             QStringLiteral("+exec autoexec.cfg")
+         }) {
+        parsed = Cs2Manager::parseAdvancedLaunchOptions(managedOption, &advancedArguments);
+        QVERIFY2(!parsed.ok, qPrintable(managedOption));
+        QVERIFY(advancedArguments.isEmpty());
+    }
+
     const QString cfg = Cs2Manager::buildDemoCfg();
     QVERIFY(cfg.contains(QStringLiteral("playdemo \"demos/swift_demo_launcher/current.dem\"")));
     QVERIFY(cfg.contains(QStringLiteral("tv_listen_voice_indices -1")));

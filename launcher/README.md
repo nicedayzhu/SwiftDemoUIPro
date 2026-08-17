@@ -8,20 +8,21 @@ A lightweight Windows Qt 6 Widgets application that safely installs this project
 
 ![Swift DemoUI Pro launcher with Demo and ZIP selection and TrueView compatibility control](../docs/images/launcher-playback-ui.png)
 
-The launcher keeps the playback workflow on one page: choose a Demo, review the compatibility option, start CS2, then restore the temporary session when finished.
+The launcher keeps the playback workflow on one page: choose a Demo, review the compatibility option, optionally configure advanced launch arguments, start CS2, then restore the temporary session when finished.
 
 ## Workflow
 
 1. Select or drag in a `.dem`, `.zip`, or `.dem.zst` file. A ZIP containing one Demo is selected automatically; if it contains several, choose one from the displayed list.
 2. Confirm the automatically detected CS2 path, or choose a different installation.
 3. Leave **TrueView prediction** off for maximum compatibility. This writes `cl_demo_predict 0` to the temporary CFG and prevents prediction flicker in Demos without TrueView command data. Enable it only for a supported recording; the preference is remembered.
-4. Select **Start Watching Demo**. The launcher performs the potentially slow staging and voice-index work on a background thread, keeps the window responsive, and reports each preparation stage. It installs/verifies the VPK, copies the Demo, streams only the selected ZIP entry, or stream-decompresses a `.dem.zst` into a dedicated staging directory. It then asks the bundled Rust sidecar to parse `SvcVoiceData`, compile the session-only Panorama data resource, and write its VPK. It creates `swift_demo_launcher.cfg` and runs:
+4. Experienced players may open the separate **Advanced launch options** dialog and enter Steam-style arguments such as `-fullscreen -w 1920 -h 1080 +fps_max 0`. The settings are saved locally and never change Steam's permanent launch options. The launcher rejects attempts to override its managed `-applaunch`, `-insecure`/`-secure`, and `+exec` arguments.
+5. Select **Start Watching Demo**. The launcher performs the potentially slow staging and voice-index work on a background thread, keeps the window responsive, and reports each preparation stage. It installs/verifies the VPK, copies the Demo, streams only the selected ZIP entry, or stream-decompresses a `.dem.zst` into a dedicated staging directory. It then asks the bundled Rust sidecar to parse `SvcVoiceData`, compile the session-only Panorama data resource, and write its VPK. It creates `swift_demo_launcher.cfg` and runs:
 
    ```text
    steam.exe -applaunch 730 -insecure -novid +exec swift_demo_launcher.cfg
    ```
 
-5. When finished, fully exit CS2 before selecting **Stop Watching Demo**. The launcher removes the exact SearchPaths it owns, the VPK, parsed voice resource, temporary CFG, session marker, and staged demo.
+6. When finished, fully exit CS2 before selecting **Stop Watching Demo**. The launcher removes the exact SearchPaths it owns, the VPK, parsed voice resource, temporary CFG, session marker, and staged demo.
 
 If the console repeatedly reports `Not enough TrueView command lookahead` or the picture flickers, stop playback, turn **TrueView prediction** off, and start the Demo again.
 
@@ -76,7 +77,7 @@ launcher\package\SwiftDemoUIPro-v<version>\SwiftDemoUIPro.exe
 launcher\package\SwiftDemoUIPro-v<version>-win64.zip
 ```
 
-Run the EXE from the unpacked version directory for local end-to-end testing. The packaging step uses `windeployqt` to collect `Qt6Core.dll`, `Qt6Gui.dll`, `Qt6Network.dll`, `Qt6Widgets.dll`, the Windows TLS backend, and `platforms\qwindows.dll`. `SwiftDemoUIPro.exe`, `swift-demo-voice-indexer.exe`, its DLLs/plugins, translations, and `swift_demo_menu_override.vpk` must remain together. Player machines do not need the Workshop Tools DLC, `resourcecompiler.exe`, or VPKEdit.
+Run the EXE from the unpacked version directory for local end-to-end testing. The packaging step uses `windeployqt` to collect `Qt6Core.dll`, `Qt6Gui.dll`, `Qt6Network.dll`, `Qt6Widgets.dll`, the Windows TLS backend, and `platforms\qwindows.dll`, but deliberately excludes the standalone VC++ Redistributable installer to keep the release ZIP compact. `SwiftDemoUIPro.exe`, `swift-demo-voice-indexer.exe`, its DLLs/plugins, translations, and `swift_demo_menu_override.vpk` must remain together. Player machines do not need the Workshop Tools DLC, `resourcecompiler.exe`, or VPKEdit.
 
 The repository-level `release.ps1` command is for committed release candidates, not ordinary development testing. It refuses a dirty Git working tree because the source archive is generated from `HEAD`.
 

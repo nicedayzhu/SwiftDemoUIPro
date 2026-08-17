@@ -20,7 +20,7 @@ Swift DemoUI Pro 是一款非官方的 Counter-Strike 2 Demo 与 HLTV 回放客�
 
 ![Swift DemoUI Pro 启动器的 Demo、ZIP 选择与 TrueView 兼容控制](docs/images/launcher-playback-ui.png)
 
-选择或拖入 Demo、ZIP 或 `.dem.zst`，确认自动检测到的 CS2 安装目录，即可开始回放。启动器会记住界面语言与 TrueView 选项，并在回放结束后移除临时文件。
+选择或拖入 Demo、ZIP 或 `.dem.zst`，确认自动检测到的 CS2 安装目录，即可开始回放。启动器会记住界面语言、TrueView 选项和可选的高级启动参数，并在回放结束后移除临时文件。
 
 ### 游戏内 DemoUI
 
@@ -32,6 +32,7 @@ Swift DemoUI Pro 是一款非官方的 Counter-Strike 2 Demo 与 HLTV 回放客�
 
 - 直接打开 `.dem` 文件、下载的 `.zip` 压缩包和 FACEIT `.dem.zst` 文件。ZIP 只解出所选 Demo；Zstandard 文件在后台流式解压。
 - 自动检测 Steam 多个库中的 CS2，仅为本次启动附加 `-insecure`，不会修改 Steam 永久启动项。
+- 为高阶玩家提供轻量的高级启动项入口，点击后在独立弹框中设置。自定义参数只保存在本机并附加到启动器发起的会话，不能覆盖由启动器管理的安全参数。
 - 默认关闭 **TrueView 预测**，避免缺少兼容 TrueView 指令数据的 Demo 出现画面闪烁。
 - 支持全部 64 个显示槽位，可收听全部、仅 T、仅 CT 或单独玩家的已录制语音。
 - 启动前解析已录制的 `VoiceData`，按 Demo tick 显示正在说话的玩家，无需修改 Demo，也不 patch `client.dll`。

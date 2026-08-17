@@ -996,9 +996,46 @@ QStringList Cs2Manager::buildZstdDemoArguments(const QString &compressedDemoPath
     };
 }
 
-QStringList Cs2Manager::buildSteamLaunchArguments()
+LauncherResult Cs2Manager::parseAdvancedLaunchOptions(const QString &text, QStringList *arguments)
 {
-    return {
+    if (!arguments)
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "The advanced launch options could not be processed."));
+
+    arguments->clear();
+    const QString trimmed = text.trimmed();
+    if (trimmed.isEmpty())
+        return LauncherResult::success();
+    if (trimmed.size() > 2048)
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Advanced launch options cannot exceed 2048 characters."));
+
+    const QStringList parsed = QProcess::splitCommand(trimmed);
+    if (parsed.size() > 128)
+        return LauncherResult::failure(QCoreApplication::translate("Cs2Manager", "Advanced launch options cannot contain more than 128 arguments."));
+
+    const QSet<QString> managedOptions = {
+        QStringLiteral("-applaunch"),
+        QStringLiteral("-insecure"),
+        QStringLiteral("-secure"),
+        QStringLiteral("+exec")
+    };
+    for (const QString &argument : parsed) {
+        const QString normalized = argument.trimmed().toLower();
+        if (managedOptions.contains(normalized)) {
+            return LauncherResult::failure(
+                QCoreApplication::translate(
+                    "Cs2Manager",
+                    "The option %1 is managed by the launcher and cannot be overridden.")
+                    .arg(argument));
+        }
+    }
+
+    *arguments = parsed;
+    return LauncherResult::success();
+}
+
+QStringList Cs2Manager::buildSteamLaunchArguments(const QStringList &additionalArguments)
+{
+    QStringList arguments = {
         QStringLiteral("-applaunch"),
         QStringLiteral("730"),
         QStringLiteral("-insecure"),
@@ -1006,16 +1043,18 @@ QStringList Cs2Manager::buildSteamLaunchArguments()
         QStringLiteral("+exec"),
         QString::fromLatin1(kCfgName)
     };
+    arguments.append(additionalArguments);
+    return arguments;
 }
 
-LauncherResult Cs2Manager::launchDemo(const Cs2Paths &paths)
+LauncherResult Cs2Manager::launchDemo(const Cs2Paths &paths, const QStringList &additionalArguments)
 {
     bool launched = false;
     qint64 processId = 0;
     if (QFileInfo::exists(paths.steamExe)) {
-        launched = QProcess::startDetached(paths.steamExe, buildSteamLaunchArguments(), paths.steamRoot, &processId);
+        launched = QProcess::startDetached(paths.steamExe, buildSteamLaunchArguments(additionalArguments), paths.steamRoot, &processId);
     } else if (QFileInfo::exists(paths.cs2Exe)) {
-        QStringList arguments = buildSteamLaunchArguments();
+        QStringList arguments = buildSteamLaunchArguments(additionalArguments);
         arguments.removeFirst();
         arguments.removeFirst();
         launched = QProcess::startDetached(paths.cs2Exe, arguments, QFileInfo(paths.cs2Exe).absolutePath(), &processId);

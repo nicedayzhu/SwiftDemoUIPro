@@ -20,7 +20,7 @@ No SwiftlyS2 installation, server plugin, Counter-Strike 2 Workshop Tools DLC, W
 
 ![Swift DemoUI Pro launcher with Demo and ZIP selection and TrueView compatibility control](docs/images/launcher-playback-ui.png)
 
-Select or drag in a Demo, ZIP archive, or `.dem.zst` download, confirm the detected CS2 installation, and start playback. The launcher remembers the interface language and TrueView preference, then removes its temporary files after playback.
+Select or drag in a Demo, ZIP archive, or `.dem.zst` download, confirm the detected CS2 installation, and start playback. The launcher remembers the interface language, TrueView preference, and optional advanced launch arguments, then removes its temporary files after playback.
 
 ### In-game DemoUI
 
@@ -32,6 +32,7 @@ The added panel keeps the native timeline and playback controls available while 
 
 - Opens `.dem` files, downloaded `.zip` archives, and FACEIT `.dem.zst` files directly. ZIP archives expose only the selected Demo; Zstandard files are stream-decompressed in the background.
 - Detects CS2 across Steam libraries and starts it with a one-time `-insecure` argument without changing permanent Steam launch options.
+- Provides a lightweight advanced launch-options entry that opens a separate dialog for experienced players. Custom arguments are stored locally and appended only to launcher-started sessions; launcher-managed safety arguments cannot be overridden.
 - Defaults **TrueView prediction** off to prevent flicker in Demos that do not contain compatible TrueView command data.
 - Controls recorded voice for everyone, T only, CT only, or individual players across all 64 display slots.
 - Parses recorded `VoiceData` before launch and shows active speakers by Demo tick without modifying the Demo or patching `client.dll`.

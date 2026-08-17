@@ -60,6 +60,8 @@ private:
     void repolish(QWidget *widget);
     void refreshUpdateUi();
     void positionUpdateBubble();
+    void refreshAdvancedOptionsUi();
+    void openAdvancedLaunchOptionsDialog();
 
     Cs2Paths paths_;
     QString demoPath_;
@@ -67,6 +69,7 @@ private:
     qint64 demoSize_ = 0;
     QString lastStatus_;
     QString currentLanguage_;
+    QString advancedLaunchOptionsText_;
     bool trueViewEnabled_ = false;
     bool demoPreparationInProgress_ = false;
     bool updateCheckInProgress_ = false;
@@ -85,6 +88,8 @@ private:
     QLabel *cs2Path_ = nullptr;
     QLabel *vpkStatus_ = nullptr;
     QLabel *statusLabel_ = nullptr;
+    QLabel *advancedOptionsSummary_ = nullptr;
+    QFrame *advancedOptionsDisclosure_ = nullptr;
     QProgressBar *preparationProgress_ = nullptr;
     QLabel *updateStatus_ = nullptr;
     QLabel *updateBubbleText_ = nullptr;

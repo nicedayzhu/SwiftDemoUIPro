@@ -53,7 +53,7 @@ public:
     static LauncherResult prepareDemoSession(const Cs2Paths &paths, const QString &demoPath, const QString &archiveEntry = {}, bool trueViewEnabled = false);
     static LauncherResult prepareVoiceStatusData(const Cs2Paths &paths);
     static LauncherResult removeDemoSession(const Cs2Paths &paths);
-    static LauncherResult launchDemo(const Cs2Paths &paths);
+    static LauncherResult launchDemo(const Cs2Paths &paths, const QStringList &additionalArguments = {});
 
     // Pure helpers kept public so the risky file transformations are unit-testable.
     static QStringList parseSteamLibraryFolders(const QString &vdfText);
@@ -62,7 +62,8 @@ public:
     static QString buildDemoCfg(bool trueViewEnabled = false);
     static QStringList buildZstdDemoArguments(const QString &compressedDemoPath, const QString &stagedDemoPath);
     static QStringList buildVoiceSessionArguments(const QString &demoPath, const QString &sessionVpkPath);
-    static QStringList buildSteamLaunchArguments();
+    static LauncherResult parseAdvancedLaunchOptions(const QString &text, QStringList *arguments);
+    static QStringList buildSteamLaunchArguments(const QStringList &additionalArguments = {});
     static QString displayFileSize(qint64 bytes);
 
 private:

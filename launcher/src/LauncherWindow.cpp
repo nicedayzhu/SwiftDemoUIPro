@@ -6,6 +6,8 @@
 #include <QComboBox>
 #include <QCoreApplication>
 #include <QDesktopServices>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QDir>
 #include <QDragEnterEvent>
 #include <QDragLeaveEvent>
@@ -18,11 +20,14 @@
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QInputDialog>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QLinearGradient>
+#include <QLineEdit>
 #include <QLocale>
 #include <QMessageBox>
 #include <QMimeData>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QPolygonF>
@@ -41,6 +46,7 @@
 #include <QtConcurrent/QtConcurrentRun>
 
 #include <algorithm>
+#include <functional>
 #include <utility>
 
 namespace
@@ -262,6 +268,77 @@ private:
     }
 };
 
+class ClickableDisclosureRow final : public QFrame
+{
+public:
+    explicit ClickableDisclosureRow(QWidget *parent = nullptr)
+        : QFrame(parent)
+    {
+        setCursor(Qt::PointingHandCursor);
+        setFocusPolicy(Qt::StrongFocus);
+        setProperty("keyboardFocus", false);
+    }
+
+    void setActivatedHandler(std::function<void()> handler)
+    {
+        activatedHandler_ = std::move(handler);
+    }
+
+protected:
+    void mouseReleaseEvent(QMouseEvent *event) override
+    {
+        if (event->button() == Qt::LeftButton && rect().contains(event->position().toPoint())) {
+            event->accept();
+            clearFocus();
+            if (activatedHandler_)
+                activatedHandler_();
+            return;
+        }
+        QFrame::mouseReleaseEvent(event);
+    }
+
+    void keyPressEvent(QKeyEvent *event) override
+    {
+        if (event->key() == Qt::Key_Return
+            || event->key() == Qt::Key_Enter
+            || event->key() == Qt::Key_Space) {
+            event->accept();
+            if (activatedHandler_)
+                activatedHandler_();
+            return;
+        }
+        QFrame::keyPressEvent(event);
+    }
+
+    void focusInEvent(QFocusEvent *event) override
+    {
+        QFrame::focusInEvent(event);
+        const bool keyboardFocus = event->reason() == Qt::TabFocusReason
+            || event->reason() == Qt::BacktabFocusReason
+            || event->reason() == Qt::ShortcutFocusReason;
+        setKeyboardFocus(keyboardFocus);
+    }
+
+    void focusOutEvent(QFocusEvent *event) override
+    {
+        QFrame::focusOutEvent(event);
+        setKeyboardFocus(false);
+    }
+
+private:
+    void setKeyboardFocus(bool enabled)
+    {
+        if (property("keyboardFocus").toBool() == enabled)
+            return;
+        setProperty("keyboardFocus", enabled);
+        style()->unpolish(this);
+        style()->polish(this);
+        update();
+    }
+
+    std::function<void()> activatedHandler_;
+};
+
 }
 
 LauncherWindow::LauncherWindow(QWidget *parent)
@@ -280,6 +357,7 @@ LauncherWindow::LauncherWindow(QWidget *parent)
         ? settings.value(QStringLiteral("uiLanguage"), QStringLiteral("system")).toString()
         : languageOverride;
     trueViewEnabled_ = settings.value(QStringLiteral("trueViewEnabled"), false).toBool();
+    advancedLaunchOptionsText_ = settings.value(QStringLiteral("advancedLaunchOptions")).toString();
     if (!loadLanguage(currentLanguage_)) {
         currentLanguage_ = QStringLiteral("system");
         loadLanguage(currentLanguage_);
@@ -308,6 +386,8 @@ LauncherWindow::LauncherWindow(QWidget *parent)
     connect(stateTimer_, &QTimer::timeout, this, &LauncherWindow::refreshState);
     stateTimer_->start();
     refreshState();
+    if (qApp->property("previewAdvancedOptionsDialog").toBool())
+        QTimer::singleShot(0, this, &LauncherWindow::openAdvancedLaunchOptionsDialog);
     if (qApp->property("previewUpdateBubble").toBool()) {
         QTimer::singleShot(0, this, [this]() {
             UpdateInfo preview;
@@ -442,6 +522,9 @@ void LauncherWindow::buildInterface()
     replayTitle->setObjectName(QStringLiteral("PageTitle"));
     auto *replaySubtitle = new QLabel(tr("Choose a Demo, ZIP, or Zstandard file and start CS2 with a safe, reversible setup"), replayPage);
     replaySubtitle->setObjectName(QStringLiteral("PageSubtitle"));
+    replaySubtitle->setWordWrap(true);
+    replaySubtitle->setMaximumWidth(480);
+    replaySubtitle->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     replayTitleCopy->addWidget(replayTitle);
     replayTitleCopy->addWidget(replaySubtitle);
     replayHeader->addLayout(replayTitleCopy, 1);
@@ -553,6 +636,33 @@ void LauncherWindow::buildInterface()
     });
     trueViewLayout->addWidget(trueViewCheckBox_, 0, Qt::AlignVCenter);
     actions->addWidget(trueViewRow);
+
+    auto *advancedOptionsSection = new QWidget(actionCard);
+    advancedOptionsSection->setObjectName(QStringLiteral("AdvancedOptionsSection"));
+    auto *advancedOptionsLayout = new QVBoxLayout(advancedOptionsSection);
+    advancedOptionsLayout->setContentsMargins(0, 0, 0, 0);
+    advancedOptionsLayout->setSpacing(0);
+
+    auto *launchOptionsHeader = new ClickableDisclosureRow(advancedOptionsSection);
+    launchOptionsHeader->setObjectName(QStringLiteral("AdvancedOptionsDisclosure"));
+    launchOptionsHeader->setFixedHeight(30);
+    launchOptionsHeader->setActivatedHandler([this]() { openAdvancedLaunchOptionsDialog(); });
+    advancedOptionsDisclosure_ = launchOptionsHeader;
+    auto *launchOptionsHeaderLayout = new QHBoxLayout(launchOptionsHeader);
+    launchOptionsHeaderLayout->setContentsMargins(4, 0, 4, 0);
+    launchOptionsHeaderLayout->setSpacing(10);
+    auto *launchOptionsTitle = new QLabel(tr("Advanced launch options"), launchOptionsHeader);
+    launchOptionsTitle->setObjectName(QStringLiteral("AdvancedOptionsTitle"));
+    launchOptionsTitle->setAttribute(Qt::WA_TransparentForMouseEvents);
+    launchOptionsHeaderLayout->addWidget(launchOptionsTitle, 0, Qt::AlignVCenter);
+    advancedOptionsSummary_ = new QLabel(launchOptionsHeader);
+    advancedOptionsSummary_->setObjectName(QStringLiteral("AdvancedOptionsSummary"));
+    advancedOptionsSummary_->setAttribute(Qt::WA_TransparentForMouseEvents);
+    launchOptionsHeaderLayout->addWidget(advancedOptionsSummary_, 0, Qt::AlignVCenter);
+    launchOptionsHeaderLayout->addStretch(1);
+    advancedOptionsLayout->addWidget(launchOptionsHeader);
+    actions->addWidget(advancedOptionsSection);
+    refreshAdvancedOptionsUi();
 
     auto *actionRow = new QHBoxLayout;
     actionRow->setSpacing(10);
@@ -1157,6 +1267,63 @@ void LauncherWindow::applyStyle()
             font-size: 13px;
             font-weight: 600;
         }
+        QWidget#AdvancedOptionsSection,
+        QFrame#AdvancedOptionsDisclosure {
+            border: none;
+            background: transparent;
+        }
+        QFrame#AdvancedOptionsDisclosure[keyboardFocus="true"] {
+            border-radius: 5px;
+            background: #f5f7f9;
+        }
+        QLabel#AdvancedOptionsTitle {
+            color: #68727e;
+            font-size: 11px;
+            font-weight: 550;
+        }
+        QFrame#AdvancedOptionsDisclosure:hover QLabel#AdvancedOptionsTitle {
+            color: #3f4854;
+        }
+        QLabel#AdvancedOptionsSummary {
+            color: #969da7;
+            font-size: 10px;
+        }
+        QLabel#AdvancedOptionsSummary[configured="true"] {
+            color: #6f7883;
+            font-weight: 550;
+        }
+        QFrame#AdvancedOptionsDisclosure:disabled QLabel#AdvancedOptionsTitle,
+        QFrame#AdvancedOptionsDisclosure:disabled QLabel#AdvancedOptionsSummary {
+            color: #b6bbc2;
+        }
+        QDialog#AdvancedOptionsDialog { background: #ffffff; }
+        QLabel#AdvancedOptionsDialogTitle {
+            color: #171a20;
+            font-size: 20px;
+            font-weight: 650;
+        }
+        QLabel#AdvancedOptionsDialogDetail,
+        QLabel#AdvancedOptionsDialogHelper {
+            color: #737d89;
+            font-size: 12px;
+        }
+        QLabel#AdvancedOptionsDialogFieldLabel {
+            color: #444d59;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        QLabel#AdvancedOptionsDialogNotice {
+            border: none;
+            border-radius: 7px;
+            background: #f5f7f9;
+            color: #697380;
+            padding: 9px 11px;
+            font-size: 11px;
+        }
+        QLabel#AdvancedOptionsDialogError {
+            color: #c74752;
+            font-size: 11px;
+        }
         QCheckBox#TrueViewCheckBox {
             min-width: 72px;
             border: 1px solid #d5dae1;
@@ -1184,6 +1351,42 @@ void LauncherWindow::applyStyle()
             border-color: #e4e7eb;
             background: #f2f4f6;
             color: #abb1ba;
+        }
+        QLineEdit#LaunchOptionsEdit {
+            min-height: 36px;
+            border: 1px solid #dde2e8;
+            border-radius: 7px;
+            background: #fbfcfd;
+            color: #303640;
+            selection-background-color: #347fd8;
+            padding: 0 11px;
+            font-size: 12px;
+        }
+        QLineEdit#LaunchOptionsEdit:hover { border-color: #aeb7c3; }
+        QLineEdit#LaunchOptionsEdit:focus { border-color: #347fd8; }
+        QLineEdit#LaunchOptionsEdit[invalid="true"] {
+            border-color: #d95763;
+            background: #fff8f8;
+        }
+        QLineEdit#LaunchOptionsEdit:disabled {
+            border-color: #e4e7eb;
+            background: #f0f2f4;
+            color: #a5abb4;
+        }
+        QDialog#AdvancedOptionsDialog QDialogButtonBox QPushButton {
+            min-width: 82px;
+            min-height: 36px;
+            border: 1px solid #d5dae1;
+            border-radius: 7px;
+            background: #ffffff;
+            color: #4d5662;
+            padding: 0 14px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        QDialog#AdvancedOptionsDialog QDialogButtonBox QPushButton:hover {
+            border-color: #aeb7c3;
+            background: #f7f9fb;
         }
         QLabel#VpkStatus {
             color: #4d5662;
@@ -1899,11 +2102,26 @@ void LauncherWindow::startWatchingDemo()
         return;
     }
 
+    QStringList advancedLaunchArguments;
+    const LauncherResult optionsResult = Cs2Manager::parseAdvancedLaunchOptions(
+        advancedLaunchOptionsText_,
+        &advancedLaunchArguments);
+    if (!optionsResult.ok) {
+        QMessageBox::warning(this, tr("Invalid launch options"), optionsResult.message);
+        openAdvancedLaunchOptionsDialog();
+        return;
+    }
+    QSettings settings(QStringLiteral("SwiftTools"), QStringLiteral("SwiftDemoLauncher"));
+    settings.setValue(QStringLiteral("advancedLaunchOptions"), advancedLaunchOptionsText_);
+
     QMessageBox confirmation(this);
     confirmation.setIcon(QMessageBox::Warning);
     confirmation.setWindowTitle(tr("Start Demo playback mode"));
     confirmation.setText(tr("CS2 will start in -insecure mode"));
-    confirmation.setInformativeText(tr("This session cannot be used for normal matchmaking. After watching, exit CS2 and return to the launcher to stop Demo playback.\n\nThe launcher does not change permanent Steam launch options."));
+    QString confirmationDetail = tr("This session cannot be used for normal matchmaking. After watching, exit CS2 and return to the launcher to stop Demo playback.\n\nThe launcher does not change permanent Steam launch options.");
+    if (!advancedLaunchOptionsText_.isEmpty())
+        confirmationDetail += tr("\n\nAdditional launch options: %1").arg(advancedLaunchOptionsText_);
+    confirmation.setInformativeText(confirmationDetail);
     auto *continueButton = confirmation.addButton(tr("Continue"), QMessageBox::AcceptRole);
     continueButton->setObjectName(QStringLiteral("DialogPrimaryButton"));
     confirmation.setDefaultButton(continueButton);
@@ -1955,6 +2173,7 @@ void LauncherWindow::startWatchingDemo()
         demoPath,
         archiveEntry,
         trueViewEnabled,
+        advancedLaunchArguments,
         vpk,
         installStage,
         stagingStage,
@@ -1978,7 +2197,7 @@ void LauncherWindow::startWatchingDemo()
             return result;
 
         reportStage(launchStage);
-        return Cs2Manager::launchDemo(paths);
+        return Cs2Manager::launchDemo(paths, advancedLaunchArguments);
     }));
 }
 
@@ -2000,6 +2219,134 @@ void LauncherWindow::showResult(const LauncherResult &result, bool dialogOnFailu
     statusLabel_->setText(lastStatus_);
     if (!result.ok && dialogOnFailure)
         QMessageBox::critical(this, tr("Operation not completed"), result.message);
+}
+
+void LauncherWindow::openAdvancedLaunchOptionsDialog()
+{
+    QDialog dialog(this);
+    dialog.setObjectName(QStringLiteral("AdvancedOptionsDialog"));
+    dialog.setWindowTitle(tr("Advanced launch options"));
+    dialog.setModal(true);
+    dialog.setMinimumWidth(560);
+
+    auto *layout = new QVBoxLayout(&dialog);
+    layout->setContentsMargins(24, 22, 24, 20);
+    layout->setSpacing(10);
+
+    auto *title = new QLabel(tr("Advanced launch options"), &dialog);
+    title->setObjectName(QStringLiteral("AdvancedOptionsDialogTitle"));
+    layout->addWidget(title);
+
+    auto *detail = new QLabel(
+        tr("For advanced users. Settings are saved locally and used only when this launcher starts CS2."),
+        &dialog);
+    detail->setObjectName(QStringLiteral("AdvancedOptionsDialogDetail"));
+    detail->setWordWrap(true);
+    layout->addWidget(detail);
+    layout->addSpacing(5);
+
+    auto *fieldLabel = new QLabel(tr("Launch options"), &dialog);
+    fieldLabel->setObjectName(QStringLiteral("AdvancedOptionsDialogFieldLabel"));
+    layout->addWidget(fieldLabel);
+
+    auto *input = new QLineEdit(advancedLaunchOptionsText_, &dialog);
+    input->setObjectName(QStringLiteral("LaunchOptionsEdit"));
+    input->setPlaceholderText(tr("Example: -fullscreen -w 1920 -h 1080 +fps_max 0"));
+    input->setClearButtonEnabled(true);
+    input->setMaxLength(2048);
+    input->setToolTip(tr("Spaces separate arguments. Put values containing spaces in double quotes."));
+    layout->addWidget(input);
+
+    auto *helper = new QLabel(
+        tr("Spaces separate arguments. Put values containing spaces in double quotes."),
+        &dialog);
+    helper->setObjectName(QStringLiteral("AdvancedOptionsDialogHelper"));
+    helper->setWordWrap(true);
+    layout->addWidget(helper);
+
+    auto *error = new QLabel(&dialog);
+    error->setObjectName(QStringLiteral("AdvancedOptionsDialogError"));
+    error->setWordWrap(true);
+    error->hide();
+    layout->addWidget(error);
+
+    auto *notice = new QLabel(
+        tr("The launcher already manages -insecure and other session-critical options."),
+        &dialog);
+    notice->setObjectName(QStringLiteral("AdvancedOptionsDialogNotice"));
+    notice->setWordWrap(true);
+    layout->addWidget(notice);
+    layout->addSpacing(4);
+
+    auto *buttons = new QDialogButtonBox(
+        QDialogButtonBox::Save | QDialogButtonBox::Cancel,
+        Qt::Horizontal,
+        &dialog);
+    auto *saveButton = buttons->button(QDialogButtonBox::Save);
+    saveButton->setObjectName(QStringLiteral("AdvancedOptionsSaveButton"));
+    saveButton->setText(tr("Save"));
+    saveButton->setDefault(true);
+    saveButton->setStyleSheet(QStringLiteral(R"CSS(
+        QPushButton {
+            border-color: #347fd8;
+            background: #347fd8;
+            color: #ffffff;
+        }
+        QPushButton:hover {
+            border-color: #438ee6;
+            background: #438ee6;
+        }
+        QPushButton:pressed { background: #2f73c4; }
+    )CSS"));
+    buttons->button(QDialogButtonBox::Cancel)->setText(tr("Cancel"));
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    connect(input, &QLineEdit::textChanged, &dialog, [this, input, error]() {
+        if (input->property("invalid").toBool()) {
+            input->setProperty("invalid", false);
+            repolish(input);
+        }
+        error->hide();
+    });
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, [this, &dialog, input, error]() {
+        QStringList parsedArguments;
+        const LauncherResult result = Cs2Manager::parseAdvancedLaunchOptions(input->text(), &parsedArguments);
+        if (!result.ok) {
+            input->setProperty("invalid", true);
+            repolish(input);
+            error->setText(result.message);
+            error->show();
+            input->setFocus();
+            return;
+        }
+
+        advancedLaunchOptionsText_ = input->text().trimmed();
+        QSettings settings(QStringLiteral("SwiftTools"), QStringLiteral("SwiftDemoLauncher"));
+        settings.setValue(QStringLiteral("advancedLaunchOptions"), advancedLaunchOptionsText_);
+        refreshAdvancedOptionsUi();
+        dialog.accept();
+    });
+    layout->addWidget(buttons);
+
+    input->setFocus();
+    input->selectAll();
+    dialog.adjustSize();
+    dialog.exec();
+}
+
+void LauncherWindow::refreshAdvancedOptionsUi()
+{
+    if (!advancedOptionsSummary_ || !advancedOptionsDisclosure_)
+        return;
+
+    const bool configured = !advancedLaunchOptionsText_.trimmed().isEmpty();
+    advancedOptionsSummary_->setText(configured ? tr("Configured") : tr("Advanced users only"));
+    advancedOptionsSummary_->setProperty("configured", configured);
+    const QString openHint = tr("Open advanced launch options");
+    advancedOptionsDisclosure_->setToolTip(openHint);
+    advancedOptionsDisclosure_->setAccessibleName(openHint);
+    advancedOptionsDisclosure_->setAccessibleDescription(
+        configured ? tr("Launch options are configured") : tr("Advanced users only"));
+    repolish(advancedOptionsSummary_);
 }
 
 void LauncherWindow::setSecurityState(const QString &state, const QString &title, const QString &detail)
@@ -2038,6 +2385,7 @@ void LauncherWindow::refreshState()
     startButton_->setText(preparing ? tr("Preparing...") : tr("Start playback"));
     stopButton_->setEnabled(!preparing && valid && !running && (active || installed));
     trueViewCheckBox_->setEnabled(!preparing && !running && !active);
+    advancedOptionsDisclosure_->setEnabled(!preparing && !running && !active);
     languageCombo_->setEnabled(!preparing);
     preparationProgress_->setVisible(preparing);
     setAcceptDrops(!preparing);

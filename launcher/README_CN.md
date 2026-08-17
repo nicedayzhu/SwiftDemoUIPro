@@ -8,20 +8,21 @@
 
 ![Swift DemoUI Pro 启动器的 Demo、ZIP 选择与 TrueView 兼容控制](../docs/images/launcher-playback-ui.png)
 
-启动器把整个回放流程集中在同一页面：选择 Demo，确认兼容选项，启动 CS2，并在观看结束后恢复临时会话。
+启动器把整个回放流程集中在同一页面：选择 Demo，确认兼容选项，按需配置高级启动参数，启动 CS2，并在观看结束后恢复临时会话。
 
 ## 使用流程
 
 1. 选择或拖入一个 `.dem`、`.zip` 或 `.dem.zst` 文件。ZIP 中只有一个 Demo 时会自动选择；存在多个时，请从列表中选择一个。
 2. 确认自动检测到的 CS2 路径，必要时选择其他安装目录。
 3. 为获得最佳兼容性，建议保持 **TrueView 预测**关闭。启动器会在临时 CFG 中写入 `cl_demo_predict 0`，避免缺少 TrueView 指令数据的 Demo 出现预测闪烁。只有确认录像支持时再启用；启动器会记住该选项。
-4. 点击**开始观看 Demo**。启动器会在后台线程完成可能较慢的暂存和语音索引，窗口保持响应并显示当前准备阶段。随后会安装/校验 VPK，把 Demo 复制到专用临时目录；ZIP 只流式写入所选条目，`.dem.zst` 则流式解压到暂存 Demo。之后由内置 Rust 辅助程序解析 `SvcVoiceData`、编译会话专用 Panorama 数据资源并写入 VPK，最后创建 `swift_demo_launcher.cfg` 并执行：
+4. 高阶玩家可以打开独立的**高级启动项**弹框，输入类似 `-fullscreen -w 1920 -h 1080 +fps_max 0` 的 Steam 风格参数。参数只保存在本机，不会修改 Steam 永久启动项；启动器会拒绝覆盖其管理的 `-applaunch`、`-insecure`/`-secure` 和 `+exec` 参数。
+5. 点击**开始观看 Demo**。启动器会在后台线程完成可能较慢的暂存和语音索引，窗口保持响应并显示当前准备阶段。随后会安装/校验 VPK，把 Demo 复制到专用临时目录；ZIP 只流式写入所选条目，`.dem.zst` 则流式解压到暂存 Demo。之后由内置 Rust 辅助程序解析 `SvcVoiceData`、编译会话专用 Panorama 数据资源并写入 VPK，最后创建 `swift_demo_launcher.cfg` 并执行：
 
    ```text
    steam.exe -applaunch 730 -insecure -novid +exec swift_demo_launcher.cfg
    ```
 
-5. 观看结束后先彻底退出 CS2，再点击**停止观看 Demo**。启动器会移除自己拥有的精确 SearchPath、VPK、解析后的语音资源、临时 CFG、会话标记和 Demo 副本。
+6. 观看结束后先彻底退出 CS2，再点击**停止观看 Demo**。启动器会移除自己拥有的精确 SearchPath、VPK、解析后的语音资源、临时 CFG、会话标记和 Demo 副本。
 
 如果控制台持续出现 `Not enough TrueView command lookahead`，或者画面不断闪烁，请停止回放、关闭 **TrueView 预测**，再重新启动 Demo。
 
@@ -76,7 +77,7 @@ launcher\package\SwiftDemoUIPro-v<版本号>\SwiftDemoUIPro.exe
 launcher\package\SwiftDemoUIPro-v<版本号>-win64.zip
 ```
 
-本地端到端测试请运行展开版本目录中的 EXE。打包步骤会通过 `windeployqt` 收集 `Qt6Core.dll`、`Qt6Gui.dll`、`Qt6Network.dll`、`Qt6Widgets.dll`、Windows TLS 后端和 `platforms\qwindows.dll`。`SwiftDemoUIPro.exe`、`swift-demo-voice-indexer.exe`、DLL/插件、翻译和 `swift_demo_menu_override.vpk` 必须保持在同一完整目录结构中。玩家电脑无需安装 Workshop Tools DLC、`resourcecompiler.exe` 或 VPKEdit。
+本地端到端测试请运行展开版本目录中的 EXE。打包步骤会通过 `windeployqt` 收集 `Qt6Core.dll`、`Qt6Gui.dll`、`Qt6Network.dll`、`Qt6Widgets.dll`、Windows TLS 后端和 `platforms\qwindows.dll`，但会明确排除独立的 VC++ Redistributable 安装程序，以控制发布 ZIP 的体积。`SwiftDemoUIPro.exe`、`swift-demo-voice-indexer.exe`、DLL/插件、翻译和 `swift_demo_menu_override.vpk` 必须保持在同一完整目录结构中。玩家电脑无需安装 Workshop Tools DLC、`resourcecompiler.exe` 或 VPKEdit。
 
 仓库根目录的 `release.ps1` 用于已经提交的 Release 候选版本，而不是日常开发测试。由于源码包从 `HEAD` 生成，只要 Git 工作区不干净，它就会拒绝继续。
 
