@@ -999,43 +999,76 @@ void LauncherWindow::buildInterface()
 
     auto *supportCard = new QFrame(aboutPage);
     supportCard->setObjectName(QStringLiteral("SupportCard"));
-    supportCard->setMinimumHeight(72);
+    supportCard->setMinimumHeight(84);
     auto *support = new QHBoxLayout(supportCard);
-    support->setContentsMargins(14, 10, 14, 10);
+    support->setContentsMargins(16, 12, 14, 12);
     support->setSpacing(12);
-    auto *supportIcon = new QLabel(supportCard);
-    supportIcon->setObjectName(QStringLiteral("SupportIcon"));
-    const QPixmap kofiIcon(QStringLiteral(":/images/kofi_icon.png"));
-    supportIcon->setPixmap(kofiIcon.isNull()
-            ? makeGlyph(Glyph::Coffee, 21, QColor(QStringLiteral("#ff5e3a")))
-            : kofiIcon.scaled(40, 40, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-    supportIcon->setAlignment(Qt::AlignCenter);
-    supportIcon->setFixedSize(40, 40);
-    support->addWidget(supportIcon);
 
-    auto *supportTitle = new QLabel(tr("Like this tool? Buy me a coffee."), supportCard);
+    auto *supportMark = new QLabel(QStringLiteral("♥"), supportCard);
+    supportMark->setObjectName(QStringLiteral("SupportMark"));
+    supportMark->setAlignment(Qt::AlignCenter);
+    supportMark->setFixedSize(40, 40);
+    supportMark->setAttribute(Qt::WA_TransparentForMouseEvents);
+    support->addWidget(supportMark, 0, Qt::AlignVCenter);
+
+    const QString supportDescriptionText =
+        tr("Help fund continued development and maintenance");
+    auto *supportCopy = new QVBoxLayout;
+    supportCopy->setSpacing(3);
+    auto *supportTitle = new QLabel(tr("Support the project"), supportCard);
     supportTitle->setObjectName(QStringLiteral("SupportTitle"));
-    support->addWidget(supportTitle, 1);
+    auto *supportDescription = new QLabel(supportDescriptionText, supportCard);
+    supportDescription->setObjectName(QStringLiteral("SupportDescription"));
+    supportDescription->setWordWrap(true);
+    supportCopy->addWidget(supportTitle);
+    supportCopy->addWidget(supportDescription);
+    support->addLayout(supportCopy, 1);
 
-    auto *supportButton = new QPushButton(supportCard);
-    supportButton->setObjectName(QStringLiteral("KofiButton"));
-    supportButton->setAccessibleName(QStringLiteral("Buy me a coffee on Ko-fi"));
-    supportButton->setToolTip(QStringLiteral("Ko-fi · ko-fi.com/K6C623WHCQ"));
-    const QPixmap kofiButtonImage(QStringLiteral(":/images/kofi_button.png"));
-    if (kofiButtonImage.isNull()) {
-        supportButton->setText(QStringLiteral("Buy me a coffee"));
-        supportButton->setIcon(makeGlyphIcon(Glyph::Coffee, QColor(QStringLiteral("#ffffff"))));
-        supportButton->setIconSize(QSize(18, 18));
-    } else {
-        supportButton->setIcon(QIcon(kofiButtonImage));
-        supportButton->setIconSize(QSize(143, 36));
-    }
-    supportButton->setFixedSize(160, 46);
-    supportButton->setCursor(Qt::PointingHandCursor);
-    connect(supportButton, &QPushButton::clicked, this, []() {
-        QDesktopServices::openUrl(QUrl(QStringLiteral("https://ko-fi.com/K6C623WHCQ")));
-    });
-    support->addWidget(supportButton, 0, Qt::AlignVCenter);
+    const QPixmap afdianIconImage(QStringLiteral(":/images/afdian_icon.png"));
+    const QPixmap kofiIconImage(QStringLiteral(":/images/kofi_icon.png"));
+    const auto makeSupportButton = [supportCard, supportDescriptionText](
+                                       const QString &text,
+                                       const QString &accessibleName,
+                                       const QString &url,
+                                       const QPixmap &iconImage,
+                                       const QString &provider,
+                                       const QColor &fallbackColor) {
+        auto *button = new QPushButton(text, supportCard);
+        button->setObjectName(QStringLiteral("SupportPlatformButton"));
+        button->setProperty("provider", provider);
+        button->setAccessibleName(accessibleName);
+        button->setAccessibleDescription(supportDescriptionText);
+        button->setToolTip(accessibleName);
+        button->setIcon(iconImage.isNull()
+                ? makeGlyphIcon(Glyph::Coffee, fallbackColor)
+                : QIcon(iconImage));
+        button->setIconSize(QSize(24, 24));
+        button->setFixedSize(126, 44);
+        button->setCursor(Qt::PointingHandCursor);
+        button->setFocusPolicy(Qt::StrongFocus);
+        QObject::connect(button, &QPushButton::clicked, button, [url]() {
+            QDesktopServices::openUrl(QUrl(url));
+        });
+        return button;
+    };
+
+    auto *supportActions = new QHBoxLayout;
+    supportActions->setSpacing(8);
+    supportActions->addWidget(makeSupportButton(
+        tr("Afdian"),
+        tr("Support on Afdian"),
+        QStringLiteral("https://afdian.com/a/nicedayzhu"),
+        afdianIconImage,
+        QStringLiteral("afdian"),
+        QColor(QStringLiteral("#946ce6"))));
+    supportActions->addWidget(makeSupportButton(
+        QStringLiteral("Ko-fi"),
+        tr("Support on Ko-fi"),
+        QStringLiteral("https://ko-fi.com/K6C623WHCQ"),
+        kofiIconImage,
+        QStringLiteral("kofi"),
+        QColor(QStringLiteral("#ff5e3a"))));
+    support->addLayout(supportActions);
     about->addWidget(supportCard);
     about->addStretch(1);
     pages_->addWidget(aboutPage);
@@ -1075,6 +1108,7 @@ void LauncherWindow::buildInterface()
 
     setCentralWidget(central);
 }
+
 void LauncherWindow::applyStyle()
 {
     const QString baseStyle = QStringLiteral(R"CSS(
@@ -1565,33 +1599,59 @@ void LauncherWindow::applyStyle()
             font-size: 11px;
         }
         QFrame#SupportCard {
-            border: 1px solid #ffe0d4;
+            border: 1px solid #e1e6ed;
             border-radius: 14px;
-            background: #fff8f4;
+            background: #f9fafc;
         }
-        QLabel#SupportIcon {
+        QLabel#SupportMark {
             border: none;
-            background: transparent;
+            border-radius: 10px;
+            background: #eaf3ff;
+            color: #438ee6;
+            font-size: 18px;
+            font-weight: 650;
         }
         QLabel#SupportTitle {
-            color: #2d2524;
+            color: #252a32;
             font-size: 14px;
             font-weight: 650;
         }
-        QPushButton#KofiButton {
-            border: 1px solid transparent;
-            border-radius: 12px;
-            background: transparent;
-            color: #ffffff;
-            padding: 4px 7px;
-            font-size: 13px;
-            font-weight: 650;
+        QLabel#SupportDescription {
+            color: #7b8490;
+            font-size: 11px;
         }
-        QPushButton#KofiButton:hover {
-            border-color: #ffc1b1;
-            background: #fff0ea;
+        QPushButton#SupportPlatformButton {
+            border: 1px solid #dce2e9;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #414954;
+            text-align: left;
+            padding: 0 12px;
+            font-size: 12px;
+            font-weight: 600;
         }
-        QPushButton#KofiButton:pressed { background: #ffe3da; }
+        QPushButton#SupportPlatformButton[provider="afdian"] {
+            color: #5f4a8c;
+        }
+        QPushButton#SupportPlatformButton[provider="afdian"]:hover {
+            border-color: #bca7ea;
+            background: #faf8ff;
+            color: #6549a1;
+        }
+        QPushButton#SupportPlatformButton[provider="afdian"]:pressed {
+            background: #f0eaff;
+        }
+        QPushButton#SupportPlatformButton[provider="kofi"]:hover {
+            border-color: #ffc0b0;
+            background: #fff8f5;
+            color: #7b382b;
+        }
+        QPushButton#SupportPlatformButton[provider="kofi"]:pressed {
+            background: #ffede7;
+        }
+        QPushButton#SupportPlatformButton:focus {
+            border: 2px solid #75abe2;
+        }
         QFrame#UpdateBubble {
             border: 1px solid #cfd9e7;
             border-radius: 11px;

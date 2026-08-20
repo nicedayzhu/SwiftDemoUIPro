@@ -119,4 +119,6 @@ Zstandard 支持通过 `zstd-rs` 静态编译进 `swift-demo-voice-indexer.exe`�
 
 ## 赞助
 
+欢迎通过爱发电支持后续开发：https://afdian.com/a/nicedayzhu
+
 [![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K6C623WHCQ)

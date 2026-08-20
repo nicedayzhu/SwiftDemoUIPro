@@ -105,6 +105,8 @@ Swift DemoUI Pro 是一款非官方的 Counter-Strike 2 Demo 与 HLTV 回放客�
 
 ## 赞助
 
-如果 Swift DemoUI Pro 对你有帮助，欢迎通过 Ko-fi 支持后续开发：
+如果 Swift DemoUI Pro 对你有帮助，欢迎通过爱发电或 Ko-fi 支持后续开发：
+
+<a href="https://afdian.com/a/nicedayzhu"><img src="launcher/assets/afdian_button.png" alt="在爱发电赞助我" height="46"></a>
 
 [![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K6C623WHCQ)

@@ -119,4 +119,6 @@ See [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt) and the packaged `license
 
 ## Support
 
+Support continued development on Afdian: https://afdian.com/a/nicedayzhu
+
 [![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K6C623WHCQ)

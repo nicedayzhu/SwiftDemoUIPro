@@ -105,6 +105,8 @@ Original project code is available under the [MIT License](LICENSE). Third-party
 
 ## Support
 
-If Swift DemoUI Pro is useful to you, you can support continued development on Ko-fi:
+If Swift DemoUI Pro is useful to you, you can support continued development on Afdian or Ko-fi:
+
+<a href="https://afdian.com/a/nicedayzhu"><img src="launcher/assets/afdian_button.png" alt="Support me on Afdian" height="46"></a>
 
 [![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/K6C623WHCQ)

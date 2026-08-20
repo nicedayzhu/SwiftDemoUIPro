@@ -364,7 +364,7 @@
 <context>
     <name>LauncherWindow</name>
     <message>
-        <location filename="../src/LauncherWindow.cpp" line="+405"/>
+        <location filename="../src/LauncherWindow.cpp" line="+431"/>
         <source>CS2 Demo Tool</source>
         <translation>CS2 回放工具</translation>
     </message>
@@ -381,23 +381,23 @@
     </message>
     <message>
         <location line="-66"/>
-        <location line="+253"/>
+        <location line="+244"/>
         <source>DemoUI Management</source>
         <translation>DemoUI 管理</translation>
     </message>
     <message>
-        <location line="-246"/>
+        <location line="-237"/>
         <source>More</source>
         <translation>其他</translation>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+332"/>
+        <location line="+323"/>
         <source>About</source>
         <translation>关于</translation>
     </message>
     <message>
-        <location line="-328"/>
+        <location line="-319"/>
         <source>Interface language</source>
         <translation>界面语言</translation>
     </message>
@@ -413,12 +413,12 @@
     </message>
     <message>
         <location line="+15"/>
-        <location line="+1826"/>
+        <location line="+1870"/>
         <source>✓</source>
         <translation>✓</translation>
     </message>
     <message>
-        <location line="-1796"/>
+        <location line="-1840"/>
         <source>Choose Demo</source>
         <translation>选择录像</translation>
     </message>
@@ -450,13 +450,13 @@
         <translation>已关闭</translation>
     </message>
     <message>
-        <location line="+45"/>
-        <location line="+1723"/>
+        <location line="+36"/>
+        <location line="+1776"/>
         <source>Start playback</source>
         <translation>开始观看</translation>
     </message>
     <message>
-        <location line="-1716"/>
+        <location line="-1769"/>
         <source>Stop and restore</source>
         <translation>停止观看并恢复</translation>
     </message>
@@ -497,12 +497,12 @@
     </message>
     <message>
         <location line="+3"/>
-        <location line="+1157"/>
+        <location line="+1198"/>
         <source>Checking...</source>
         <translation>正在检查...</translation>
     </message>
     <message>
-        <location line="-1153"/>
+        <location line="-1194"/>
         <source>Install / Repair</source>
         <translation>安装 / 修复</translation>
     </message>
@@ -537,7 +537,27 @@
         <translation>哔哩哔哩</translation>
     </message>
     <message>
-        <location line="+804"/>
+        <location line="+23"/>
+        <source>Help fund continued development and maintenance</source>
+        <translation>帮助支持后续开发与维护</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Support the project</source>
+        <translation>支持项目</translation>
+    </message>
+    <message>
+        <location line="+40"/>
+        <source>Afdian</source>
+        <translation>爱发电</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Support on Ko-fi</source>
+        <translation>在 Ko-fi 支持项目</translation>
+    </message>
+    <message>
+        <location line="+771"/>
         <source>Unable to switch language</source>
         <translation>无法切换语言</translation>
     </message>
@@ -579,7 +599,7 @@
         <translation>无法使用该文件</translation>
     </message>
     <message>
-        <location line="-1514"/>
+        <location line="-1546"/>
         <source>Swift DemoUI Pro · %1</source>
         <translation>Swift DemoUI Pro · %1</translation>
     </message>
@@ -614,18 +634,18 @@
         <translation>支持 CS2 .dem、.zip 和 .dem.zst 文件</translation>
     </message>
     <message>
-        <location line="+318"/>
-        <location line="+1015"/>
+        <location line="+309"/>
+        <location line="+1056"/>
         <source>Check for updates</source>
         <translation>检查更新</translation>
     </message>
     <message>
-        <location line="-926"/>
+        <location line="-967"/>
         <source>Official website</source>
         <translation>官方网站</translation>
     </message>
     <message>
-        <location line="+80"/>
+        <location line="+113"/>
         <source>View</source>
         <translation>查看</translation>
     </message>
@@ -635,7 +655,7 @@
         <translation>关闭提示</translation>
     </message>
     <message>
-        <location line="+774"/>
+        <location line="+782"/>
         <source>Downloading DemoUI update...</source>
         <translation>正在下载 DemoUI 更新……</translation>
     </message>
@@ -675,7 +695,7 @@
         <translation>无法检查更新：%1</translation>
     </message>
     <message>
-        <location line="-1088"/>
+        <location line="-1129"/>
         <source>Launcher %1 · DemoUI %2</source>
         <translation>启动器 %1 · DemoUI %2</translation>
     </message>
@@ -715,12 +735,7 @@
         <translation>视频与教程</translation>
     </message>
     <message>
-        <location line="+23"/>
-        <source>Like this tool? Buy me a coffee.</source>
-        <translation>喜欢这个工具？请我喝杯咖啡。</translation>
-    </message>
-    <message>
-        <location line="+911"/>
+        <location line="+975"/>
         <source>Download launcher %1</source>
         <translation>下载启动器 %1</translation>
     </message>
@@ -750,8 +765,8 @@
         <translation>尚未检查更新</translation>
     </message>
     <message>
-        <location line="-1265"/>
-        <location line="+1593"/>
+        <location line="-1306"/>
+        <location line="+1634"/>
         <location line="+8"/>
         <source>Advanced launch options</source>
         <translation>高级启动选项</translation>
@@ -768,7 +783,7 @@
         <translation>使用空格分隔参数；包含空格的值请用英文双引号括起。</translation>
     </message>
     <message>
-        <location line="-1457"/>
+        <location line="-1498"/>
         <source>Counter-Strike 2 DemoUI and playback tool</source>
         <translation>Counter-Strike 2 DemoUI 与回放工具</translation>
     </message>
@@ -778,7 +793,12 @@
         <translation>启动器 %1（%2）· DemoUI %3</translation>
     </message>
     <message>
-        <location line="+1117"/>
+        <location line="+229"/>
+        <source>Support on Afdian</source>
+        <translation>在爱发电支持我</translation>
+    </message>
+    <message>
+        <location line="+929"/>
         <source>You&apos;re up to date</source>
         <translation>当前已是最新版本</translation>
     </message>
@@ -910,13 +930,13 @@ Additional launch options: %1</source>
     </message>
     <message>
         <location line="+3"/>
-        <location line="+161"/>
+        <location line="+173"/>
         <location line="+189"/>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
     <message>
-        <location line="-340"/>
+        <location line="-352"/>
         <source>Preparing the DemoUI component...</source>
         <translation>正在准备 DemoUI 组件...</translation>
     </message>
@@ -971,7 +991,7 @@ Additional launch options: %1</source>
         <translation>保存</translation>
     </message>
     <message>
-        <location line="+43"/>
+        <location line="+55"/>
         <source>Configured</source>
         <translation>已设置</translation>
     </message>
