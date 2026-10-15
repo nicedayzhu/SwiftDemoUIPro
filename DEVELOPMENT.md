@@ -50,6 +50,14 @@ node .\tests\test_demo_voice_mask.js
 
 This covers voice-mask generation, parsed voice-pulse lookup, player discovery and status behavior, POV commands, round intervals, required native DemoUI layout integration, and matching English/Chinese Panorama localization catalogs.
 
+After a CS2 DemoUI update, also run the current Valve controller against the override with a local GameTracking-CS2 checkout:
+
+```powershell
+node .\tests\test_native_demo_controller.js "<GameTracking-CS2 checkout>"
+```
+
+This optional integration test compares the native Root and executes Valve's current script with panel stubs, including startup, the Demo visibility class, speed controls, player/round menus, and settings. The layout baseline is CS2 build 2000932 / GameTracking-CS2 `df666dcba` (2026-10-15). The previous layout lacked `SpeedSlider`, causing the updated script to throw before scheduling its first frame and enabling the classes that show Demo Voice. Keep the native Root and its test hash synchronized when importing a newer layout. This test does not replace visual verification in CS2.
+
 The Rust parser can also be tested directly:
 
 ```powershell

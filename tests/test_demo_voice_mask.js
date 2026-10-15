@@ -110,8 +110,9 @@ if (/swift-demo-playback/.test(layout)) {
 	throw new Error("custom menu must not duplicate native playback controls");
 }
 
+// Valve build 2000932, GameTracking-CS2 df666dcba (2026-10-15).
 var nativeRootHash = crypto.createHash("sha256").update(extractNativeRoot(layout)).digest("hex");
-if (nativeRootHash !== "cc5a10b29e1abdbd65b2a9260a6b0d55784aac87534629890bdc76072d4efd94") {
+if (nativeRootHash !== "2b2102b9008bc058b959e4535534602ed46a0f31f3e2b439ec9e11d4b7a25048") {
     throw new Error("Valve's native DemoUI Root must remain byte-for-byte unchanged: " + nativeRootHash);
 }
 

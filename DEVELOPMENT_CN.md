@@ -50,6 +50,14 @@ node .\tests\test_demo_voice_mask.js
 
 该测试覆盖语音掩码生成、解析语音 pulse 查询、玩家发现与状态处理、POV 指令、回合区间、原生 DemoUI 必需布局，以及中英文 Panorama 本地化目录与 Token 一致性。
 
+CS2 更新 DemoUI 后，还应使用本地 GameTracking-CS2 仓库，将当前 Valve 控制器与覆盖布局一起验证：
+
+```powershell
+node .\tests\test_native_demo_controller.js "<GameTracking-CS2 仓库路径>"
+```
+
+这项可选集成测试会比较原生 Root，并通过面板桩执行 Valve 当前脚本，覆盖初始化、Demo 显示类、速度控制、玩家/回合菜单和设置。当前布局基线为 CS2 build 2000932 / GameTracking-CS2 `df666dcba`（2026-10-15）。旧布局缺少 `SpeedSlider`，新版脚本因此在调度首帧、启用语音面板依赖的显示类之前抛出异常。导入新版布局时，应同步原生 Root 及其测试哈希。此测试不能替代 CS2 内的视觉验证。
+
 也可以单独测试 Rust 解析器：
 
 ```powershell

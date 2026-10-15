@@ -43,6 +43,7 @@ The launcher must never imply that an `-insecure` session is suitable for matchm
 | `launcher/third_party/miniz/` | Vendored miniz source and MIT license used for in-process ZIP reading. |
 | `launcher/translations/` | Qt Linguist `.ts` translation sources. Generated `.qm` files are build outputs. |
 | `tests/test_demo_voice_mask.js` | Node-based Panorama logic and native-layout integration tests. |
+| `tests/test_native_demo_controller.js` | Optional integration test against a local GameTracking-CS2 checkout: current native Root parity and Valve script startup/control behavior. |
 | `VERSION` | Launcher/package semantic version used by CMake, UI, Windows resources, and launcher asset names. |
 | `MENU_VERSION` | DemoUI VPK semantic version, synchronized with `VERSION` for public Releases. |
 | `release.ps1` | Complete local release-candidate build and optional GitHub publication entry point. |
@@ -141,6 +142,8 @@ node .\tests\test_demo_voice_mask.js
 ```
 
 This test covers mask generation, player discovery/status behavior, POV commands, `RoundIntervals`, and required native DemoUI layout integration.
+
+After a Valve DemoUI update, also run `node .\tests\test_native_demo_controller.js "<GameTracking-CS2 checkout>"`. The current native Root baseline is build 2000932 / `df666dcba` (2026-10-15); synchronize the Root and its pinned test hash together. Missing native controls such as `SpeedSlider` can abort Valve's script before it enables the mode classes that display the custom menu.
 
 ### Compile and pack the Panorama VPK
 
